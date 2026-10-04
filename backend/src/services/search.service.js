@@ -15,7 +15,16 @@ import { DialogueSummaryDto } from '../dtos/dialogue-summary.dto.js';
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
-  const { matchedCharacter, rangeSceneIds, moodSceneIds, hasChar, hasRange, hasMood } = filterHelpers;
+  const {
+    matchedCharacter,
+    rangeSceneIds,
+    moodSceneIds,
+    visibleSceneIds,
+    hasChar,
+    hasRange,
+    hasMood,
+    hasVisibleScenes,
+  } = filterHelpers;
   let source = null;
   let formattedSource = null;
 
@@ -24,6 +33,7 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
     if (!source) return null;
 
     // Apply filters
+    if (hasVisibleScenes && !visibleSceneIds.has(source._id.toString())) return null;
     if (hasRange && !rangeSceneIds.has(source._id.toString())) return null;
     if (hasMood && !moodSceneIds.has(source._id.toString())) return null;
     if (hasChar) {
@@ -38,11 +48,16 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
     source = await characterRepository.findById(embedding.sourceId);
     if (!source) return null;
 
+    const sceneIds = (source.sceneIds || []).map(id => id.toString());
+    if (hasVisibleScenes) {
+      const inVisible = sceneIds.some(id => visibleSceneIds.has(id));
+      if (!inVisible) return null;
+    }
+
     // Apply filters
     if (hasChar) {
       if (!matchedCharacter || source._id.toString() !== matchedCharacter._id.toString()) return null;
     }
-    const sceneIds = (source.sceneIds || []).map(id => id.toString());
     if (hasRange) {
       const inRange = sceneIds.some(id => rangeSceneIds.has(id));
       if (!inRange) return null;
@@ -53,12 +68,18 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
     }
 
     formattedSource = CharacterDto.toResponse(source);
+    if (hasVisibleScenes) {
+      formattedSource.sceneIds = (formattedSource.sceneIds || []).filter(id =>
+        visibleSceneIds.has(id.toString())
+      );
+    }
 
   } else if (embedding.sourceType === 'dialogue_summary') {
     source = await dialogueSummaryRepository.findById(embedding.sourceId);
     if (!source) return null;
 
     // Apply filters
+    if (hasVisibleScenes && !visibleSceneIds.has(source.sceneId.toString())) return null;
     if (hasRange && !rangeSceneIds.has(source.sceneId.toString())) return null;
     if (hasMood && !moodSceneIds.has(source.sceneId.toString())) return null;
     if (hasChar) {
@@ -85,9 +106,15 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
     matchedCharacter: null,
     rangeSceneIds: new Set(),
     moodSceneIds: new Set(),
+    visibleSceneIds: filters.visibleSceneIds
+      ? (filters.visibleSceneIds instanceof Set
+          ? filters.visibleSceneIds
+          : new Set(Array.from(filters.visibleSceneIds).map((id) => id.toString())))
+      : null,
     hasChar: !!filters.character,
     hasRange: !!(filters.sceneRange || filters.sceneRangeFrom || filters.sceneRangeTo),
     hasMood: !!filters.mood,
+    hasVisibleScenes: Boolean(filters.visibleSceneIds),
   };
 
   if (filterHelpers.hasChar) {

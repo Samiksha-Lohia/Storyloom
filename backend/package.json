@@ -8,13 +8,20 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "ai:ping": "node scripts/ai-ping.js",
-    "test": "node --experimental-test-module-mocks --test tests/**/*.test.js"
+    "seed:demo": "node scripts/seed-demo.js",
+    "seed:admin": "node scripts/seed-admin.js",
+    "seed:users": "node scripts/seed-users.js",
+    "seed:books": "node scripts/seed-demo-books.js",
+    "repaginate": "node scripts/repaginate.js",
+    "migrate:users": "node scripts/migrate-existing-users.js",
+    "test": "node --experimental-test-module-mocks --test --test-concurrency=1 tests/**/*.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.621.0",
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.12.0",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -34,7 +41,8 @@
     "winston": "^3.14.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "socket.io-client": "^4.8.4"
   },
   "engines": {
     "node": ">=18.0.0"

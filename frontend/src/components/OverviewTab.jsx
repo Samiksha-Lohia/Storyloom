@@ -12,7 +12,8 @@ import {
   RefreshCw 
 } from 'lucide-react';
 
-export default function OverviewTab({ documentId }) {
+export default function OverviewTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [doc, setDoc] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState({
@@ -25,7 +26,7 @@ export default function OverviewTab({ documentId }) {
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
-    if (!documentId || documentId === 'null' || documentId === 'undefined') {
+    if (!resolvedSource?.id || resolvedSource.id === 'null' || resolvedSource.id === 'undefined') {
       setLoading(false);
       return;
     }
@@ -33,16 +34,18 @@ export default function OverviewTab({ documentId }) {
 
     loadData();
 
-    // Start polling jobs
-    loadJobs(abortController.signal);
-
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-    }
-
-    pollIntervalRef.current = setInterval(() => {
+    // Start polling jobs only if document
+    if (resolvedSource.kind === 'document') {
       loadJobs(abortController.signal);
-    }, 3000);
+
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+
+      pollIntervalRef.current = setInterval(() => {
+        loadJobs(abortController.signal);
+      }, 3000);
+    }
 
     return () => {
       if (pollIntervalRef.current) {
@@ -51,30 +54,42 @@ export default function OverviewTab({ documentId }) {
       }
       abortController.abort();
     };
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load document info
-      const documentData = await api.documents.getById(documentId);
-      setDoc(documentData);
+      // Load source info
+      let sourceData = null;
+      if (resolvedSource.kind === 'book') {
+        sourceData = await api.books.getById(resolvedSource.id).catch(() => null);
+      } else {
+        sourceData = await api.documents.getById(resolvedSource.id).catch(() => null);
+      }
+      setDoc(sourceData);
 
       // Load characters to get count
-      const chars = await api.story.getCharacters(documentId).catch(() => []);
+      const charsRes = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      const chars = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
       
-      // Load scenes to get count and calculate dominant mood
-      const scenes = await api.story.getScenes(documentId).catch(() => []);
+      // Load scenes to get count
+      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      const scenes = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
       
       // Calculate dominant mood
       let dominant = 'Neutral';
-      if (scenes && scenes.length > 0) {
-        // We might also have mood analysis collection
-        const moods = await api.story.getMood(documentId).catch(() => []);
+      const moodRes = await api.analysis.getMood(resolvedSource, options).catch(() => null);
+      if (moodRes?.data?.summary?.dominantMood) {
+        dominant = moodRes.data.summary.dominantMood;
+      } else {
+        const rawMoods = moodRes?.data !== undefined ? moodRes.data : moodRes;
+        const moods = Array.isArray(rawMoods) ? rawMoods : rawMoods?.results || [];
         if (moods && moods.length > 0) {
           const counts = {};
           moods.forEach(m => {
-            counts[m.primaryMood] = (counts[m.primaryMood] || 0) + 1;
+            if (m.primaryMood) {
+              counts[m.primaryMood] = (counts[m.primaryMood] || 0) + 1;
+            }
           });
           const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
           if (sorted.length > 0) dominant = sorted[0][0];
@@ -82,8 +97,8 @@ export default function OverviewTab({ documentId }) {
       }
 
       setStats({
-        wordCount: documentData.wordCount || 0,
-        scenesCount: scenes.length || documentData.totalScenes || 0,
+        wordCount: sourceData?.wordCount || 0,
+        scenesCount: scenes.length || sourceData?.totalScenes || 0,
         charactersCount: chars.length || 0,
         dominantMood: dominant
       });

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { ShieldAlert, AlertTriangle, CheckCircle, Check, EyeOff, Archive, BookOpen } from 'lucide-react';
+import { ShieldAlert as _ShieldAlert, AlertTriangle as _AlertTriangle, CheckCircle, Check, EyeOff, Archive, BookOpen } from 'lucide-react';
 
-export default function ContinuityTab({ documentId }) {
+export default function ContinuityTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [issues, setIssues] = useState([]);
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(true);
@@ -13,14 +14,19 @@ export default function ContinuityTab({ documentId }) {
 
   useEffect(() => {
     loadData();
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
 
   const loadData = async () => {
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Fetch scenes to resolve names in the log
-      const sceneRes = await api.story.getScenes(documentId).catch(() => []);
-      const scenesList = sceneRes.results || sceneRes || [];
+      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      const sceneRaw = sceneRes?.data !== undefined ? sceneRes.data : sceneRes;
+      const scenesList = Array.isArray(sceneRaw) ? sceneRaw : sceneRaw?.results || [];
       const scenesMap = {};
       scenesList.forEach(s => {
         scenesMap[s._id || s.id] = s;
@@ -28,8 +34,9 @@ export default function ContinuityTab({ documentId }) {
       setScenes(scenesMap);
 
       // 2. Fetch continuity issues
-      const data = await api.story.getContinuity(documentId).catch(() => []);
-      setIssues(data || []);
+      const res = await api.analysis.getContinuity(resolvedSource, options).catch(() => []);
+      const raw = res?.data !== undefined ? res.data : res;
+      setIssues(Array.isArray(raw) ? raw : []);
     } catch (err) {
       console.error('Failed to load continuity issues:', err);
     } finally {
@@ -38,14 +45,15 @@ export default function ContinuityTab({ documentId }) {
   };
 
   const handleUpdateStatus = async (issueId, newStatus) => {
+    if (!resolvedSource?.id) return;
     try {
-      const updated = await api.story.updateContinuityStatus(documentId, issueId, newStatus);
+      const updated = await api.analysis.updateContinuityStatus(resolvedSource, issueId, newStatus);
       
       // Update local state
       setIssues(prev => prev.map(issue => {
         const id = issue._id || issue.id;
         if (id === issueId) {
-          return { ...issue, status: updated.status };
+          return { ...issue, status: updated?.status || newStatus };
         }
         return issue;
       }));

@@ -1,8 +1,11 @@
 export class ApiError extends Error {
-  constructor(statusCode, message, isOperational = true, stack = '') {
+  constructor(statusCode, message, isOperational = true, stack = '', code = null) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    if (code) {
+      this.code = code;
+    }
     if (stack) {
       this.stack = stack;
     } else {
@@ -12,22 +15,23 @@ export class ApiError extends Error {
 }
 
 export class BadRequestError extends ApiError {
-  constructor(message = 'Bad Request') {
-    super(400, message);
+  constructor(message = 'Bad Request', code = null) {
+    super(400, message, true, '', code);
   }
 }
 
 export class UnauthorizedError extends ApiError {
-  constructor(message = 'Unauthorized') {
-    super(401, message);
+  constructor(message = 'Unauthorized', code = null) {
+    super(401, message, true, '', code);
   }
 }
 
 export class ForbiddenError extends ApiError {
-  constructor(message = 'Forbidden') {
-    super(403, message);
+  constructor(message = 'Forbidden', code = null) {
+    super(403, message, true, '', code);
   }
 }
+
 
 export class NotFoundError extends ApiError {
   constructor(message = 'Not Found') {
@@ -36,8 +40,8 @@ export class NotFoundError extends ApiError {
 }
 
 export class ConflictError extends ApiError {
-  constructor(message = 'Conflict') {
-    super(409, message);
+  constructor(message = 'Conflict', code = null) {
+    super(409, message, true, '', code);
   }
 }
 

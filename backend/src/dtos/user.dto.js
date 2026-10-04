@@ -1,11 +1,28 @@
 export class UserDto {
   constructor(user) {
-    this.id = user._id || user.id;
+    this.id = (user._id || user.id).toString();
     this.name = user.name;
+    this.username = user.username;
     this.email = user.email;
-    this.plan = user.plan;
+    this.role = user.role;
+    this.status = user.status;
+    this.avatarPublicId = user.avatarPublicId || null;
+    this.avatarUrl = user.avatarUrl || null;
+    this.bio = user.bio || '';
+    this.publisherProfile = user.publisherProfile || null;
+    this.strikes = user.strikes || 0;
+    this.defaultTemplate = user.defaultTemplate || 'classic';
+    this.plan = user.plan || 'free';
+    this.matureAckAt = user.matureAckAt || null;
+    this.readerSettings = user.readerSettings || {
+      fontSize: 16,
+      lineHeight: 1.6,
+      fontFamily: 'serif',
+      theme: 'light',
+    };
     this.createdAt = user.createdAt;
   }
+
 
   static toResponse(user) {
     if (!user) return null;
@@ -14,6 +31,6 @@ export class UserDto {
 
   static toResponseList(users) {
     if (!Array.isArray(users)) return [];
-    return users.map(user => new UserDto(user));
+    return users.map((user) => new UserDto(user));
   }
 }

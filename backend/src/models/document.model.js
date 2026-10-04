@@ -9,6 +9,12 @@ const documentSchema = new mongoose.Schema(
       required: true,
       index: true, // Index for listing a user's library efficiently
     },
+    bookId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Book',
+      default: null,
+      index: true,
+    },
     title: {
       type: String,
       required: true,

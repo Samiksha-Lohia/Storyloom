@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import { redis } from '../config/redis.js';
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
-import STAGES, { STAGE_DEPENDENCIES } from '../constants/stages.js';
+import STAGES, { STAGE_DEPENDENCIES, STAGE_LIST } from '../constants/stages.js';
 import { JOB_STATUSES, DOCUMENT_STATUSES } from '../constants/index.js';
 import {
   PIPELINE_QUEUE_NAME,
@@ -33,11 +33,17 @@ import Character from '../models/character.model.js';
 import Relationship from '../models/relationship.model.js';
 import TimelineEvent from '../models/timeline-event.model.js';
 import DialogueSummary from '../models/dialogue-summary.model.js';
+import Book from '../models/book.model.js';
+import { maintenanceQueue } from '../queues/maintenance.queue.js';
 import MoodAnalysis from '../models/mood-analysis.model.js';
 import StoryArc from '../models/story-arc.model.js';
 import ContinuityIssue from '../models/continuity-issue.model.js';
 import Embedding from '../models/embedding.model.js';
+import { BOOK_STATUSES } from '../constants/book.js';
+
+import { paginate } from '../services/paginator.service.js';
 import processingJobRepository from '../repositories/processing-job.repository.js';
+
 
 // STAGE_DEPENDENCIES imported from constants/stages.js.
 // This remains the single source of truth.
@@ -243,6 +249,16 @@ const enqueueReadyStages = async (documentId) => {
     emitDocumentEvent(documentId, 'pipeline:document-ready', {
       status: DOCUMENT_STATUSES.READY,
     });
+
+    // Enqueue pitch generation on platform-maintenance queue
+    try {
+      const book = await Book.findOne({ documentId });
+      if (book) {
+        await maintenanceQueue.add('generate-pitch', { bookId: book._id.toString() });
+      }
+    } catch (pitchErr) {
+      logger.warn(`Failed to enqueue pitch generation on pipeline ready: ${pitchErr.message}`);
+    }
   }
 };
 
@@ -418,10 +434,27 @@ const runParsing = async ({
     status: DOCUMENT_STATUSES.PROCESSING,
   });
 
+  // If a Book exists for the document, compute offsets and save pageOffsets, pageCount
+  const book = await Book.findOne({ documentId });
+  if (book) {
+    const pageOffsets = paginate(normalized);
+    const pageCount = pageOffsets.length;
+
+    book.pageOffsets = pageOffsets;
+    book.pageCount = pageCount;
+    if (book.status === BOOK_STATUSES.PROCESSING) {
+      book.status = BOOK_STATUSES.DRAFT;
+    }
+    await book.save();
+
+    emitDocumentEvent(documentId, 'pipeline:paginated', { pageCount });
+  }
+
   return {
     wordCount: wordCount(normalized),
   };
 };
+
 
 /* -------------------------------------------------------------------------- */
 /* SCENES                                                                      */
@@ -530,77 +563,86 @@ ${parsedText}`;
     },
   };
 
-  const rawScenes = await generateJSON(
-    prompt,
-    schemaHint,
-    STAGES.SCENES
-  );
+  let processedScenes = [];
 
-  const normalizedScenes =
-    normalizeArrayResponse(rawScenes);
-
-  const schemaJoi = Joi.array()
-    .items(
-      Joi.object({
-        sceneNumber: Joi.number()
-          .integer()
-          .required(),
-        title: Joi.string().required(),
-        summary: Joi.string().required(),
-        location: Joi.string()
-          .allow('')
-          .default(''),
-        sceneText: Joi.string().required(),
-      }).unknown(true),
-    )
-    .required();
-
-  const {
-    value: validatedScenes,
-    error,
-  } = schemaJoi.validate(normalizedScenes);
-
-  if (error) {
-    throw new Error(
-      `Scene breakdown validation failed: ${error.message}`,
-    );
-  }
-
-  let lastIndex = 0;
-  const processedScenes = [];
-
-  for (const scene of validatedScenes) {
-    const sceneText = scene.sceneText;
-
-    let start = parsedText.indexOf(
-      sceneText,
-      lastIndex,
+  try {
+    const rawScenes = await generateJSON(
+      prompt,
+      schemaHint,
+      STAGES.SCENES
     );
 
-    if (start === -1) {
-      start = parsedText.indexOf(sceneText);
+    const normalizedScenes =
+      normalizeArrayResponse(rawScenes);
+
+    const schemaJoi = Joi.array()
+      .items(
+        Joi.object({
+          sceneNumber: Joi.number()
+            .integer()
+            .required(),
+          title: Joi.string().required(),
+          summary: Joi.string().required(),
+          location: Joi.string()
+            .allow('')
+            .default(''),
+          sceneText: Joi.string().required(),
+        }).unknown(true),
+      )
+      .required();
+
+    const {
+      value: validatedScenes,
+      error,
+    } = schemaJoi.validate(normalizedScenes);
+
+    if (error) {
+      throw new Error(
+        `Scene breakdown validation failed: ${error.message}`,
+      );
     }
 
-    const safeStart =
-      start !== -1 ? start : lastIndex;
+    let lastIndex = 0;
+    for (const scene of validatedScenes) {
+      const sceneText = scene.sceneText;
 
-    const end = safeStart + sceneText.length;
+      let start = parsedText.indexOf(
+        sceneText,
+        lastIndex,
+      );
 
-    lastIndex = end;
+      if (start === -1) {
+        start = parsedText.indexOf(sceneText);
+      }
 
-    processedScenes.push({
+      const safeStart =
+        start !== -1 ? start : lastIndex;
+
+      const end = safeStart + sceneText.length;
+
+      lastIndex = end;
+
+      processedScenes.push({
+        documentId,
+        sceneNumber: scene.sceneNumber,
+        title: scene.title,
+        summary: scene.summary,
+        location: scene.location,
+        textRange: {
+          start: safeStart,
+          end,
+        },
+        wordCount: wordCount(sceneText),
+        rawText: sceneText,
+      });
+    }
+  } catch (err) {
+    logger.warn(`OpenRouter scenes stage failed (${err.message}). Falling back to local scene analyzer.`);
+    const scenes = splitIntoScenes(parsedText);
+    processedScenes = scenes.map((s) => ({
+      ...s,
       documentId,
-      sceneNumber: scene.sceneNumber,
-      title: scene.title,
-      summary: scene.summary,
-      location: scene.location,
-      textRange: {
-        start: safeStart,
-        end,
-      },
-      wordCount: wordCount(sceneText),
-      rawText: sceneText,
-    });
+    }));
   }
 
   await Scene.deleteMany({ documentId });
@@ -762,96 +804,127 @@ ${parsedText}`;
     },
   };
 
-  const rawCharacters = await generateJSON(
-    prompt,
-    schemaHint,
-    STAGES.CHARACTERS
-  );
+  let insertedCharacters = [];
 
-  const normalizedCharacters =
-    normalizeArrayResponse(rawCharacters);
+  try {
+    const rawCharacters = await generateJSON(
+      prompt,
+      schemaHint,
+      STAGES.CHARACTERS
+    );
 
-  const characterJoi = Joi.array()
-    .items(
-      Joi.object({
-        name: Joi.string().required(),
-        aliases: Joi.array()
-          .items(Joi.string())
-          .default([]),
-        role: Joi.string()
-          .valid(
-            'protagonist',
-            'antagonist',
-            'supporting',
+    const normalizedCharacters =
+      normalizeArrayResponse(rawCharacters);
+
+    const characterJoi = Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().required(),
+          aliases: Joi.array()
+            .items(Joi.string())
+            .default([]),
+          role: Joi.string()
+            .valid(
+              'protagonist',
+              'antagonist',
+              'supporting',
+            )
+            .default('supporting'),
+          traits: Joi.array()
+            .items(Joi.string())
+            .default([]),
+          description: Joi.string()
+            .allow('')
+            .default(''),
+          arcSummary: Joi.string()
+            .allow('')
+            .default(''),
+        }).unknown(true),
+      )
+      .required();
+
+    const {
+      value: validatedCharacters,
+      error,
+    } = characterJoi.validate(
+      normalizedCharacters,
+    );
+
+    if (error) {
+      throw new Error(
+        `Character extraction validation failed: ${error.message}`,
+      );
+    }
+
+    await Character.deleteMany({ documentId });
+
+    const charactersToInsert =
+      validatedCharacters.map((candidate) => {
+        const sceneIds = scenes
+          .filter((scene) => {
+            const text = scene.rawText || '';
+
+            const nameMatch = new RegExp(
+              `\\b${escapeRegex(candidate.name)}\\b`,
+              'i',
+            ).test(text);
+
+            const aliasMatch =
+              candidate.aliases?.some((alias) =>
+                new RegExp(
+                  `\\b${escapeRegex(alias)}\\b`,
+                  'i',
+                ).test(text),
+              );
+
+            return nameMatch || aliasMatch;
+          })
+          .map((scene) => scene._id);
+
+        return {
+          documentId,
+          name: candidate.name,
+          aliases: candidate.aliases,
+          role: candidate.role,
+          traits: candidate.traits,
+          description: candidate.description,
+          arcSummary: candidate.arcSummary,
+          sceneIds,
+        };
+      });
+
+    insertedCharacters =
+      await Character.insertMany(
+        charactersToInsert,
+      );
+  } catch (err) {
+    logger.warn(`OpenRouter characters stage failed (${err.message}). Falling back to local character analyzer.`);
+    const candidates = extractCandidateNames(doc?.parsedText || '');
+    await Character.deleteMany({ documentId });
+
+    insertedCharacters = await Character.insertMany(
+      candidates.map((candidate, index) => {
+        const sceneIds = scenes
+          .filter((scene) =>
+            new RegExp(
+              `\\b${escapeRegex(candidate.name)}\\b`,
+              'i',
+            ).test(scene.rawText || ''),
           )
-          .default('supporting'),
-        traits: Joi.array()
-          .items(Joi.string())
-          .default([]),
-        description: Joi.string()
-          .allow('')
-          .default(''),
-        arcSummary: Joi.string()
-          .allow('')
-          .default(''),
-      }).unknown(true),
-    )
-    .required();
+          .map((scene) => scene._id);
 
-  const {
-    value: validatedCharacters,
-    error,
-  } = characterJoi.validate(
-    normalizedCharacters,
-  );
-
-  if (error) {
-    throw new Error(
-      `Character extraction validation failed: ${error.message}`,
+        return {
+          documentId,
+          name: candidate.name,
+          role: classifyRole(index, candidates.length),
+          traits: traitsForName(candidate.name, doc?.parsedText || ''),
+          description: `${candidate.name} is a key figure appearing across ${sceneIds.length} scene(s).`,
+          arcSummary: `${candidate.name}'s trajectory unfolds across the narrative arc.`,
+          sceneIds,
+        };
+      }),
     );
   }
-
-  await Character.deleteMany({ documentId });
-
-  const charactersToInsert =
-    validatedCharacters.map((candidate) => {
-      const sceneIds = scenes
-        .filter((scene) => {
-          const text = scene.rawText || '';
-
-          const nameMatch = new RegExp(
-            `\\b${escapeRegex(candidate.name)}\\b`,
-            'i',
-          ).test(text);
-
-          const aliasMatch =
-            candidate.aliases?.some((alias) =>
-              new RegExp(
-                `\\b${escapeRegex(alias)}\\b`,
-                'i',
-              ).test(text),
-            );
-
-          return nameMatch || aliasMatch;
-        })
-        .map((scene) => scene._id);
-
-      return {
-        documentId,
-        name: candidate.name,
-        aliases: candidate.aliases,
-        role: candidate.role,
-        traits: candidate.traits,
-        description: candidate.description,
-        arcSummary: candidate.arcSummary,
-        sceneIds,
-      };
-    });
-
-  const insertedCharacters =
-    await Character.insertMany(
-      charactersToInsert,
-    );
 
   for (const scene of scenes) {
     const characterIds = insertedCharacters
@@ -1102,12 +1175,15 @@ ${scenesListFormatted}
     },
   };
 
-  const rawRelationships =
-    await generateJSON(
-      prompt,
-      schemaHint,
-      STAGES.RELATIONSHIPS
-    );
+  let relationshipsToInsert = [];
+
+  try {
+    const rawRelationships =
+      await generateJSON(
+        prompt,
+        schemaHint,
+        STAGES.RELATIONSHIPS
+      );
 
   // Setup robust scene resolution mapping
   const sceneResolverMap = new Map();
@@ -1356,7 +1432,6 @@ ${scenesListFormatted}
     return null;
   };
 
-  const relationshipsToInsert = [];
   const processedPairs = new Set();
 
   for (const relationship of validatedRelationships) {
@@ -1395,6 +1470,46 @@ ${scenesListFormatted}
       sentimentBySceneId,
       sceneIds,
     });
+  }
+  } catch (err) {
+    logger.warn(`OpenRouter relationships stage failed (${err.message}). Falling back to local relationship analyzer.`);
+    relationshipsToInsert = [];
+    for (let i = 0; i < characters.length; i += 1) {
+      for (let j = i + 1; j < characters.length; j += 1) {
+        const a = characters[i];
+        const b = characters[j];
+
+        const sharedScenes = scenes.filter((scene) => {
+          const text = (scene.rawText || '').toLowerCase();
+          const matchesChar = (char) => {
+            if (char.name && text.includes(char.name.toLowerCase())) return true;
+            if (Array.isArray(char.aliases)) {
+              for (const alias of char.aliases) {
+                if (alias && text.includes(alias.toLowerCase())) return true;
+              }
+            }
+            return false;
+          };
+          return matchesChar(a) && matchesChar(b);
+        });
+
+        if (!sharedScenes.length) continue;
+
+        const combinedText = sharedScenes.map((s) => s.rawText || '').join(' ');
+        const sentimentScore = sentimentForText(combinedText);
+        const type = relationTypeForPair(combinedText);
+
+        relationshipsToInsert.push({
+          documentId,
+          characterAId: a._id,
+          characterBId: b._id,
+          type,
+          sentimentScore,
+          sentimentBySceneId: new Map(sharedScenes.map((s) => [s._id.toString(), sentimentForText(s.rawText || '')])),
+          sceneIds: sharedScenes.map((s) => s._id),
+        });
+      }
+    }
   }
 
   if (relationshipsToInsert.length) {
@@ -1517,78 +1632,91 @@ ${scenes
     },
   };
 
-  const rawTimeline =
-    await generateJSON(
-      prompt,
-      schemaHint,
-      STAGES.TIMELINE
-    );
+  let timelineEventsToInsert = [];
 
-  const normalizedTimeline =
-    normalizeArrayResponse(
-      rawTimeline,
-    );
-
-  const timelineJoi = Joi.array()
-    .items(
-      Joi.object({
-        sceneNumber:
-          Joi.number().integer().required(),
-
-        chronologicalOrder:
-          Joi.number().integer().required(),
-
-        timeLabel: Joi.string()
-          .allow('')
-          .default(''),
-
-        isFlashback:
-          Joi.boolean().default(false),
-      }).unknown(true),
-    )
-    .required();
-
-  const {
-    value: validatedTimeline,
-    error,
-  } = timelineJoi.validate(
-    normalizedTimeline,
-  );
-
-  if (error) {
-    throw new Error(
-      `Timeline validation failed: ${error.message}`,
-    );
-  }
-
-  const sceneByNumber = new Map(
-    scenes.map((scene) => [
-      scene.sceneNumber,
-      scene,
-    ]),
-  );
-
-  const timelineEventsToInsert =
-    validatedTimeline.map((item) => {
-      const scene = sceneByNumber.get(
-        item.sceneNumber,
+  try {
+    const rawTimeline =
+      await generateJSON(
+        prompt,
+        schemaHint,
+        STAGES.TIMELINE
       );
 
-      if (!scene) {
-        throw new Error(
-          `Timeline validation failed: sceneNumber ${item.sceneNumber} does not exist for document ${documentId}`,
-        );
-      }
+    const normalizedTimeline =
+      normalizeArrayResponse(
+        rawTimeline,
+      );
 
-      return {
-        documentId,
-        sceneId: scene._id,
-        chronologicalOrder:
-          item.chronologicalOrder,
-        timeLabel: item.timeLabel,
-        isFlashback: item.isFlashback,
-      };
-    });
+    const timelineJoi = Joi.array()
+      .items(
+        Joi.object({
+          sceneNumber:
+            Joi.number().integer().required(),
+
+          chronologicalOrder:
+            Joi.number().integer().required(),
+
+          timeLabel: Joi.string()
+            .allow('')
+            .default(''),
+
+          isFlashback:
+            Joi.boolean().default(false),
+        }).unknown(true),
+      )
+      .required();
+
+    const {
+      value: validatedTimeline,
+      error,
+    } = timelineJoi.validate(
+      normalizedTimeline,
+    );
+
+    if (error) {
+      throw new Error(
+        `Timeline validation failed: ${error.message}`,
+      );
+    }
+
+    const sceneByNumber = new Map(
+      scenes.map((scene) => [
+        scene.sceneNumber,
+        scene,
+      ]),
+    );
+
+    timelineEventsToInsert =
+      validatedTimeline.map((item) => {
+        const scene = sceneByNumber.get(
+          item.sceneNumber,
+        );
+
+        if (!scene) {
+          throw new Error(
+            `Timeline validation failed: sceneNumber ${item.sceneNumber} does not exist for document ${documentId}`,
+          );
+        }
+
+        return {
+          documentId,
+          sceneId: scene._id,
+          chronologicalOrder:
+            item.chronologicalOrder,
+          timeLabel: item.timeLabel,
+          isFlashback: item.isFlashback,
+        };
+      });
+  } catch (err) {
+    logger.warn(`OpenRouter timeline stage failed (${err.message}). Falling back to local timeline analyzer.`);
+    timelineEventsToInsert = scenes.map((scene, index) => ({
+      documentId,
+      sceneId: scene._id,
+      chronologicalOrder: index + 1,
+      timeLabel: `Scene ${scene.sceneNumber}`,
+      isFlashback: /\b(earlier|remembered|flashback|years ago)\b/i.test(scene.summary || ''),
+    }));
+  }
 
   if (timelineEventsToInsert.length) {
     await TimelineEvent.insertMany(
@@ -2004,12 +2132,15 @@ ${scenes
     },
   };
 
-  const rawIssues =
-    await generateJSON(
-      prompt,
-      schemaHint,
-      STAGES.CONTINUITY,
-    );
+  let issuesToInsert = [];
+
+  try {
+    const rawIssues =
+      await generateJSON(
+        prompt,
+        schemaHint,
+        STAGES.CONTINUITY,
+      );
 
   const rawExtracted = normalizeArrayResponse(rawIssues);
   const rawArray = Array.isArray(rawExtracted)
@@ -2181,7 +2312,7 @@ ${scenes
     );
   }
 
-  const issuesToInsert =
+  issuesToInsert =
     validatedIssues.map(
       (issue) => ({
         documentId,
@@ -2192,6 +2323,44 @@ ${scenes
         severity: issue.severity,
       }),
     );
+  } catch (err) {
+    logger.warn(`OpenRouter continuity stage failed (${err.message}). Falling back to local continuity analyzer.`);
+    issuesToInsert = [];
+    scenes.forEach((scene, index) => {
+      const text = scene.rawText || '';
+      if (/\bdead\b/i.test(text)) {
+        const laterScene = scenes
+          .slice(index + 1)
+          .find(
+            (candidate) =>
+              candidate.rawText &&
+              candidate.rawText.match(
+                NAME_PATTERN_FROM_TEXT(text),
+              ),
+          );
+
+        if (laterScene) {
+          issuesToInsert.push({
+            documentId,
+            type: 'timeline-conflict',
+            description: `A possible death or disappearance in ${scene.title} may need continuity review later in the story.`,
+            sceneIds: [scene._id, laterScene._id],
+            severity: 'medium',
+          });
+        }
+      }
+    });
+
+    if (!scenes.length) {
+      issuesToInsert.push({
+        documentId,
+        type: 'unexplained-gap',
+        description: 'No scenes were detected, so continuity could not be checked.',
+        sceneIds: [],
+        severity: 'high',
+      });
+    }
+  }
 
   if (issuesToInsert.length) {
     await ContinuityIssue.insertMany(
@@ -2245,6 +2414,7 @@ const runEmbeddings = async ({
       documentId,
       sourceType: 'scene',
       sourceId: scene._id,
+      sceneId: scene._id,
       vector: buildTextEmbedding(
         `${scene.title} ${scene.summary} ${scene.rawText || ''}`,
       ),
@@ -2255,6 +2425,7 @@ const runEmbeddings = async ({
       documentId,
       sourceType: 'character',
       sourceId: character._id,
+      sceneId: null,
       vector: buildTextEmbedding(
         `${character.name} ${character.description || ''} ${(character.traits || []).join(' ')}`,
       ),
@@ -2265,6 +2436,7 @@ const runEmbeddings = async ({
       documentId,
       sourceType: 'dialogue_summary',
       sourceId: item._id,
+      sceneId: item.sceneId,
       vector: buildTextEmbedding(
         `${item.summaryText} ${(item.keyQuotes || []).join(' ')} ${item.tone || ''}`,
       ),
@@ -2284,10 +2456,65 @@ const runEmbeddings = async ({
   };
 };
 
+/**
+ * Runs all pipeline stages sequentially for a document.
+ * Creates or updates ProcessingJob records and updates Document status.
+ */
+const processDocumentDirectly = async (documentId) => {
+  const STAGE_ORDER = [
+    STAGES.PARSING,
+    STAGES.SCENES,
+    STAGES.CHARACTERS,
+    STAGES.RELATIONSHIPS,
+    STAGES.TIMELINE,
+    STAGES.DIALOGUE,
+    STAGES.MOOD,
+    STAGES.ARC,
+    STAGES.CONTINUITY,
+    STAGES.EMBEDDINGS,
+  ];
+
+  // 1. Ensure processing jobs exist
+  const existingJobs = await processingJobRepository.findByDocumentId(documentId);
+  if (!existingJobs || existingJobs.length === 0) {
+    const jobRecords = STAGE_LIST.map((stage) => ({
+      documentId,
+      stage,
+      status: JOB_STATUSES.QUEUED,
+      dependsOn: STAGE_DEPENDENCIES[stage],
+    }));
+    await processingJobRepository.create(jobRecords);
+  }
+
+  // 2. Run each stage in order
+  for (const stage of STAGE_ORDER) {
+    await markRunning(documentId, stage);
+    try {
+      await runStage({ data: { documentId: documentId.toString(), stage } });
+      await markCompleted(documentId, stage);
+    } catch (err) {
+      logger.error(`Error in stage ${stage} for document ${documentId}: ${err.message}`);
+      await markFailed(documentId, stage, err);
+      throw err;
+    }
+  }
+
+  await Document.findByIdAndUpdate(documentId, {
+    status: DOCUMENT_STATUSES.READY,
+  });
+};
+
 export {
   startPipelineWorker,
   runStage,
   runScenes,
   runCharacters,
   runRelationships,
+  runTimeline,
+  runDialogue,
+  runMood,
+  runArc,
+  runContinuity,
+  runEmbeddings,
+  processDocumentDirectly,
 };

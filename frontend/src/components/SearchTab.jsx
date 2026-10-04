@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Search, Loader2, BookOpen, MessageSquare, Users, Sparkles, SlidersHorizontal } from 'lucide-react';
 
-export default function SearchTab({ documentId, onNavigateToScene }) {
+export default function SearchTab({ documentId, source, options = {}, onNavigateToScene }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
@@ -19,11 +20,14 @@ export default function SearchTab({ documentId, onNavigateToScene }) {
 
   useEffect(() => {
     loadAuxiliaryData();
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
 
   const loadAuxiliaryData = async () => {
+    if (!resolvedSource?.id) return;
     try {
-      const chars = await api.story.getCharacters(documentId).catch(() => []);
+      const res = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      const raw = res?.data !== undefined ? res.data : res;
+      const chars = Array.isArray(raw) ? raw : raw?.results || [];
       setCharactersList(chars || []);
     } catch (err) {
       console.error('Failed to load search filter lists:', err);
@@ -32,7 +36,7 @@ export default function SearchTab({ documentId, onNavigateToScene }) {
 
   const handleSearchSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || !resolvedSource?.id) return;
 
     setLoading(true);
     try {
@@ -42,8 +46,9 @@ export default function SearchTab({ documentId, onNavigateToScene }) {
       if (sceneRangeFrom) filters.sceneRangeFrom = parseInt(sceneRangeFrom, 10);
       if (sceneRangeTo) filters.sceneRangeTo = parseInt(sceneRangeTo, 10);
 
-      const data = await api.story.search(documentId, query, filters);
-      setResults(data || []);
+      const res = await api.analysis.search(resolvedSource, query, filters, options);
+      const raw = res?.data !== undefined ? res.data : res;
+      setResults(Array.isArray(raw) ? raw : raw?.results || []);
     } catch (err) {
       alert(`Search failed: ${err.message}`);
     } finally {

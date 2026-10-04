@@ -4,7 +4,8 @@ import logger from '../utilities/logger.js';
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(config.mongoose.url, {
+    const mongoUrl = process.env.MONGO_URI || config.mongoose.url;
+    const conn = await mongoose.connect(mongoUrl, {
       autoIndex: true, // Build indexes automatically in MongoDB
     });
 

@@ -8,6 +8,7 @@ import logger from './utilities/logger.js';
 import createApp from './app.js';
 import { initSocket } from './socket/index.js';
 import { startPipelineWorker } from './workers/pipeline.worker.js';
+import { startMaintenanceWorker } from './workers/maintenance.worker.js';
 
 const bootstrap = async () => {
   // ─── Connect to MongoDB ───────────────────────────────────────────────────
@@ -26,9 +27,11 @@ const bootstrap = async () => {
     cors: { origin: config.corsAllowedOrigins },
   });
   initSocket(io);
+  app.set('io', io);
 
-  // ─── Start BullMQ Pipeline Worker ─────────────────────────────────────────
+  // ─── Start BullMQ Workers ─────────────────────────────────────────────────
   startPipelineWorker(io);
+  startMaintenanceWorker();
 
   // ─── Start HTTP Server ────────────────────────────────────────────────────
   httpServer.listen(config.port, () => {

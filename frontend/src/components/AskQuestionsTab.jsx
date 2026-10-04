@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { api } from '../services/api';
 import { MessageSquare, Send, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
-export default function AskQuestionsTab({ documentId }) {
+export default function AskQuestionsTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ export default function AskQuestionsTab({ documentId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!question.trim() || loading) return;
+    if (!question.trim() || loading || !resolvedSource?.id) return;
 
     const currentQuestion = question.trim();
     setQuestion('');
@@ -21,10 +22,11 @@ export default function AskQuestionsTab({ documentId }) {
     setHistory((prev) => [...prev, { role: 'user', content: currentQuestion }]);
 
     try {
-      const response = await api.story.ask(documentId, currentQuestion);
+      const response = await api.analysis.ask(resolvedSource, currentQuestion, options);
+      const answer = response?.data?.answer || response?.answer || 'No response returned.';
       setHistory((prev) => [
         ...prev,
-        { role: 'assistant', content: response.answer || 'No response returned.' },
+        { role: 'assistant', content: answer },
       ]);
     } catch (err) {
       console.error(err);

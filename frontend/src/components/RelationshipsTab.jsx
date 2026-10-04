@@ -2,13 +2,22 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { ReactFlow, Background, Controls } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { GitFork, Heart, HeartCrack, Sparkles, X, BookOpen } from 'lucide-react';
+import { GitFork, Heart, HeartCrack, X, BookOpen } from 'lucide-react';
 
-export default function RelationshipsTab({ documentId }) {
-  const [relationships, setRelationships] = useState([]);
-  const [characters, setCharacters] = useState({});
+export default function RelationshipsTab({ documentId, source, options = {}, summary = false, initialData = null }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
+  const [relationships, setRelationships] = useState(initialData?.relationships || []);
+  const [characters, setCharacters] = useState(() => {
+    if (!initialData?.characters) return {};
+    const map = {};
+    initialData.characters.forEach(c => {
+      map[(c._id || c.id)?.toString()] = c;
+    });
+    return map;
+  });
   const [scenes, setScenes] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData && Boolean(resolvedSource?.id));
+  const [analysisStatus, setAnalysisStatus] = useState(null);
   
   // Filter states
   const [selectedType, setSelectedType] = useState('all');
@@ -18,31 +27,55 @@ export default function RelationshipsTab({ documentId }) {
   const [selectedEdge, setSelectedEdge] = useState(null);
 
   useEffect(() => {
+    if (initialData) {
+      if (initialData.relationships) {
+        setRelationships(initialData.relationships);
+      }
+      if (initialData.characters) {
+        const map = {};
+        initialData.characters.forEach(c => {
+          map[(c._id || c.id)?.toString()] = c;
+        });
+        setCharacters(map);
+      }
+      setLoading(false);
+      return;
+    }
     loadData();
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options), initialData]);
 
   const loadData = async () => {
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Load characters
-      const charsList = await api.story.getCharacters(documentId).catch(() => []);
+      const charsRes = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
       const charsMap = {};
       charsList.forEach(c => {
-        charsMap[c._id || c.id] = c;
+        charsMap[(c._id || c.id)?.toString()] = c;
       });
       setCharacters(charsMap);
 
       // 2. Load scenes (to resolve shared scene titles in edge panel)
-      const sceneRes = await api.story.getScenes(documentId).catch(() => []);
-      const scenesList = sceneRes.results || sceneRes || [];
+      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
       const scenesMap = {};
       scenesList.forEach(s => {
-        scenesMap[s._id || s.id] = s;
+        scenesMap[(s._id || s.id)?.toString()] = s;
       });
       setScenes(scenesMap);
 
       // 3. Load relationships
-      const relList = await api.story.getRelationships(documentId).catch(() => []);
+      const relRes = await api.analysis.getRelationships(resolvedSource, options).catch(() => []);
+      if (relRes?.analysisStatus) {
+        setAnalysisStatus(relRes.analysisStatus);
+      }
+      const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
+      const relList = Array.isArray(rawRel) ? rawRel : rawRel?.results || [];
       setRelationships(relList || []);
     } catch (err) {
       console.error('Failed to load relationship data:', err);
@@ -53,22 +86,29 @@ export default function RelationshipsTab({ documentId }) {
 
   // Filtered relationships
   const filteredRelationships = useMemo(() => {
-    return relationships.filter(rel => {
-      if (selectedType !== 'all' && rel.type !== selectedType) return false;
-      if (rel.sentimentScore < sentimentRange[0] || rel.sentimentScore > sentimentRange[1]) return false;
-      return true;
-    });
+    return relationships
+      .map(r => ({
+        ...r,
+        _id: r._id || r.id,
+        characterAId: (r.characterA?.id || r.characterAId?._id || r.characterAId)?.toString(),
+        characterBId: (r.characterB?.id || r.characterBId?._id || r.characterBId)?.toString(),
+      }))
+      .filter(rel => {
+        if (selectedType !== 'all' && rel.type !== selectedType) return false;
+        if (rel.sentimentScore < sentimentRange[0] || rel.sentimentScore > sentimentRange[1]) return false;
+        return true;
+      });
   }, [relationships, selectedType, sentimentRange]);
 
   // Construct React Flow nodes and edges
   const { flowNodes, flowEdges } = useMemo(() => {
     const activeCharIds = new Set();
     filteredRelationships.forEach(r => {
-      activeCharIds.add(r.characterAId);
-      activeCharIds.add(r.characterBId);
+      if (r.characterAId) activeCharIds.add(r.characterAId);
+      if (r.characterBId) activeCharIds.add(r.characterBId);
     });
 
-    let activeChars = Object.values(characters).filter(c => activeCharIds.has(c._id || c.id));
+    let activeChars = Object.values(characters).filter(c => activeCharIds.has((c._id || c.id)?.toString()));
     // If no filtered relationships or active IDs, show all characters
     if (activeChars.length === 0) {
       activeChars = Object.values(characters);
@@ -76,12 +116,12 @@ export default function RelationshipsTab({ documentId }) {
     
     // Auto circular layout
     const total = activeChars.length;
-    const radius = Math.max(160, total * 30);
-    const centerX = 350;
-    const centerY = 250;
+    const radius = Math.max(120, Math.min(220, total * 25));
+    const centerX = 240;
+    const centerY = 160;
 
     const nodes = activeChars.map((char, index) => {
-      const charId = char._id || char.id;
+      const charId = (char._id || char.id)?.toString();
       const angle = (index / total) * 2 * Math.PI;
       
       const isProtagonist = char.role?.toLowerCase() === 'protagonist';
@@ -103,12 +143,12 @@ export default function RelationshipsTab({ documentId }) {
           )
         },
         position: {
-          x: centerX + radius * Math.cos(angle) - 50,
-          y: centerY + radius * Math.sin(angle) - 20,
+          x: centerX + radius * Math.cos(angle) - 45,
+          y: centerY + radius * Math.sin(angle) - 18,
         },
         style: {
           border: '2px solid #1e293b',
-          borderRadius: '12px',
+          borderRadius: '10px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
         },
         className: `${bgClass}`
@@ -118,13 +158,11 @@ export default function RelationshipsTab({ documentId }) {
     const edges = filteredRelationships.map((rel, index) => {
       const relId = rel._id || rel.id || `edge-${index}`;
       
-      // Edge coloring based on sentimentScore
-      // positive = green, negative = red, neutral = gray
       let color = '#94a3b8'; // gray
       if (rel.sentimentScore > 0.2) color = '#10b981'; // green
       else if (rel.sentimentScore < -0.2) color = '#ef4444'; // red
 
-      const thickness = Math.max(2, Math.min(8, (rel.sceneIds?.length || 1) * 1.5));
+      const thickness = Math.max(2, Math.min(6, (rel.sceneIds?.length || 1) * 1.5));
 
       return {
         id: relId,
@@ -157,7 +195,50 @@ export default function RelationshipsTab({ documentId }) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-10 bg-slate-100 rounded-lg w-1/4"></div>
-        <div className="h-[450px] bg-slate-100 rounded-2xl w-full"></div>
+        <div className="h-[300px] bg-slate-100 rounded-2xl w-full"></div>
+      </div>
+    );
+  }
+
+  // Read-only summary mode for pitch panel
+  if (summary) {
+    return (
+      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs relative h-72">
+        {flowNodes.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50/60">
+            <GitFork className="w-8 h-8 text-slate-300 mb-2" />
+            <p className="font-serif font-semibold text-slate-700 text-sm">No Cast Relationships Mapped</p>
+            <p className="text-xs text-slate-400 mt-0.5">Network will appear when interaction data is available.</p>
+          </div>
+        ) : (
+          <ReactFlow
+            nodes={flowNodes}
+            edges={flowEdges}
+            onEdgeClick={handleEdgeClick}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            elementsSelectable={true}
+            fitView
+          >
+            <Background color="#cbd5e1" gap={16} size={1} />
+            <Controls showInteractive={false} className="!bg-white !border-slate-200 !shadow-xs rounded-md scale-90 origin-bottom-left" />
+          </ReactFlow>
+        )}
+        {selectedEdge && (
+          <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-xs border border-slate-200 rounded-lg p-2.5 shadow-md flex items-center justify-between text-xs z-10">
+            <div className="flex items-center gap-2">
+              {getRelationshipTypeIcon(selectedEdge.type)}
+              <span className="font-semibold text-slate-800">
+                {characters[selectedEdge.characterAId]?.name || 'Character A'} ↔ {characters[selectedEdge.characterBId]?.name || 'Character B'}
+              </span>
+              <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] capitalize font-medium">{selectedEdge.type}</span>
+              <span className="text-slate-400 text-[10px]">Sentiment: {selectedEdge.sentimentScore > 0 ? '+' : ''}{selectedEdge.sentimentScore}</span>
+            </div>
+            <button onClick={() => setSelectedEdge(null)} className="text-slate-400 hover:text-slate-600 p-1">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     );
   }

@@ -17,16 +17,47 @@ const createApp = () => {
 
   app.set('trust proxy', 1);
 
-  // ─── Security Headers ──────────────────────────────────────────────────────
-  app.use(helmet());
+  // ─── Security Headers (C5) ────────────────────────────────────────────────
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
+          connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
+          frameSrc: ["'none'"],
+          objectSrc: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      frameguard: { action: 'deny' },
+      noSniff: true,
+    })
+  );
 
   // ─── CORS ──────────────────────────────────────────────────────────────────
   const allowedOrigins = config.corsAllowedOrigins;
+  const isProduction = config.env === 'production';
+  const frontendUrl = process.env.FRONTEND_URL;
+
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, postman)
         if (!origin) return callback(null, true);
+
+        // In production, strictly lock to FRONTEND_URL or allowedOrigins if defined
+        if (isProduction && frontendUrl && origin === frontendUrl) {
+          return callback(null, true);
+        }
 
         // If config specifies '*', allow all origins dynamically
         if (allowedOrigins === '*') {
@@ -40,10 +71,16 @@ const createApp = () => {
           }
         }
 
-        // Dynamically allow any vercel.app subdomain (e.g. preview builds) or localhost
+        // Dynamically allow any vercel.app subdomain or localhost in dev/staging
         const isVercel = /\.vercel\.app$/.test(origin);
-        const isLocalhost = /^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
-        if (isVercel || isLocalhost) {
+        const isLocalhost =
+          /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+          /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+        if (!isProduction && (isVercel || isLocalhost)) {
+          return callback(null, true);
+        }
+
+        if (isProduction && isVercel) {
           return callback(null, true);
         }
 
@@ -66,22 +103,50 @@ const createApp = () => {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // ─── Global Rate Limiter ───────────────────────────────────────────────────
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 200,
+  // ─── Tiered Rate Limiters (C5) ─────────────────────────────────────────────
+  // 1. Strict Auth Limiter (allows at least 10 logins per minute: configured to 30/min)
+  const authStrictLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    limit: config.env === 'test' ? 1000 : 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
+    message: { success: false, message: 'Too many authentication attempts. Please try again after 1 minute.' },
+  });
+  app.use(['/api/auth/login', '/api/auth/register'], authStrictLimiter);
+
+  // 2. Lenient Read / Search Limiter (300 per minute)
+  const readLenientLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: config.env === 'test' ? 5000 : 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
+    skip: (req) => req.method !== 'GET',
+    message: { success: false, message: 'High reading traffic, please try again shortly.' },
+  });
+  app.use(['/api/books', '/api/search'], readLenientLimiter);
+
+  // 3. Standard API Limiter (120 per minute)
+  const apiStandardLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: config.env === 'test' ? 5000 : 120,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
       sendCommand: (...args) => redis.call(...args),
     }),
     skip: (req) => {
-      // Bypass global rate limit for document jobs status checking GET endpoint
+      // Bypass for document jobs status checking GET endpoint
       return req.method === 'GET' && req.originalUrl && /\/api\/documents\/[^/]+\/jobs(\?|$)/.test(req.originalUrl);
     },
     message: { success: false, message: 'Too many requests, please try again later.' },
   });
-  app.use('/api', limiter);
+  app.use('/api', apiStandardLimiter);
 
   // ─── Health Check ──────────────────────────────────────────────────────────
   app.get('/', (_req, res) => {

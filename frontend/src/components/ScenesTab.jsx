@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { BookOpen, MapPin, Users, Smile, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function ScenesTab({ documentId }) {
+export default function ScenesTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [scenes, setScenes] = useState([]);
   const [characters, setCharacters] = useState({});
   const [moods, setMoods] = useState({});
   const [dialogues, setDialogues] = useState({});
   const [expandedSceneId, setExpandedSceneId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [analysisStatus, setAnalysisStatus] = useState(null);
 
   // Pagination states
   const [page, setPage] = useState(1);
@@ -17,13 +19,18 @@ export default function ScenesTab({ documentId }) {
 
   useEffect(() => {
     loadInitialData();
-  }, [documentId, page]);
+  }, [resolvedSource?.kind, resolvedSource?.id, page, JSON.stringify(options)]);
 
   const loadInitialData = async () => {
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Fetch characters to map IDs to names
-      const charsList = await api.story.getCharacters(documentId).catch(() => []);
+      const charsRes = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
       const charsMap = {};
       charsList.forEach(c => {
         charsMap[c._id || c.id] = c;
@@ -31,33 +38,40 @@ export default function ScenesTab({ documentId }) {
       setCharacters(charsMap);
 
       // 2. Fetch moods to map to scenes
-      const moodsList = await api.story.getMood(documentId).catch(() => []);
+      const moodsRes = await api.analysis.getMood(resolvedSource, options).catch(() => []);
+      const moodsList = moodsRes?.data !== undefined ? (Array.isArray(moodsRes.data) ? moodsRes.data : moodsRes.data?.results || []) : (Array.isArray(moodsRes) ? moodsRes : moodsRes?.results || []);
       const moodsMap = {};
       moodsList.forEach(m => {
-        moodsMap[m.sceneId] = m;
+        if (m.sceneId) {
+          const sId = (m.sceneId._id || m.sceneId).toString();
+          moodsMap[sId] = m;
+        }
       });
       setMoods(moodsMap);
 
-      // 3. Fetch dialogue summaries
-      const dialogueList = await api.story.getDialogue(documentId).catch(() => []);
-      const dialogueMap = {};
-      dialogueList.forEach(d => {
-        if (!dialogueMap[d.sceneId]) {
-          dialogueMap[d.sceneId] = [];
-        }
-        dialogueMap[d.sceneId].push(d);
-      });
-      setDialogues(dialogueMap);
-
-      // 4. Fetch scenes for the document
-      const sceneRes = await api.story.getScenes(documentId, page, limit);
-      if (sceneRes.results) {
-        setScenes(sceneRes.results);
-        setTotalPages(sceneRes.pagination.pages || 1);
-      } else {
-        setScenes(sceneRes || []);
-        setTotalPages(1);
+      // 3. Fetch dialogue summaries (if available for document)
+      if (resolvedSource.kind === 'document') {
+        const dialogueList = await api.story.getDialogue(resolvedSource.id).catch(() => []);
+        const dialogueMap = {};
+        (dialogueList || []).forEach(d => {
+          if (!dialogueMap[d.sceneId]) {
+            dialogueMap[d.sceneId] = [];
+          }
+          dialogueMap[d.sceneId].push(d);
+        });
+        setDialogues(dialogueMap);
       }
+
+      // 4. Fetch scenes for the source
+      const sceneRes = await api.analysis.getScenes(resolvedSource, { ...options, page, limit });
+      if (sceneRes?.analysisStatus) {
+        setAnalysisStatus(sceneRes.analysisStatus);
+      }
+      const rawScenes = sceneRes?.data !== undefined ? sceneRes.data : sceneRes;
+      const items = Array.isArray(rawScenes) ? rawScenes : rawScenes?.results || [];
+      const pagination = sceneRes?.pagination || sceneRes?.data?.pagination;
+      setScenes(items);
+      setTotalPages(pagination?.pages || pagination?.totalPages || 1);
     } catch (err) {
       console.error('Failed to load scenes data:', err);
     } finally {

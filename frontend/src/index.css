@@ -1,18 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Nunito+Sans:ital,opsz,wght@0,6..12,300..900;1,6..12,300..900&display=swap');
 
 @import "tailwindcss";
 
-
 @theme {
-  --font-sans: "Outfit", sans-serif;
-  --font-serif: "Lora", serif;
+  --color-primary: #FF500A; /* TODO(owner): verify orange against wattpad.com */
+  --color-primary-hover: #E04600;
+  --color-primary-tint: #FFF0E8;
+  --color-ink: #121212;
+  --color-muted: #6B6B6B;
+  --color-border: #E5E5E5;
+  --color-surface: #F7F7F7;
+  --color-success: #1F9D55;
+  --color-danger: #D63B2F;
+
+  --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Lora", Georgia, serif;
   --font-handwriting: "Caveat", cursive;
 
   --color-notebook-grid: #f3f4f6;
   --color-notebook-line: #e5e7eb;
 }
 
-/* Notebook grid background utility */
+:root {
+  --primary: #FF500A; /* TODO(owner): verify orange against wattpad.com */
+  --primary-hover: #E04600;
+  --primary-tint: #FFF0E8;
+  --ink: #121212;
+  --muted: #6B6B6B;
+  --border: #E5E5E5;
+  --surface: #F7F7F7;
+  --success: #1F9D55;
+  --danger: #D63B2F;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background-color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus ring default */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Notebook grid background utility (for existing Workspace) */
 .notebook-grid {
   background-color: #faf9f6;
   background-image: radial-gradient(
@@ -23,17 +70,7 @@
   background-size: 20px 20px;
 }
 
-/* Page flip structure styling */
-.page-flip-container {
-  perspective: 1500px;
-}
-
-.page-sheet {
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Scrollbar customization to keep standard notebook feel */
+/* Scrollbar customization */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -44,16 +81,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #E5E5E5;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-body {
-  font-family: var(--font-sans);
-  color: #1e293b;
-  background-color: #fafbfc;
+  background: #CBD5E1;
 }

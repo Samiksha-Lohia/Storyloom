@@ -17,6 +17,12 @@ const embeddingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
+    sceneId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Scene',
+      default: null,
+      index: true,
+    },
     vector: {
       type: [Number],
       required: true,

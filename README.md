@@ -1,265 +1,181 @@
-# SceneCraft — AI-Powered Interactive Story Analysis Platform
+# SceneCraft — AI-Powered Interactive Story & Literary Publishing Platform
 
-> **Not just a summary.** SceneCraft is a multi-service platform built around a background job-queue pipeline, transforming any uploaded narrative manuscript (PDF, DOCX, or TXT) into a structured, fully explorable, interactive workspace with live WebSocket progress tracking and semantic search.
+> **From Draft to Deal.** SceneCraft is an end-to-end literary platform connecting independent authors with professional acquisitions editors. Powered by a multi-stage background job-queue pipeline, SceneCraft transforms raw narrative manuscripts into structured, interactive story analyses, generates AI-powered publisher pitch cards, enables real-time negotiation chat with contact safety guardrails, and provides comprehensive administrative governance.
 
 [![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis%20%7C%20Socket.io-orange?style=flat-square)](https://github.com)
-[![AI Orchestration](https://img.shields.io/badge/AI-OpenRouter-blue?style=flat-square)](https://github.com)
+[![AI Engine](https://img.shields.io/badge/AI-Gemini%20%2B%20Groq%20%2B%20OpenRouter-blue?style=flat-square)](https://github.com)
 [![Visualizations](https://img.shields.io/badge/UI-xyflow%20%2B%20Framer%20Motion%20%2B%20Recharts-green?style=flat-square)](https://github.com)
+[![Security](https://img.shields.io/badge/Security-Helmet%20CSP%20%7C%20Tiered%20Rate%20Limits-purple?style=flat-square)](https://github.com)
 
 ---
 
 ## 📋 Table of Contents
 - [Overview](#-overview)
-- [Screenshot](#-screenshot)
-- [What Makes SceneCraft Different](#-what-makes-scenecraft-different)
-- [Core Features & Modules](#-core-features--modules)
+- [Key Architectural Highlights](#-key-architectural-highlights)
+- [Platform Feature Modules](#-platform-feature-modules)
+  - [1. Story Analysis Engine (Phases 1–7)](#1-story-analysis-engine)
+  - [2. Publisher Discovery & Pitch Deck (Phase 8)](#2-publisher-discovery--pitch-deck)
+  - [3. Publish Request & Rights Negotiation (Phase 9)](#3-publish-request--rights-negotiation)
+  - [4. Real-Time Secure Chat & Safety Controls](#4-real-time-secure-chat--safety-controls)
+  - [5. Platform Hardening & Admin Suite (Phase 10)](#5-platform-hardening--admin-suite)
 - [System Architecture](#-system-architecture)
-- [Tech Stack](#-tech-stack)
-- [Project Directory Structure](#-project-directory-structure)
-- [Core Data Pipelines & Lifecycles](#-core-data-pipelines--lifecycles)
+- [Interactive Demo & Credentials](#-interactive-demo--credentials)
 - [Environment Variables](#-environment-variables)
-- [Installation & Setup](#-installation--setup)
-- [Design Patterns Used](#-design-patterns-used)
+- [Installation & Quick Start](#-installation--quick-start)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
+- [API Route Directory](#-api-route-directory)
+- [Production Deployment](#-production-deployment)
 - [License](#-license)
 
 ---
 
 ## 🌟 Overview
 
-SceneCraft converts raw creative drafts into rich, interactive metadata. Instead of relying on a flat, disposable chatbot response, SceneCraft runs a **10-stage dependency-aware AI analysis pipeline** powered by **OpenRouter** to parse structural, narrative, character, relationship, and emotional details.
-
-All results are stored in a cross-referenced NoSQL database and served through a minimal, paper-inspired notebook interface featuring interactive relationship node graphs, chronologically-reordered timelines, narrative tension charts, and semantic query lookup.
-
----
-
-## 📸 Screenshot
-
-Here is a preview of the SceneCraft interactive workspace:
-
-![SceneCraft Workspace](images/Screenshot%202026-08-13%20013321.png)
+SceneCraft bridges the gap between literary creation and commercial acquisition:
+1. **Writers** upload manuscripts (`.pdf`, `.docx`, `.txt`) and receive granular structural, character, timeline, and tension breakdowns alongside interactive reader feedback and readership analytics.
+2. **Publishers** browse the curated catalogue with advanced acquisitions filters (completion rate, reading time, wishlist status), review AI-generated pitch cards, maintain private portfolios, and submit formal rights acquisition offers.
+3. **Collaboration & Dealmaking** occurs through real-time negotiated messaging guarded by Redis-backed rate limiting and automated contact-info masking until the author explicitly permits direct off-platform contact.
+4. **Trust & Safety Officers** monitor platform health, review automated and user-submitted reports, audit reported chat transcripts with immutable logging, and enforce suspensions or content takedowns.
 
 ---
 
-## What Makes SceneCraft Different
+## ⚡ Key Architectural Highlights
 
-These are the engineering highlights that separate SceneCraft from simple single-prompt wrapper projects:
-
-| Feature | Implementation |
+| Pillar | Engineering Implementation |
 |---|---|
-| ⛓️ **Dependency-Aware Job Graph** | BullMQ + Redis task management scheduling dependent analysis stages sequentially (e.g. mapping relationships *after* character profiles are extracted) |
-| 📊 **Real-Time Stage Streaming** | Socket.io progress updates that stream status updates of the processing pipeline directly to the client as jobs complete |
-| 🕸️ **Interactive Node Graphs** | React Flow (`@xyflow/react`) canvas rendering characters as nodes and relationships as edges with custom weight and sentiment indicators |
-| 🔍 **Semantic Story Memory** | Text embeddings generated and queried via vector representation for natural language queries |
-| 📈 **Tension & Pacing Mapping** | Custom algorithm analyzing conflict indicators and scene lengths, visualized using interactive Recharts curves |
-| 🕵️ **Continuity Auditor** | Multi-pass LLM scanner detecting plot holes, timeline inconsistencies, and character attribute mismatches |
-| 📂 **Format-Flexible Parser** | Streamlined server-side parser extracting structural elements from `.docx`, `.pdf`, and `.txt` files |
+| ⛓️ **Dependency-Aware Job Graph** | BullMQ + Redis task management scheduling dependent analysis stages (e.g. mapping relationships *after* character profiles are extracted). |
+| 📊 **Real-Time Stage Streaming** | Socket.io progress updates that stream status of the processing pipeline directly to the client as jobs complete. |
+| 🛡️ **Zero-Bypass Safety Controls** | Socket identity authenticated strictly via JWT. In-memory and Redis token bucket limiting messaging (20 msgs/min). Deterministic contact filtering (regex for emails, phone numbers, and web domains) protecting unpublished creators. |
+| 🔍 **Audited Admin Moderation** | Admin access to private negotiations is strictly prohibited unless tied to an active moderation report; every inspection is immutably logged to MongoDB `AuditLog`. |
+| ⚡ **Redis Catalogue Caching** | High-traffic `GET /api/books` queries cached with 60-second TTL and automatic invalidation on book updates or moderation takedowns. |
+| 📦 **Optimized Client Delivery** | Manual vendor code-splitting isolates heavy dependencies (`recharts`, `framer-motion`, `lucide-react`), cutting primary JS bundle weight to ~540 kB. |
 
 ---
 
-## ✨ Core Features & Modules
+## ✨ Platform Feature Modules
 
-### 1. Scene Breakdown
-- **Automatic Segmentation**: Identifies scene boundaries from structural, narrative, and setting cues.
-- **Location & Cast Tagging**: Tags settings and present characters on a scene-by-scene basis.
-- **Original Source Links**: Saves text range offsets, enabling users to click a scene card and scroll directly to that page.
+### 1. Story Analysis Engine
+- **Scene Breakdown**: Identifies scene boundaries from narrative and structural cues with direct text-offset jumps.
+- **Character Resolution & Tracking**: Discovers cast members, nicknames, dynamic traits, and temporal sentiment shifts.
+- **Story Timeline & Arc**: Dual-axis chronological vs. narrative ordering and Recharts-powered narrative tension curves.
+- **Continuity Auditor**: Scans for plot inconsistencies, anachronisms, and attribute drifts across chapters.
 
-### 2. Character Profiles
-- **Entity Resolution**: Automatically deduplicates names and nicknames (e.g. merging "Alex" and "Alexander") into single identity records.
-- **Dynamic Traits**: Lists personality descriptors, role classifications (Protagonist, Antagonist, Supporting), and tracks appearance records.
+### 2. Publisher Discovery & Pitch Deck
+- **Publisher Application & Review**: Publishers apply with company credentials and undergo administrative vetting.
+- **Acquisitions Pitch Deck**: AI generates high-impact loglines, comparable titles ("For Fans Of"), target demographic profiles, and commercial hooks.
+- **Private Wishlists**: Publishers maintain confidential portfolios; authors see aggregate interest counts without revealing publisher identities.
+- **Author Profiles & Social Follow**: Public author showcases with catalogued bibliography, social links, and real-time followers.
 
-### 3. Relationship Graph
-- **Network Diagrams**: Shows character proximity, ally/rival status, and sentiment weight.
-- **Temporal Sentiment Tracking**: Stores sentiment score changes per scene, allowing users to watch connections evolve or decay over the story's timeline.
+### 3. Publish Request & Rights Negotiation
+- **Formal Acquisition Offers**: Publishers propose advances, royalty terms, and selective rights (`print`, `ebook`, `audiobook`, `translation`, `film_tv_web`).
+- **Author Decision Workflow**: Authors can accept offers (instantly provisioning a dedicated real-time chat), decline with a 30-day cooldown, or block bad-faith publishers.
+- **Manuscript "In Talks" Badge**: Once an offer is accepted, the book displays an "In Talks" badge in the discovery catalogue.
 
-### 4. Story Timeline
-- **Dual Axis Ordering**: Users can toggle between **Narrative Order** (the order events are read) and **Chronological Order** (the actual timeline order, highlighting flashbacks and flash-forwards).
-- **Time Marker Parsing**: Resolves temporal references (e.g. "Three years later" or "the following autumn").
+### 4. Real-Time Secure Chat & Safety Controls
+- **Socket.io Singleton Architecture**: Room-based messaging (`conversation:{id}`) with real-time optimistic delivery and message status acknowledgements (`readAt`).
+- **Contact-Filter Shield**: Automatically detects and redacts emails, URLs, and phone numbers in prose unless the author toggles `contactSharingEnabled`.
+- **Live Typing Indicators & Unread Badges**: Real-time presence indicators with notification badge counts synced across sessions.
 
-### 5. Mood & Emotion Analysis
-- **Intensity Matrix**: Evaluates narration and dialogue tone per scene to score primary emotions (grief, joy, tension, fear).
-- **Color Shaded Grid**: Shades scene cards dynamically on soft pastel gradients representing emotional intensity.
-
-### 6. Story Arc Chart
-- **Tension Curve**: Plots emotional intensity and conflict scores to trace narrative build-up.
-- **Climax Detection**: Automatically flags peak tension coordinates and overlays benchmark narrative curves (Three-Act, Hero's Journey).
-
-### 7. Continuity Checker
-- **Audit Logging**: Flags inconsistent attributes (e.g. eye color changing from blue to green) or impossible movements (a character appearing in two locations simultaneously).
-- **Triage Dashboard**: Ranks issues by severity (High, Medium, Low) allowing creators to dismiss or mark issues as resolved.
+### 5. Platform Hardening & Admin Suite
+- **Comprehensive Analytics Dashboard**: Live metrics for DAU/WAU, signup velocity, manuscript status distribution, pending publisher reviews, and open trust & safety reports.
+- **User Governance**: Searchable user directory with role migration, temporary suspension (auto-suspending author books), and permanent bans.
+- **Manuscript Moderation**: Content takedown and restoration workflows notifying authors with audited justification records.
+- **Resilience & UX Completeness**: Full-coverage `ErrorBoundary`, 403 Forbidden role guards, and standardized 404 recovery states.
 
 ---
 
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TD
-    subgraph ClientLayer["Frontend Presentation (React + Tailwind v4)"]
-        UI["Notebook Interface (Vite)"]
-        SocketClient["Socket.io Client"]
-        Flow["@xyflow/react Diagram"]
-        Charts["Recharts (Tension Curves)"]
+graph TB
+    subgraph Client["Frontend Client (React 19 + Vite 8)"]
+        UI["Reader / Writer / Publisher UI"]
+        SocketClient["Socket.io Client Singleton"]
+        Charts["Recharts Visualizations"]
     end
 
-    subgraph ServiceLayer["API Gateway & Orchestrator"]
-        API["Express HTTP Gateway (Node.js)"]
-        Auth["JWT Validator & Middleware"]
-        Parser["Document Parser (PDF-Parse / Mammoth)"]
+    subgraph Gateway["Express API & Security Gateway"]
+        Helmet["Helmet CSP & Security Headers"]
+        Cors["CORS Domain Lock"]
+        RateLimit["Tiered Rate Limiter (Redis)"]
+        Auth["JWT & Role Authorization Guard"]
+        Router["Express Routers (111 Endpoints)"]
     end
 
-    subgraph QueueLayer["Asynchronous Task Manager (BullMQ)"]
-        Manager["Job Graph Broker"]
-        RedisStore[("Redis (Queue State & Cache)")]
+    subgraph Workers["BullMQ Worker Cluster"]
+        StoryWorker["Story Pipeline Worker"]
+        PitchWorker["Platform Maintenance & Pitch Worker"]
     end
 
-    subgraph WorkersLayer["AI Pipelines & Analysis Workers"]
-        ParseWorker["Parse & Chunk Worker"]
-        SceneWorker["Scene Breakdown Worker"]
-        CharWorker["Character Profiler"]
-        RelWorker["Relationship Graph Builder"]
-        TimelineWorker["Timeline Reconstructor"]
-        MoodWorker["Emotion Analyzer"]
-        ArcWorker["Story Arc Plotter"]
-        ContWorker["Continuity Checker"]
-        EmbedWorker["Semantic Embedding Worker"]
+    subgraph Storage["Data Tier"]
+        MongoDB[("MongoDB Atlas (Relational NoSQL)")]
+        RedisCache[("Redis Cache & Socket Adapter")]
+        Cloudinary[("Cloudinary Asset Delivery")]
     end
 
-    subgraph StorageLayer["Persistence & Infrastructure"]
-        DB[("MongoDB (Story Data Models)")]
-        OpenRouter["OpenRouter (LLM Analysis)"]
-    end
-
-    UI -->|HTTP Requests| API
-    SocketClient <-->|Live Updates| API
-    API --> Auth
-    API --> Parser
-    Parser -->|Raw Text| DB
-    API -->|Initialize Pipeline| Manager
-    Manager -->|Write State| RedisStore
-    RedisStore --> ParseWorker
-    ParseWorker --> SceneWorker
-    SceneWorker --> CharWorker
-    CharWorker --> RelWorker & TimelineWorker
-    RelWorker & TimelineWorker --> MoodWorker
-    MoodWorker --> ArcWorker & ContWorker
-    ContWorker & ArcWorker --> EmbedWorker
-    
-    WorkersLayer -->|LLM Queries| OpenRouter
-    WorkersLayer -->|Save Documents| DB
-    WorkersLayer -->|Status Events| API
-    API -->|WebSocket Events| SocketClient
+    UI <-->|HTTPS REST| Gateway
+    SocketClient <-->|WSS / Socket.io| Gateway
+    Gateway --> StoryWorker
+    Gateway --> PitchWorker
+    Gateway <--> MongoDB
+    Gateway <--> RedisCache
+    StoryWorker <--> RedisCache
+    StoryWorker <--> MongoDB
+    Gateway --> Cloudinary
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 🔑 Interactive Demo & Credentials
 
-### Backend
-- **Node.js**: Runtime environment.
-- **Express.js**: HTTP server.
-- **MongoDB + Mongoose**: Primary document database.
-- **Redis (ioredis)**: State management for BullMQ queues and temporary rate-limit storage.
-- **BullMQ**: Dependency-aware background job processor.
-- **OpenRouter API**: Unified LLM access powering the analysis pipeline.
-- **pdf-parse & mammoth**: Server-side raw text extractions from PDF and DOCX.
+The database can be seeded instantly with realistic multi-chapter manuscripts, reviews, wishlists, offers, and chat exchanges:
 
-### Frontend
-- **React 19 + Vite**: High-performance client framework.
-- **Tailwind CSS v4**: Utility-first styling.
-- **Framer Motion**: Page-flip transition states and loading visual sequences.
-- **@xyflow/react**: Interactive relationship network graphs.
-- **Recharts**: Responsive charting for tension and pacing curves.
-- **Socket.io Client**: Real-time progress updates.
-
----
-
-## 📁 Project Directory Structure
-
-```
-SceneCraft/
-├── backend/
-│   ├── src/
-│   │   ├── config/          # Redis, MongoDB, and AI Provider initializers
-│   │   ├── controllers/     # HTTP endpoint handlers
-│   │   ├── middlewares/     # JWT Auth guards, rate limiting, and global error handlers
-│   │   ├── models/          # Schemas (User, Document, Scene, Character, Relationship, etc.)
-│   │   ├── queues/          # BullMQ queue creators and job graph handlers
-│   │   ├── routes/          # Express Router declarations
-│   │   ├── services/        # AI prompt generators and processing logic
-│   │   ├── utils/           # Text chunkers and app helpers
-│   │   ├── workers/         # BullMQ processing consumers (parsing, scenes, characters)
-│   │   ├── app.js           # Express app lifecycle setup
-│   │   └── server.js        # Entry server listener and Socket.io bootstrap
-├── frontend/
-│   ├── src/
-│   │   ├── assets/          # Static layout elements
-│   │   ├── components/      # UI components (SearchTab, StoryArcTab, Loader, Navigation)
-│   │   ├── contexts/        # React Global contexts (Auth, Socket)
-│   │   ├── hooks/           # Custom API fetching and websocket wrappers
-│   │   ├── layouts/         # Frame layouts
-│   │   ├── pages/           # Views (Dashboard, Notebook Workspace, Characters, Relations)
-│   │   ├── App.jsx          # Route paths
-│   │   └── main.jsx         # Vite bootstrapping
+```bash
+# In backend directory
+npm run seed:demo
 ```
 
----
-
-## 🔄 Core Data Pipelines & Lifecycles
-
-### 1. Document Processing & Dependency Graph
-```mermaid
-graph TD
-    Upload[User Uploads Document] --> Parser[Raw Text Extracted]
-    Parser --> Chunk[Text Chunked & Tokenized]
-    Chunk --> SceneJob[Job 1: Scene Breakdown]
-    SceneJob --> CharJob[Job 2: Character Profile Extraction]
-    CharJob --> RelJob[Job 3: Relationship Analysis]
-    CharJob --> TimeJob[Job 4: Chronological Timeline Mapping]
-    RelJob & TimeJob --> MoodJob[Job 5: Emotion & Mood Matrix]
-    MoodJob --> ArcJob[Job 6: Story Arc Plotting]
-    MoodJob --> ContJob[Job 7: Continuity Analysis]
-    ContJob & ArcJob --> VectorJob[Job 8: Embedding Generation]
-    VectorJob --> Ready[Workspace Status: Ready]
-```
-
-### 2. Live Pipeline Progress Streaming
-```mermaid
-sequenceDiagram
-    participant User as Client Browser
-    participant API as Express Gateway
-    participant Redis as BullMQ Queue
-    participant Worker as Job Worker
-
-    User->>API: POST /api/documents/upload (Form Data)
-    API->>Redis: Create Job Dependency Graph & Queue Jobs
-    API-->>User: Return documentId (Status: processing)
-    User->>API: Establish WebSockets (Socket.IO Connection)
-    Note over User, API: Join room specific to documentId
-    Worker->>Redis: Complete Stage 1 (Scene Breakdown)
-    Redis->>API: Notify Stage Completion
-    API->>User: Emit "pipeline-progress" { stage: "scenes", status: "completed" }
-    Note over User: Update Progress UI & Unlock Scenes Tab
-```
+### Pre-Configured Demo Accounts:
+| Role | Email | Password | Details |
+|---|---|---|---|
+| 👑 **Administrator** | `admin@scenecraft.com` | `Password123!` | Full moderation & platform analytics access |
+| 🏢 **Publisher (Approved)** | `publisher@scenecraft.com` | `Password123!` | Apex Literary Publishing (Acquisitions Editor) |
+| ⏳ **Publisher (Pending)** | `pending.publisher@scenecraft.com` | `Password123!` | Starlight Books (Awaiting Admin Review) |
+| ✍️ **Author (Bestseller)** | `writer@scenecraft.com` | `Password123!` | Elena Vance (Speculative fiction author) |
+| ✍️ **Author (In Talks)** | `kai.sterling@scenecraft.com` | `Password123!` | Kai Sterling (Active offer & negotiation chat) |
+| 📖 **Reader (Community)** | `reader@scenecraft.com` | `Password123!` | Alex Reader (Full reading, review, library access) |
+| 📖 **Reader (Verified)** | `clara.reader@scenecraft.com` | `Password123!` | Clara Page (Reader & fiction enthusiast) |
 
 ---
 
 ## 🔑 Environment Variables
 
-Create a `.env` file inside `backend/`:
-
+### Backend Configuration (`backend/.env`):
 ```env
 NODE_ENV=development
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/scenecraft
+FRONTEND_URL=http://localhost:5173
+
+# Databases
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/scenecraft
 REDIS_URL=redis://127.0.0.1:6379
 
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRY=24h
+# Authentication
+JWT_SECRET=super_secret_jwt_key_min_32_chars_long
+JWT_EXPIRES_IN=7d
 
-OPENROUTER_API_KEY=your_openrouter_api_key
+# AI Providers
+OPENROUTER_API_KEY=sk-or-v1-...
+GEMINI_API_KEY=AIzaSy...
+GROQ_API_KEY=gsk_...
+
+# Asset Storage (Optional for production covers)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
 ```
 
-Create a `.env` file inside `frontend/`:
-
+### Frontend Configuration (`frontend/.env`):
 ```env
 VITE_API_URL=http://localhost:5000/api
 VITE_WS_URL=http://localhost:5000
@@ -267,16 +183,16 @@ VITE_WS_URL=http://localhost:5000
 
 ---
 
-## ⚡ Installation & Setup
+## ⚡ Installation & Quick Start
 
 ### Prerequisites
 - Node.js (v18.0.0 or higher)
-- MongoDB instance running locally or on Atlas
-- Redis server active (port 6379)
+- MongoDB instance running locally or on MongoDB Atlas
+- Redis server active on port 6379
 
-### 1. Clone & Install
+### 1. Installation
 ```bash
-git clone https://github.com/yourusername/SceneCraft.git
+git clone https://github.com/Samiksha-Lohia/SceneCraft.git
 cd SceneCraft
 
 # Install backend dependencies
@@ -286,23 +202,67 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-### 2. Start Services
+### 2. Seed Demo Data
 ```bash
-# In backend/ directory
+cd backend
+npm run seed:demo
+```
+
+### 3. Run Development Servers
+```bash
+# Terminal 1: Backend API & Socket Server
+cd backend
 npm run dev
 
-# In frontend/ directory
+# Terminal 2: Frontend Client
+cd frontend
 npm run dev
 ```
-Open `http://localhost:5173` in your browser.
+Open **`http://localhost:5173`** to access SceneCraft.
 
 ---
 
-## 🧠 Design Patterns Used
+## 🧪 Testing & Quality Assurance
 
-- **Pipeline / Job Graph Pattern**: Splitting LLM queries into chronological dependent stages to build reliable, structured knowledge representation.
-- **Pub/Sub Event Pattern**: Communicating status updates across Workers, HTTP Servers, and client screens using Redis and Socket.io.
-- **Factory & Strategy Pattern**: Dynamically choosing parser wrappers based on file MIME types (`pdf`, `docx`, `txt`).
+SceneCraft features an automated integration and security test suite using Node's native test runner:
+
+```bash
+# Run backend test suite
+cd backend
+npm test
+
+# Run route security audit
+node --experimental-test-module-mocks --test tests/routes-audit.test.js
+
+# Run frontend linting & production build
+cd ../frontend
+npm run lint
+npm run build
+```
+
+- **Routes Audit**: Validates that all 111 Express API endpoints possess valid authentication and role enforcement guards.
+- **Phase 9 Test Suite**: Validates request state transitions, cooldown windows, socket message delivery, contact filtering, and audited conversation inspections.
+
+---
+
+## 🗺️ API Route Directory
+
+All 111 API endpoints across all services are catalogued with parameter schemas and role permissions in:
+👉 **[`docs/ROUTES.md`](docs/ROUTES.md)**
+
+---
+
+## 🚀 Production Deployment
+
+Before deploying to production, review the comprehensive pre-flight verification checklist in:
+👉 **[`docs/LAUNCH.md`](docs/LAUNCH.md)**
+
+Covering:
+- Environment secrets rotation & MongoDB Atlas IP whitelisting
+- Compound database index confirmation
+- Redis persistence & Redis Sentinel configuration
+- Cloudflare SSL/HSTS and CDN caching policies
+- Legal compliance (Terms of Service, DMCA reporting, Privacy Policy)
 
 ---
 

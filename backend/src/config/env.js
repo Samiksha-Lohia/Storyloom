@@ -20,7 +20,7 @@ const envVarsSchema = Joi.object()
     JWT_REFRESH_SECRET: Joi.string().required().description('JWT Refresh Token secret key'),
     JWT_ACCESS_EXPIRY: Joi.string().default('15m').description('JWT Access Token expiration time'),
     JWT_REFRESH_EXPIRY: Joi.string().default('7d').description('JWT Refresh Token expiration time'),
-    MAX_FILE_SIZE_MB: Joi.number().default(10).description('Max uploaded file size in Megabytes'),
+    MAX_FILE_SIZE_MB: Joi.number().default(15).description('Max uploaded file size in Megabytes'),
     UPLOAD_DIR: Joi.string().default('uploads/').description('Upload directory path'),
     ALLOWED_MIME_TYPES: Joi.string()
       .default('application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain')
@@ -50,6 +50,23 @@ const envVarsSchema = Joi.object()
     OPENROUTER_MODEL_3: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 3'),
     OPENROUTER_MAX_TOKENS: Joi.number().integer().default(4096).description('OpenRouter Max Tokens'),
     CORS_ORIGIN: Joi.string().optional().allow('').description('Comma-separated allowed origins for CORS'),
+    CLOUDINARY_CLOUD_NAME: Joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: Joi.required(),
+      otherwise: Joi.optional().allow(''),
+    }).description('Cloudinary Cloud Name'),
+    CLOUDINARY_API_KEY: Joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: Joi.required(),
+      otherwise: Joi.optional().allow(''),
+    }).description('Cloudinary API Key'),
+    CLOUDINARY_API_SECRET: Joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: Joi.required(),
+      otherwise: Joi.optional().allow(''),
+    }).description('Cloudinary API Secret'),
+    ADMIN_EMAIL: Joi.string().optional().allow('').description('Admin email for initial seed'),
+    ADMIN_PASSWORD: Joi.string().optional().allow('').description('Admin password for initial seed'),
   })
   .unknown();
 
@@ -63,7 +80,9 @@ const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   mongoose: {
-    url: envVars.MONGO_URI,
+    get url() {
+      return process.env.MONGO_URI || envVars.MONGO_URI;
+    },
   },
   redis: {
     url: envVars.REDIS_URL,
@@ -110,6 +129,15 @@ const config = {
       model3: envVars.OPENROUTER_MODEL_3,
       maxTokens: envVars.OPENROUTER_MAX_TOKENS,
     },
+  },
+  cloudinary: {
+    cloudName: envVars.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: envVars.CLOUDINARY_API_KEY || '',
+    apiSecret: envVars.CLOUDINARY_API_SECRET || '',
+  },
+  admin: {
+    email: envVars.ADMIN_EMAIL || '',
+    password: envVars.ADMIN_PASSWORD || '',
   },
 };
 

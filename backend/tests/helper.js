@@ -6,14 +6,29 @@ export const setupTestDB = (before, after, afterEach) => {
   before(async () => {
     // Set environment to test
     process.env.NODE_ENV = 'test';
-    // Use test DB to prevent polluting dev DB
-    if (!process.env.MONGO_URI) {
+    // Use test DB to prevent polluting or wiping dev DB
+    if (process.env.MONGO_URI) {
+      if (process.env.MONGO_URI.includes('.mongodb.net/')) {
+        process.env.MONGO_URI = process.env.MONGO_URI.replace(/\.mongodb\.net\/([^?]*)/, '.mongodb.net/scenecraft_test');
+      } else if (process.env.MONGO_URI.includes('localhost')) {
+        process.env.MONGO_URI = 'mongodb://localhost:27017/scenecraft_test';
+      }
+    } else {
       process.env.MONGO_URI = 'mongodb://localhost:27017/scenecraft_test';
     }
-    // If not already connected, connect to the DB
-    if (mongoose.connection.readyState === 0) {
-      await connectDB();
+    // Ensure connection is using test DB
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
     }
+    await connectDB();
+    // Clean up any stale data from interrupted test runs
+    if (mongoose.connection.readyState !== 0) {
+      const collections = mongoose.connection.collections;
+      for (const key in collections) {
+        await collections[key].deleteMany({});
+      }
+    }
+    await redis.flushdb();
   });
 
   after(async () => {

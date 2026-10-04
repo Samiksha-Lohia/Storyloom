@@ -2,19 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Users, Tag, Award, Heart, BookOpen } from 'lucide-react';
 
-export default function CharactersTab({ documentId }) {
+export default function CharactersTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [analysisStatus, setAnalysisStatus] = useState(null);
 
   useEffect(() => {
     loadCharacters();
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
 
   const loadCharacters = async () => {
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const data = await api.story.getCharacters(documentId).catch(() => []);
-      setCharacters(data || []);
+      const res = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      if (res?.analysisStatus) {
+        setAnalysisStatus(res.analysisStatus);
+      }
+      const raw = res?.data !== undefined ? res.data : res;
+      const items = Array.isArray(raw) ? raw : raw?.results || [];
+      setCharacters(items || []);
     } catch (err) {
       console.error('Failed to load characters:', err);
     } finally {

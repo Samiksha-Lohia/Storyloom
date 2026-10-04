@@ -28,7 +28,11 @@ import logger from '../utilities/logger.js';
  * @param {Object} file     - Multer file object (req.file)
  * @returns {Promise<DocumentDto>}
  */
-const uploadDocument = async (userId, file) => {
+const uploadDocument = async (userId, file, options = {}) => {
+  const customTitle = typeof options === 'string' ? options : options.title;
+  const bookId = typeof options === 'object' ? options.bookId : null;
+  const returnRaw = typeof options === 'object' ? Boolean(options.returnRaw) : false;
+
   const ext = path.extname(file.originalname).toLowerCase().slice(1); // 'pdf' | 'docx' | 'txt'
   const storageKey = `documents/${userId}/${Date.now()}-${file.originalname}`;
 
@@ -38,11 +42,12 @@ const uploadDocument = async (userId, file) => {
   // 2. Create the document record
   const document = await documentRepository.create({
     userId,
-    title: path.basename(file.originalname, path.extname(file.originalname)),
+    title: customTitle || path.basename(file.originalname, path.extname(file.originalname)),
     originalFilename: file.originalname,
     fileType: ext,
     storageUrl,
     status: 'processing',
+    ...(bookId && { bookId }),
   });
 
   // 3. Seed a ProcessingJob record for every stage
@@ -62,7 +67,8 @@ const uploadDocument = async (userId, file) => {
   );
 
   logger.info(`Document ${document._id} uploaded — pipeline started.`);
-  return DocumentDto.toResponse(document);
+  const dto = DocumentDto.toResponse(document);
+  return returnRaw ? { document, dto } : dto;
 };
 
 /**

@@ -2,31 +2,42 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Clock, Calendar, AlertTriangle, ArrowRightLeft, BookOpen, MapPin } from 'lucide-react';
 
-export default function TimelineTab({ documentId }) {
+export default function TimelineTab({ documentId, source, options = {} }) {
+  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
   const [timelineEvents, setTimelineEvents] = useState([]);
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(true);
+  const [analysisStatus, setAnalysisStatus] = useState(null);
   const [orderMode, setOrderMode] = useState('narrative'); // 'narrative' | 'chronological'
 
   useEffect(() => {
     loadData();
-  }, [documentId]);
+  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
 
   const loadData = async () => {
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Fetch scenes
-      const sceneRes = await api.story.getScenes(documentId).catch(() => []);
-      const scenesList = sceneRes.results || sceneRes || [];
+      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
       const scenesMap = {};
       scenesList.forEach(s => {
-        scenesMap[s._id || s.id] = s;
+        scenesMap[(s._id || s.id)?.toString()] = s;
       });
       setScenes(scenesMap);
 
       // 2. Fetch timeline events
-      const events = await api.story.getTimeline(documentId).catch(() => []);
-      setTimelineEvents(events || []);
+      const eventsRes = await api.analysis.getTimeline(resolvedSource, options).catch(() => []);
+      if (eventsRes?.analysisStatus) {
+        setAnalysisStatus(eventsRes.analysisStatus);
+      }
+      const rawEvents = eventsRes?.data !== undefined ? eventsRes.data : eventsRes;
+      const eventsList = Array.isArray(rawEvents) ? rawEvents : rawEvents?.results || [];
+      setTimelineEvents(eventsList || []);
     } catch (err) {
       console.error('Failed to load timeline:', err);
     } finally {
@@ -36,8 +47,10 @@ export default function TimelineTab({ documentId }) {
 
   // Sort timeline events based on selected mode
   const sortedEvents = [...timelineEvents].sort((a, b) => {
-    const sceneA = scenes[a.sceneId];
-    const sceneB = scenes[b.sceneId];
+    const sIdA = (a.sceneId?._id || a.sceneId)?.toString();
+    const sIdB = (b.sceneId?._id || b.sceneId)?.toString();
+    const sceneA = scenes[sIdA];
+    const sceneB = scenes[sIdB];
 
     if (orderMode === 'chronological') {
       return a.chronologicalOrder - b.chronologicalOrder;
