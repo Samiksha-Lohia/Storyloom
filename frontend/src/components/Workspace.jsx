@@ -27,7 +27,7 @@ export default function Workspace({ documentId, onBack }) {
   const [doc, setDoc] = useState(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'scenes' | 'characters' | 'relationships' | 'timeline' | 'arc' | 'continuity'
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadDoc();
@@ -69,16 +69,16 @@ export default function Workspace({ documentId, onBack }) {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col text-ink">
       {/* Workspace Header */}
-      <header className="w-full bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <header className="w-full bg-paper border-b border-rule px-6 py-4 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-4 max-w-[60%]">
           <button 
             onClick={onBack}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors"
+            className="p-1.5 border border-rule hover:bg-rule/10 rounded text-muted hover:text-ink cursor-pointer"
             title="Back to library"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           
           <div className="flex items-center gap-2 overflow-hidden">
@@ -91,21 +91,21 @@ export default function Workspace({ documentId, onBack }) {
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()}
                   onBlur={handleSaveTitle}
                   autoFocus
-                  className="px-2 py-1 border border-slate-300 rounded-md text-lg font-serif font-semibold text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-slate-900"
+                  className="px-2 py-1 border border-rule rounded text-base font-bold text-ink bg-paper focus:outline-hidden focus:ring-1 focus:ring-ink"
                 />
-                <button onClick={handleSaveTitle} className="p-1 text-green-600 hover:bg-green-50 rounded-md">
-                  <Check className="w-4 h-4" strokeWidth={2.5} />
+                <button onClick={handleSaveTitle} className="p-1 text-ink hover:text-accent rounded cursor-pointer">
+                  <Check className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-                <h1 className="text-xl font-serif font-bold text-slate-950 truncate max-w-[400px]">
+                <h1 className="text-lg font-bold text-ink truncate max-w-[400px]">
                   {doc?.title || 'Loading Story...'}
                 </h1>
-                <Edit2 className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Edit2 className="w-3.5 h-3.5 text-muted hover:text-ink" />
               </div>
             )}
-            <span className="hidden sm:inline-block px-2.5 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[10px] uppercase font-semibold">
+            <span className="hidden sm:inline-block px-2 py-0.5 border border-rule text-muted rounded text-[10px] uppercase font-semibold">
               {doc?.fileType}
             </span>
           </div>
@@ -116,17 +116,17 @@ export default function Workspace({ documentId, onBack }) {
       <div className="flex-1 flex overflow-hidden">
         
         {/* Navigation Sidebar */}
-        <aside className="w-64 bg-white border-r border-slate-200 p-4 flex flex-col justify-between hidden md:flex">
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 mb-2">Notebook Tabs</p>
+        <aside className="w-64 bg-paper border-r border-rule p-4 flex flex-col justify-between hidden md:flex shrink-0">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted px-3 mb-2">Notebook Tabs</p>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold cursor-pointer ${
                   activeTab === tab.id 
-                    ? 'bg-slate-950 text-white shadow-xs' 
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-ink text-paper' 
+                    : 'text-muted hover:text-ink hover:bg-rule/10'
                 }`}
               >
                 {tab.icon}
@@ -136,20 +136,19 @@ export default function Workspace({ documentId, onBack }) {
           </div>
 
           {/* Bottom user card or badge */}
-          <div className="p-3 border-t border-slate-100 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center font-bold text-xs text-purple-700">
-              SC
+          <div className="p-3 border-t border-rule flex items-center gap-3">
+            <div className="w-7 h-7 rounded border border-rule flex items-center justify-center font-bold text-[10px] text-ink">
+              SL
             </div>
             <div className="text-left overflow-hidden">
-              <span className="block text-xs font-semibold text-slate-700 truncate">{doc?.title}</span>
-              <span className="block text-[10px] text-slate-400 uppercase font-mono">{doc?.wordCount || 0} words</span>
+              <span className="block text-xs font-semibold text-ink truncate">{doc?.title}</span>
+              <span className="block text-[10px] text-muted uppercase font-mono">{doc?.wordCount || 0} words</span>
             </div>
           </div>
         </aside>
 
         {/* Content Sheet */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#fafbfc] relative">
-          {/* Subtle Page line overlay to simulate notebook paper */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-paper relative">
           <div className="max-w-6xl mx-auto">
             {activeTab === 'overview' && <OverviewTab documentId={documentId} />}
             {activeTab === 'scenes' && <ScenesTab documentId={documentId} />}

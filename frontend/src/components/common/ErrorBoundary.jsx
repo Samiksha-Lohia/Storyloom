@@ -23,22 +23,22 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#F7F7F7] flex flex-col items-center justify-center p-6 text-center">
-          <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-8 h-8" />
+        <div className="min-h-screen bg-paper flex flex-col items-center justify-center p-6 text-center text-ink">
+          <div className="max-w-md w-full bg-paper border border-rule rounded p-8 space-y-4">
+            <div className="w-10 h-10 rounded border border-danger text-danger flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-4 h-4" />
             </div>
 
-            <h2 className="font-serif font-bold text-2xl text-slate-900">
+            <h2 className="font-bold text-xl text-ink">
               Something went wrong
             </h2>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed font-body">
               An unexpected error occurred while rendering this view. Your session and drafts remain safe.
             </p>
 
             {this.state.error && (
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left overflow-x-auto text-[11px] font-mono text-slate-700 max-h-32">
+              <div className="p-3 bg-paper border border-rule rounded text-left overflow-x-auto text-[11px] font-mono text-muted max-h-32">
                 {this.state.error.message || String(this.state.error)}
               </div>
             )}
@@ -47,16 +47,16 @@ export class ErrorBoundary extends React.Component {
               <button
                 type="button"
                 onClick={this.handleReset}
-                className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-[#FF500A] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 px-4 bg-ink text-paper rounded text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-4 h-4" />
                 Try Again
               </button>
               <a
                 href="/"
-                className="py-2.5 px-4 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="py-2 px-4 border border-rule hover:bg-rule/40 text-ink rounded text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Home className="w-3.5 h-3.5" />
+                <Home className="w-4 h-4" />
                 Home
               </a>
             </div>

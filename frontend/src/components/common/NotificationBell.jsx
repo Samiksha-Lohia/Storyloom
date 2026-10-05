@@ -1,17 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Bell,
-  CheckCheck,
-  BookOpen,
-  AlertOctagon,
-  Info,
-  AlertTriangle,
-  MessageSquare,
-  Send,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
+import { Bell } from 'lucide-react';
 import socketClient from '../../services/socket.js';
 import { api } from '../../services/api.js';
 
@@ -46,7 +35,6 @@ export default function NotificationBell() {
 
     fetchNotifications();
 
-    // Use socketClient singleton
     const handleNewNotification = (newNotif) => {
       setNotifications((prev) => [
         newNotif,
@@ -88,7 +76,6 @@ export default function NotificationBell() {
     await handleMarkAsRead(notif);
     setIsOpen(false);
 
-    // Route according to notification type
     const role = currentUser?.role || 'reader';
     if (notif.type === 'publish_request_received') {
       navigate('/w/requests');
@@ -131,31 +118,6 @@ export default function NotificationBell() {
 
   if (!currentUser) return null;
 
-  const getIconForType = (type) => {
-    if (type === 'strike_received' || type === 'account_suspended') {
-      return <AlertOctagon className="w-4 h-4 text-red-600" />;
-    }
-    if (type === 'book_removed') {
-      return <AlertTriangle className="w-4 h-4 text-amber-600" />;
-    }
-    if (type === 'review_received') {
-      return <BookOpen className="w-4 h-4 text-blue-600" />;
-    }
-    if (type === 'publish_request_received') {
-      return <Send className="w-4 h-4 text-[#FF500A]" />;
-    }
-    if (type === 'publish_request_accepted') {
-      return <CheckCircle className="w-4 h-4 text-emerald-600" />;
-    }
-    if (type === 'publish_request_declined') {
-      return <XCircle className="w-4 h-4 text-rose-600" />;
-    }
-    if (type === 'new_message') {
-      return <MessageSquare className="w-4 h-4 text-blue-600" />;
-    }
-    return <Info className="w-4 h-4 text-[#FF500A]" />;
-  };
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell Button */}
@@ -163,11 +125,11 @@ export default function NotificationBell() {
         type="button"
         onClick={handleToggle}
         aria-label="Notifications"
-        className="relative p-2 text-stone-600 hover:text-stone-900 rounded-full hover:bg-stone-100 transition cursor-pointer"
+        className="relative p-2 text-ink hover:text-accent rounded border border-transparent hover:border-rule cursor-pointer"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4 text-ink" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-[#FF500A] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-in zoom-in">
+          <span className="absolute top-0 right-0 min-w-[16px] h-[16px] px-1 bg-accent text-paper text-[10px] font-bold rounded flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -175,15 +137,15 @@ export default function NotificationBell() {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-xl border border-stone-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-paper rounded border border-rule overflow-hidden z-50 text-ink">
           {/* Header */}
-          <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+          <div className="p-3 border-b border-rule flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="font-heading text-sm font-bold text-stone-900">
+              <h3 className="text-xs font-bold text-ink uppercase tracking-wider">
                 Notifications
               </h3>
               {unreadCount > 0 && (
-                <span className="text-[11px] font-bold bg-[#FF500A]/10 text-[#FF500A] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold bg-accent text-paper px-1.5 py-0.5 rounded">
                   {unreadCount} new
                 </span>
               )}
@@ -192,56 +154,52 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="text-xs text-stone-500 hover:text-[#FF500A] transition font-medium flex items-center gap-1 cursor-pointer"
+                className="text-xs text-muted hover:text-accent font-bold cursor-pointer hover:underline"
               >
-                <CheckCheck className="w-3.5 h-3.5" />
-                <span>Mark all read</span>
+                Mark all read
               </button>
             )}
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-stone-100">
+          <div className="max-h-80 overflow-y-auto divide-y divide-rule">
             {loading && notifications.length === 0 ? (
-              <div className="py-8 text-center text-xs text-stone-400">
-                Loading notifications...
+              <div className="py-6 text-center text-xs text-muted">
+                Loading…
               </div>
             ) : notifications.length === 0 ? (
-              <div className="py-10 text-center space-y-1">
-                <Bell className="w-6 h-6 text-stone-300 mx-auto" />
-                <p className="text-xs font-semibold text-stone-600">No notifications yet</p>
-                <p className="text-[11px] text-stone-400">Updates about your books and reviews will appear here.</p>
+              <div className="py-8 text-center space-y-1">
+                <p className="text-xs font-bold text-ink">No notifications yet</p>
+                <p className="text-[11px] text-muted">Updates will appear here.</p>
               </div>
             ) : (
               notifications.map((notif) => (
                 <div
                   key={notif._id}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`p-3.5 flex items-start gap-3 hover:bg-stone-50 transition cursor-pointer ${
-                    !notif.read ? 'bg-orange-50/30' : ''
+                  className={`p-3 flex items-start gap-2 hover:bg-rule/30 cursor-pointer ${
+                    !notif.read ? 'bg-rule/15 font-bold' : ''
                   }`}
                 >
-                  <div className="p-2 rounded-xl bg-stone-100 shrink-0 mt-0.5">
-                    {getIconForType(notif.type)}
-                  </div>
+                  <Bell className="w-4 h-4 text-ink shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className="text-xs font-bold text-stone-900 truncate">
+                      <h4 className="text-xs font-bold text-ink truncate">
                         {notif.title}
                       </h4>
-                      <span className="text-[10px] text-stone-400 shrink-0">
+                      <span className="text-[10px] text-muted shrink-0 font-normal">
                         {new Date(notif.createdAt).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
                         })}
                       </span>
                     </div>
-                    <p className="text-xs text-stone-600 mt-0.5 leading-relaxed line-clamp-3">
+                    <p className="text-xs text-muted mt-0.5 leading-relaxed line-clamp-2 font-normal">
                       {notif.message}
                     </p>
                   </div>
                   {!notif.read && (
-                    <span className="w-2 h-2 rounded-full bg-[#FF500A] shrink-0 mt-2" />
+                    <span className="w-1.5 h-1.5 rounded bg-accent shrink-0 mt-1.5" />
                   )}
                 </div>
               ))
@@ -252,3 +210,4 @@ export default function NotificationBell() {
     </div>
   );
 }
+

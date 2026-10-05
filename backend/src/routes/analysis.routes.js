@@ -20,6 +20,7 @@ const jobsLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:analysis-jobs:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => ipKeyGenerator(req.ip),

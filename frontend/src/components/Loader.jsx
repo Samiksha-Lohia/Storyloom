@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { APP_NAME } from '../constants/app';
+import Logo from './common/Logo';
 
 export default function Loader({ documentId, file, onComplete, onCancel }) {
   const [activeDocId, setActiveDocId] = useState(documentId);
@@ -9,30 +10,24 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
   const [overallProgress, setOverallProgress] = useState(0);
   const [currentStageText, setCurrentStageText] = useState('Initializing upload...');
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(true);
   const pollIntervalRef = React.useRef(null);
 
-
-  // Books representation for the left-side animation
-  // Reference stack (from bottom to top matching pipeline sequence)
+  // Reference stack
   const initialBooks = [
-    { id: 'embeddings', label: 'EMBEDDINGS', color: 'bg-indigo-50 border-slate-900 text-indigo-900', stage: 'embeddings' },
-    { id: 'continuity', label: 'CONTINUITY', color: 'bg-teal-50 border-slate-900 text-teal-900', stage: 'continuity' },
-    { id: 'arc', label: 'STORY ARC', color: 'bg-rose-50 border-slate-900 text-rose-900', stage: 'arc' },
-    { id: 'mood', label: 'MOOD & TENSION', color: 'bg-orange-50 border-slate-900 text-orange-900', stage: 'mood' },
-    { id: 'dialogue', label: 'DIALOGUE', color: 'bg-sky-50 border-slate-900 text-sky-900', stage: 'dialogue' },
-    { id: 'timeline', label: 'TIMELINE', color: 'bg-amber-50 border-slate-900 text-amber-900', stage: 'timeline' },
-    { id: 'relationships', label: 'RELATIONSHIPS', color: 'bg-red-50 border-slate-900 text-red-900', stage: 'relationships' },
-    { id: 'characters', label: 'CHARACTERS', color: 'bg-emerald-50 border-slate-900 text-emerald-900', stage: 'characters' },
-    { id: 'scenes', label: 'SCENES', color: 'bg-purple-50 border-slate-900 text-purple-900', stage: 'scenes' },
-    { id: 'parsing', label: 'PARSING TEXT', color: 'bg-stone-100 border-slate-900 text-stone-900', stage: 'parsing' },
+    { id: 'embeddings', label: 'EMBEDDINGS', stage: 'embeddings' },
+    { id: 'continuity', label: 'CONTINUITY', stage: 'continuity' },
+    { id: 'arc', label: 'STORY ARC', stage: 'arc' },
+    { id: 'mood', label: 'MOOD & TENSION', stage: 'mood' },
+    { id: 'dialogue', label: 'DIALOGUE', stage: 'dialogue' },
+    { id: 'timeline', label: 'TIMELINE', stage: 'timeline' },
+    { id: 'relationships', label: 'RELATIONSHIPS', stage: 'relationships' },
+    { id: 'characters', label: 'CHARACTERS', stage: 'characters' },
+    { id: 'scenes', label: 'SCENES', stage: 'scenes' },
+    { id: 'parsing', label: 'PARSING TEXT', stage: 'parsing' },
   ];
-
-  const [activeBookIndex, setActiveBookIndex] = useState(0);
 
   // Poll for document processing status
   useEffect(() => {
-    let uploadStarted = false;
     const abortController = new AbortController();
 
     const startProcessing = async () => {
@@ -51,9 +46,6 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
           throw new Error('No document ID or file provided.');
         }
 
-        // Start polling jobs
-        uploadStarted = true;
-
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
         }
@@ -67,7 +59,6 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
       } catch (err) {
         if (err.name !== 'AbortError') {
           setErrorMsg(err.message || 'Failed to upload document.');
-          setLoading(false);
         }
       }
     };
@@ -88,8 +79,6 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
       const jobList = await api.jobs.getStatus(docId, signal);
       setJobs(jobList || []);
 
-      // Calculate progress and determine current stage
-      // Stages: parsing, scenes, characters, relationships, timeline, dialogue, mood, arc, continuity, embeddings
       const stageLabels = {
         parsing: 'Parsing document text',
         scenes: 'Performing scene breakdown',
@@ -114,17 +103,12 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
         if (job.status === 'failed') failedStage = job;
       });
 
-      // Simple progress calculation
       const progressPercent = Math.round((completedCount / totalStages) * 100);
       setOverallProgress(progressPercent);
-
-      // Set the active book index to the number of completed jobs to trigger the landing puff particles
-      setActiveBookIndex(completedCount);
 
       if (failedStage) {
         setCurrentStageText(`Failed during ${stageLabels[failedStage.stage] || failedStage.stage}`);
         setErrorMsg(failedStage.error || 'A processing pipeline job failed.');
-        setLoading(false);
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         return;
       }
@@ -133,14 +117,11 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
         setCurrentStageText(`${stageLabels[activeStage] || activeStage}...`);
       } else if (completedCount === totalStages && totalStages > 0) {
         setCurrentStageText('Story analysis complete!');
-        setLoading(false);
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-        // Delay completion navigation slightly for visual satisfaction
         setTimeout(() => {
           onComplete(docId);
         }, 1500);
       } else {
-        // Find first non-completed stage
         const nextJob = jobList.find(j => j.status !== 'completed');
         if (nextJob) {
           setCurrentStageText(`Queued: ${stageLabels[nextJob.stage] || nextJob.stage}`);
@@ -155,132 +136,96 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
 
   const handleRetryStage = async (stage) => {
     setErrorMsg('');
-    setLoading(true);
     try {
       await api.jobs.retryStage(activeDocId, stage);
       checkStatus(activeDocId);
     } catch (err) {
       setErrorMsg(err.message);
-      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen notebook-grid flex items-center justify-center p-6 md:p-12">
-      <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden p-8 md:p-16 flex flex-col md:grid md:grid-cols-12 gap-12 items-center relative">
+    <div className="min-h-screen bg-paper flex items-center justify-center p-6 text-ink font-body">
+      <div className="w-full max-w-4xl bg-paper border border-rule rounded p-8 flex flex-col md:grid md:grid-cols-12 gap-8 items-start">
         
-        {/* Left Side: Stacking Book Animation */}
-        <div className="md:col-span-6 w-full flex flex-col items-center justify-center min-h-[360px] relative">
-          
-          {/* Animated stack container */}
-          <div className="relative flex flex-col items-center justify-end w-64 h-[320px] border-b-4 border-slate-900 pb-2">
-            
-            <AnimatePresence>
-              {initialBooks.map((book, idx) => {
-                // Determine if this book has fallen
-                const isFallen = jobs.some(j => j.stage === book.stage && j.status === 'completed');
-                
-                if (!isFallen) return null;
-
-                return (
-                  <motion.div
-                    key={book.id}
-                    initial={{ y: -450, opacity: 0 }}
-                    animate={{ 
-                      y: 0, 
-                      opacity: 1, 
-                      rotate: idx % 2 === 0 ? 0.6 : -0.6,
-                      scaleY: [1, 0.85, 1], // Squash effect on impact
-                    }}
-                    transition={{ 
-                      type: 'spring', 
-                      stiffness: 120, 
-                      damping: 10,
-                      delay: 0.05 
-                    }}
-                    className={`w-48 h-[26px] border-2 border-slate-900 rounded shadow-xs ${book.color} flex items-center justify-center font-bold text-[10px] tracking-wider mb-[-2px]`}
-                  >
-                    <span>{book.label}</span>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-
-            {/* Dust puff particles on book landing */}
-            {activeBookIndex > 0 && activeBookIndex <= 10 && (
-              <motion.div 
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
-                key={activeBookIndex}
-                transition={{ duration: 0.4 }}
-                className="absolute bottom-2 left-6 right-6 h-6 border-t-2 border-slate-300 rounded-full filter blur-xs -z-10"
-              />
-            )}
-          </div>
-          
-          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Incremental analysis stack
+        {/* Left Side: Pipeline List */}
+        <div className="md:col-span-5 w-full space-y-2 border-r border-rule pr-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
+            Analysis Pipeline
           </p>
+          <div className="space-y-1">
+            {initialBooks.map((book) => {
+              const isCompleted = jobs.some(j => j.stage === book.stage && j.status === 'completed');
+              const isRunning = jobs.some(j => j.stage === book.stage && j.status === 'running');
+              return (
+                <div
+                  key={book.id}
+                  className={`px-3 py-1.5 border rounded text-xs flex items-center justify-between ${
+                    isCompleted
+                      ? 'border-rule text-ink bg-rule/20'
+                      : isRunning
+                      ? 'border-accent text-accent font-bold'
+                      : 'border-rule/40 text-muted'
+                  }`}
+                >
+                  <span>{book.label}</span>
+                  {isCompleted && <span className="text-success text-[11px]">Done</span>}
+                  {isRunning && <span className="text-accent text-[11px]">Loading…</span>}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right Side: Progress Bar and Info */}
-        <div className="md:col-span-6 w-full text-left space-y-6">
-          {/* Logo quill banner */}
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 text-slate-900 fill-none stroke-current" strokeWidth="2">
-              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-              <line x1="16" y1="8" x2="2" y2="22" />
-              <line x1="17.5" y1="15" x2="9" y2="15" />
-            </svg>
-            <div className="text-left">
-              <h2 className="font-serif font-bold text-2xl text-slate-900 leading-none">SceneCraft</h2>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">AI Story Analysis</span>
-            </div>
+        <div className="md:col-span-7 w-full text-left space-y-6">
+          <div className="mb-2">
+            <Logo />
+            <p className="text-xs text-muted mt-1 uppercase tracking-wider">{APP_NAME} Pipeline</p>
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+            <div className="flex items-center justify-between text-sm font-bold text-ink">
               <span className="truncate max-w-[80%]">{currentStageText}</span>
               <span className="font-mono">{overallProgress}%</span>
             </div>
             
             {/* Main Progress Bar */}
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-              <motion.div
-                className="h-full bg-purple-600 rounded-full"
-                animate={{ width: `${overallProgress}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+            <div className="w-full h-2 bg-paper rounded border border-rule overflow-hidden">
+              <div
+                className="h-full bg-accent"
+                style={{ width: `${overallProgress}%` }}
               />
             </div>
           </div>
 
           {/* Detailed list of pipeline stages */}
-          <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-2 max-h-40 overflow-y-auto">
+          <div className="bg-paper border border-rule rounded p-3 space-y-2 max-h-48 overflow-y-auto">
             {jobs.map((job) => (
               <div key={job.stage} className="flex items-center justify-between text-xs">
-                <span className="capitalize font-medium text-slate-600">{job.stage} analysis</span>
+                <span className="capitalize font-bold text-ink">{job.stage} analysis</span>
                 <div className="flex items-center gap-1.5">
                   {job.status === 'completed' && (
-                    <span className="flex items-center gap-1 text-green-600 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                    <span className="flex items-center gap-1 text-success font-bold">
+                      <CheckCircle2 className="w-4 h-4" /> Completed
                     </span>
                   )}
                   {job.status === 'running' && (
-                    <span className="flex items-center gap-1 text-purple-600 font-semibold animate-pulse">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing ({job.progress}%)
+                    <span className="text-accent font-bold">
+                      Loading… ({job.progress}%)
                     </span>
                   )}
                   {job.status === 'queued' && (
-                    <span className="text-slate-400">Queued</span>
+                    <span className="text-muted">Queued</span>
                   )}
                   {job.status === 'failed' && (
                     <div className="flex items-center gap-1.5">
-                      <span className="flex items-center gap-1 text-red-600 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5" /> Failed
+                      <span className="flex items-center gap-1 text-danger font-bold">
+                        <AlertCircle className="w-4 h-4" /> Failed
                       </span>
                       <button 
                         onClick={() => handleRetryStage(job.stage)}
-                        className="px-2 py-0.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-sm font-semibold transition-colors"
+                        className="px-2 py-0.5 border border-danger text-danger rounded text-xs font-bold hover:underline cursor-pointer"
                       >
                         Retry
                       </button>
@@ -293,11 +238,11 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
 
           {/* Error message */}
           {errorMsg && (
-            <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="p-3 border border-danger rounded text-sm flex items-start gap-2 text-danger">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold">Analysis halted</p>
-                <p className="text-xs text-red-600 mt-0.5">{errorMsg}</p>
+                <p className="font-bold">Analysis halted</p>
+                <p className="text-xs mt-0.5">{errorMsg}</p>
               </div>
             </div>
           )}
@@ -306,7 +251,7 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
           <div className="pt-2">
             <button
               onClick={onCancel}
-              className="px-4 py-2 border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all"
+              className="px-4 py-2 border border-rule hover:border-ink text-ink rounded text-xs font-bold cursor-pointer"
             >
               Cancel & Go back
             </button>
@@ -316,3 +261,4 @@ export default function Loader({ documentId, file, onComplete, onCancel }) {
     </div>
   );
 }
+

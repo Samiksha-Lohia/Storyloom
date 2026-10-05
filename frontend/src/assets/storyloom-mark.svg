@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Storyloom">
+  <title>Storyloom</title>
+  <g stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- open book: two pages and a spine -->
+    <path d="M32 17C26 13 17 13 9 16V49C17 46 26 46 32 50"/>
+    <path d="M32 17C38 13 47 13 55 16V49C47 46 38 46 32 50"/>
+    <path d="M32 17V50"/>
+  </g>
+  <!-- the thread: woven through the pages -->
+  <path d="M9 33C15 27 20 39 26 33S38 27 44 33S50 39 55 33" stroke="#9B2D20" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

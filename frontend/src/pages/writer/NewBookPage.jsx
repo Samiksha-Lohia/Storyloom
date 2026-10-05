@@ -173,22 +173,22 @@ export function NewBookPage() {
   }
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 text-left">
       {/* Header */}
       <div>
-        <span className="text-xs font-bold uppercase tracking-wider text-[#FF500A]">
+        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
           Writer Studio
         </span>
-        <h1 className="font-heading text-3xl sm:text-4xl font-black text-stone-900 mt-1">
+        <h1 className="text-3xl sm:text-4xl font-normal text-ink mt-1">
           Publish New Story
         </h1>
-        <p className="text-stone-600 text-sm mt-1">
+        <p className="text-muted text-xs mt-1">
           Upload your manuscript, frame your cover artwork, and activate AI story intelligence.
         </p>
       </div>
 
       {/* Steps Indicator */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-3 sm:p-4 shadow-xs">
+      <div className="bg-paper rounded border border-rule p-3 sm:p-4">
         <div className="flex items-center justify-between overflow-x-auto gap-2">
           {STEPS.map((step, idx) => {
             const isActive = currentStep === idx;
@@ -201,15 +201,15 @@ export function NewBookPage() {
                   if (idx < currentStep) setCurrentStep(idx);
                 }}
                 disabled={idx > currentStep}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-[#FF500A] text-white shadow-xs'
+                    ? 'bg-ink text-paper border border-ink'
                     : isDone
-                    ? 'bg-stone-100 text-stone-800 hover:bg-stone-200'
-                    : 'text-stone-400 cursor-not-allowed'
+                    ? 'bg-paper text-ink border border-rule'
+                    : 'text-muted border border-transparent cursor-not-allowed'
                 }`}
               >
-                {isDone ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : null}
+                {isDone ? <CheckCircle2 className="w-3.5 h-3.5 text-success" /> : null}
                 {step.label}
               </button>
             );
@@ -219,20 +219,20 @@ export function NewBookPage() {
 
       {/* Error alert */}
       {submitError && (
-        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-center gap-3">
+        <div className="p-4 rounded bg-paper border border-rule text-danger text-xs flex items-center gap-3">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{submitError}</span>
         </div>
       )}
 
       {/* Wizard Content Panels */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs">
+      <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
         {/* ─── Step 1: Manuscript ────────────────────────────────────────── */}
         {currentStep === 0 && (
           <div className="space-y-6">
             <div>
-              <h2 className="font-heading text-xl font-bold text-stone-900">Manuscript Upload</h2>
-              <p className="text-xs text-stone-500">
+              <h2 className="font-bold text-base text-ink">Manuscript Upload</h2>
+              <p className="text-xs text-muted">
                 Upload your completed or in-progress manuscript file (.txt, .pdf, or .docx up to 15 MB).
               </p>
             </div>
@@ -240,24 +240,24 @@ export function NewBookPage() {
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleManuscriptDrop}
-              className={`border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center transition-all ${
+              className={`border-2 border-dashed rounded p-8 sm:p-12 text-center ${
                 manuscriptFile
-                  ? 'border-emerald-400 bg-emerald-50/20'
-                  : 'border-stone-200 hover:border-[#FF500A] bg-stone-50/50 hover:bg-[#FFF0E8]/20'
+                  ? 'border-rule bg-paper'
+                  : 'border-rule bg-paper hover:border-ink'
               }`}
             >
               {manuscriptFile ? (
                 <div className="flex flex-col items-center justify-center space-y-3">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <FileText className="w-8 h-8" />
+                  <div className="w-12 h-12 rounded border border-rule text-success flex items-center justify-center">
+                    <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-stone-900 text-base">{manuscriptFile.name}</p>
-                    <p className="text-xs text-stone-500">
+                    <p className="font-bold text-ink text-sm">{manuscriptFile.name}</p>
+                    <p className="text-xs text-muted">
                       {(manuscriptFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for pagination
                     </p>
                   </div>
-                  <label className="text-xs font-bold text-[#FF500A] hover:underline cursor-pointer">
+                  <label className="text-xs font-bold text-accent hover:underline cursor-pointer">
                     Replace Manuscript
                     <input
                       type="file"
@@ -295,18 +295,18 @@ export function NewBookPage() {
                       }
                     }}
                   />
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-stone-200 shadow-xs flex items-center justify-center text-stone-400">
-                    <Upload className="w-8 h-8" />
+                  <div className="w-12 h-12 rounded bg-paper border border-rule flex items-center justify-center text-muted">
+                    <Upload className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="font-bold text-stone-900 text-sm block">
+                    <span className="font-bold text-ink text-xs block">
                       Choose manuscript or drag and drop here
                     </span>
-                    <span className="text-xs text-stone-500 mt-1 block">
+                    <span className="text-xs text-muted mt-1 block">
                       Text files (.txt), Word (.docx), or PDF (.pdf) up to 15 MB
                     </span>
                   </div>
-                  <span className="px-3 py-1 bg-stone-100 rounded-full text-[11px] font-bold text-stone-600">
+                  <span className="px-2.5 py-0.5 bg-paper border border-rule rounded text-[10px] font-bold text-muted uppercase tracking-wider">
                     Client-side validation verified
                   </span>
                 </label>
@@ -319,8 +319,8 @@ export function NewBookPage() {
         {currentStep === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="font-heading text-xl font-bold text-stone-900">Cover Artwork (2:3 Ratio)</h2>
-              <p className="text-xs text-stone-500">
+              <h2 className="font-bold text-base text-ink">Cover Artwork (2:3 Ratio)</h2>
+              <p className="text-xs text-muted">
                 Frame your cover to the standard 2:3 book ratio. If skipped, an elegant tinted fallback will be generated.
               </p>
             </div>
@@ -339,28 +339,28 @@ export function NewBookPage() {
         {currentStep === 2 && (
           <div className="space-y-6">
             <div>
-              <h2 className="font-heading text-xl font-bold text-stone-900">Story Details</h2>
-              <p className="text-xs text-stone-500">
+              <h2 className="font-bold text-base text-ink">Story Details</h2>
+              <p className="text-xs text-muted">
                 Give your readers the title, synopsis, genre, and tags.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Story Title *
                 </label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Echoes of the Obsidian Crown"
-                  className="font-medium text-base"
+                  className="font-bold text-sm"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Synopsis / Blurb *
                 </label>
                 <textarea
@@ -368,20 +368,20 @@ export function NewBookPage() {
                   onChange={(e) => setBlurb(e.target.value)}
                   placeholder="Hook your readers with a compelling summary..."
                   rows={5}
-                  className="w-full px-4 py-3 rounded-2xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#FF500A] focus:border-transparent text-sm text-stone-900 resize-none transition"
+                  className="w-full px-3 py-2 rounded border border-rule focus:outline-hidden focus:ring-1 focus:ring-ink text-xs text-ink bg-paper resize-none"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                     Primary Genre
                   </label>
                   <select
                     value={genre}
                     onChange={(e) => setGenre(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#FF500A] text-sm text-stone-900 bg-white"
+                    className="w-full px-3 py-2 rounded border border-rule focus:outline-hidden focus:ring-1 focus:ring-ink text-xs text-ink bg-paper font-bold cursor-pointer"
                   >
                     {GENRES.map((g) => (
                       <option key={g} value={g}>
@@ -392,13 +392,13 @@ export function NewBookPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                     Language
                   </label>
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#FF500A] text-sm text-stone-900 bg-white"
+                    className="w-full px-3 py-2 rounded border border-rule focus:outline-hidden focus:ring-1 focus:ring-ink text-xs text-ink bg-paper font-bold cursor-pointer"
                   >
                     <option value="en">English</option>
                     <option value="es">Spanish</option>
@@ -412,20 +412,20 @@ export function NewBookPage() {
 
               {/* Tags Input */}
               <div>
-                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Tags (up to 10)
                 </label>
-                <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl border border-stone-300 bg-white focus-within:ring-2 focus-within:ring-[#FF500A]">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded border border-rule bg-paper focus-within:ring-1 focus-within:ring-ink">
                   {tags.map((t) => (
                     <span
                       key={t}
-                      className="px-2.5 py-1 bg-stone-100 text-stone-800 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                      className="px-2 py-0.5 bg-paper border border-rule text-ink rounded text-xs font-bold flex items-center gap-1.5"
                     >
                       #{t}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(t)}
-                        className="text-stone-400 hover:text-red-500 font-bold"
+                        className="text-muted hover:text-danger font-bold cursor-pointer"
                       >
                         ×
                       </button>
@@ -438,27 +438,26 @@ export function NewBookPage() {
                     onKeyDown={handleAddTag}
                     placeholder={tags.length < 10 ? 'Type tag and press Enter...' : 'Tag limit reached'}
                     disabled={tags.length >= 10}
-                    className="flex-1 min-w-[140px] px-2 py-1 text-xs sm:text-sm focus:outline-none bg-transparent"
+                    className="flex-1 min-w-[140px] px-2 py-1 text-xs focus:outline-hidden bg-transparent text-ink placeholder-muted"
                   />
                 </div>
               </div>
 
               {/* Maturity Rating */}
-              <div className="p-4 rounded-2xl border border-stone-200 bg-stone-50/50 flex items-center justify-between">
+              <div className="p-4 rounded border border-rule bg-paper flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-sm text-stone-900 block">Mature Content (18+)</span>
-                  <span className="text-xs text-stone-500 block">
+                  <span className="font-bold text-xs text-ink block">Mature Content (18+)</span>
+                  <span className="text-xs text-muted block">
                     Contains graphic violence, explicit language, or mature themes.
                   </span>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={mature}
                     onChange={(e) => setMature(e.target.checked)}
-                    className="sr-only peer"
+                    className="w-4 h-4 accent-ink rounded cursor-pointer"
                   />
-                  <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF500A]" />
                 </label>
               </div>
             </div>
@@ -469,8 +468,8 @@ export function NewBookPage() {
         {currentStep === 3 && (
           <div className="space-y-6">
             <div>
-              <h2 className="font-heading text-xl font-bold text-stone-900">Story Presentation Template</h2>
-              <p className="text-xs text-stone-500">
+              <h2 className="font-bold text-base text-ink">Story Presentation Template</h2>
+              <p className="text-xs text-muted">
                 Choose how your book detail page is rendered to readers, and see the live preview below.
               </p>
             </div>
@@ -498,39 +497,39 @@ export function NewBookPage() {
         {currentStep === 4 && (
           <div className="space-y-6">
             <div>
-              <h2 className="font-heading text-xl font-bold text-stone-900">Rights & AI Intelligence Disclosure</h2>
-              <p className="text-xs text-stone-500">
+              <h2 className="font-bold text-base text-ink">Rights & AI Intelligence Disclosure</h2>
+              <p className="text-xs text-muted">
                 Confirm your ownership and acknowledge automated story intelligence processing.
               </p>
             </div>
 
             <div className="space-y-4">
               {/* Rights Checkbox */}
-              <label className="p-4 rounded-2xl border border-stone-200 hover:border-[#FF500A] bg-stone-50/50 flex items-start gap-3.5 cursor-pointer transition">
+              <label className="p-4 rounded border border-rule bg-paper hover:border-ink flex items-start gap-3.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={acceptedRights}
                   onChange={(e) => setAcceptedRights(e.target.checked)}
-                  className="mt-1 w-4 h-4 text-[#FF500A] rounded border-stone-300 focus:ring-[#FF500A]"
+                  className="mt-1 w-4 h-4 accent-ink rounded cursor-pointer"
                   required
                 />
                 <div>
-                  <span className="font-bold text-sm text-stone-900 block flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-[#FF500A]" />
+                  <span className="font-bold text-xs text-ink block flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-accent" />
                     I own this work or have the rights to publish it
                   </span>
-                  <span className="text-xs text-stone-600 mt-0.5 block leading-relaxed">
+                  <span className="text-xs text-muted mt-0.5 block leading-relaxed">
                     By submitting this manuscript, you certify under penalty of terms suspension that you are the creator or authorized rights-holder of this original work.
                   </span>
                 </div>
               </label>
 
               {/* AI Disclosure Line per Spec §13 */}
-              <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/40 flex items-start gap-3.5 text-xs text-amber-900 leading-relaxed">
-                <Cpu className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              <div className="p-4 rounded border border-rule bg-paper flex items-start gap-3.5 text-xs text-ink leading-relaxed">
+                <Cpu className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block text-amber-950">AI Narrative Intelligence Disclosure</span>
-                  <span>
+                  <span className="font-bold block text-ink">AI Narrative Intelligence Disclosure</span>
+                  <span className="text-muted">
                     Manuscripts are sent to a private LLM provider for analysis (extracting scenes, character networks, timelines, and dialogue metrics). Your text is never used to train public foundational models.
                   </span>
                 </div>
@@ -540,7 +539,7 @@ export function NewBookPage() {
         )}
 
         {/* Wizard Controls */}
-        <div className="flex items-center justify-between pt-6 border-t border-stone-100 mt-6">
+        <div className="flex items-center justify-between pt-6 border-t border-rule mt-6">
           <Button
             type="button"
             variant="ghost"
@@ -569,10 +568,10 @@ export function NewBookPage() {
             <Button
               type="button"
               variant="primary"
-              size="lg"
+              size="md"
               onClick={handleSubmit}
               disabled={!canProceed() || isSubmitting}
-              className="flex items-center gap-2 shadow-md hover:shadow-lg"
+              className="flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               {isSubmitting ? 'Uploading & Starting Pipeline...' : 'Submit Manuscript'}
@@ -583,3 +582,5 @@ export function NewBookPage() {
     </div>
   );
 }
+
+export default NewBookPage;

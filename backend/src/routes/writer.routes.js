@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticate, authenticateOptional } from '../middleware/auth.middleware.js';
 import { authorize, requireActive } from '../middleware/rbac.middleware.js';
 import { USER_ROLES } from '../constants/user-roles.js';
 import * as writerController from '../controllers/writer.controller.js';
@@ -8,19 +8,11 @@ export const PUBLIC_ROUTES = ['GET /profile/:id', 'GET /:username'];
 
 const router = Router();
 
-// Optional auth helper for public profile so logged-in reader ID is captured for dedupe
-const optionalAuthenticate = (req, res, next) => {
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    return authenticate(req, res, next);
-  }
-  next();
-};
-
 /**
  * GET /api/writer/profile/:id
  * Public writer profile. Records profile_view.
  */
-router.get('/profile/:id', optionalAuthenticate, writerController.getProfile);
+router.get('/profile/:id', authenticateOptional, writerController.getProfile);
 
 /**
  * GET /api/writer/analytics
@@ -86,7 +78,7 @@ router.delete(
  */
 router.get(
   '/:username',
-  optionalAuthenticate,
+  authenticateOptional,
   writerController.getProfile
 );
 

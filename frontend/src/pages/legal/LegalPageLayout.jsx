@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Shield } from 'lucide-react';
+import { APP_NAME } from '../../constants/app';
 
 export function LegalPageLayout({ title, lastUpdated, children }) {
   return (
@@ -7,51 +9,51 @@ export function LegalPageLayout({ title, lastUpdated, children }) {
       {/* Draft Notice Banner */}
       <div
         role="alert"
-        className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-xs"
+        className="bg-paper border border-rule rounded p-4 flex items-start gap-3.5"
       >
-        <div className="w-8 h-8 rounded-full bg-amber-200 text-amber-900 font-bold flex items-center justify-center shrink-0 text-sm">
-          ⚖️
+        <div className="w-7 h-7 rounded border border-rule flex items-center justify-center shrink-0 text-xs text-ink">
+          <Shield className="w-4 h-4 text-ink" />
         </div>
         <div>
-          <h2 className="font-heading font-bold text-amber-950 text-sm sm:text-base">
+          <h2 className="font-bold text-ink text-xs uppercase tracking-wider">
             Draft: Requires Legal Review
           </h2>
-          <p className="text-amber-900/90 text-xs sm:text-sm mt-1 leading-relaxed">
-            This document is a development draft prepared for the SceneCraft platform. It must be formally reviewed and ratified by qualified legal counsel prior to commercial launch.
+          <p className="text-muted text-xs mt-1 leading-relaxed">
+            This document is a development draft prepared for the {APP_NAME} platform. It must be formally reviewed and ratified by qualified legal counsel prior to commercial launch.
           </p>
         </div>
       </div>
 
       {/* Breadcrumb */}
-      <nav className="text-xs text-stone-500 flex items-center gap-1.5" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-stone-900">Home</Link>
+      <nav className="text-xs text-muted flex items-center gap-1.5" aria-label="Breadcrumb">
+        <Link to="/" className="hover:text-ink">Home</Link>
         <span>/</span>
-        <span className="font-semibold text-stone-800">Legal</span>
+        <span className="font-semibold text-ink">Legal</span>
         <span>/</span>
-        <span className="text-stone-600">{title}</span>
+        <span className="text-muted">{title}</span>
       </nav>
 
       {/* Header */}
-      <header className="border-b border-stone-200 pb-6">
-        <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+      <header className="border-b border-rule pb-4">
+        <h1 className="font-calligraphy text-3xl sm:text-4xl font-normal text-ink">
           {title}
         </h1>
-        <p className="text-xs text-stone-500 mt-2">
-          Effective Date: {lastUpdated || 'October 2026'} • Version 1.0 (Draft)
+        <p className="text-xs text-muted mt-2">
+          Effective Date: {lastUpdated || 'October 2026'} &bull; Version 1.0 (Draft)
         </p>
       </header>
 
       {/* Body Content */}
-      <article className="prose prose-stone max-w-none text-stone-700 leading-relaxed font-serif text-sm sm:text-base space-y-6">
+      <article className="prose max-w-none text-ink leading-relaxed text-xs sm:text-sm space-y-6">
         {children}
       </article>
 
       {/* Footer Back link */}
-      <div className="pt-8 border-t border-stone-200 flex justify-between items-center text-xs text-stone-500 font-sans">
-        <Link to="/" className="text-[#FF500A] font-bold hover:underline">
-          &larr; Back to SceneCraft Home
+      <div className="pt-6 border-t border-rule flex justify-between items-center text-xs text-muted">
+        <Link to="/" className="text-accent font-bold hover:underline">
+          &larr; Back to {APP_NAME} Home
         </Link>
-        <span>SceneCraft Legal Department</span>
+        <span>{APP_NAME} Legal Department</span>
       </div>
     </div>
   );

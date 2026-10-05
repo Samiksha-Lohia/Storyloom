@@ -21,6 +21,7 @@ const appReportLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:report:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${req.user?.id || 'anon'}`,
@@ -36,6 +37,7 @@ const publicNoticeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:report-public:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => ipKeyGenerator(req.ip),

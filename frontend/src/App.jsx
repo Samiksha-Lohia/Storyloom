@@ -22,6 +22,8 @@ import { CopyrightPage } from './pages/legal/CopyrightPage';
 import { HelpPage } from './pages/help/HelpPage';
 import { ContactPage } from './pages/help/ContactPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { SettingsPage } from './pages/settings/SettingsPage';
 import { PlaceholderPage, NotFoundPage } from './pages/PlaceholderPage';
 import { DevWorkspacePage } from './pages/dev/DevWorkspacePage';
 import { NewBookPage } from './pages/writer/NewBookPage';
@@ -67,15 +69,20 @@ function App() {
             <Route path="/copyright" element={<CopyrightPage />} />
             <Route path="/help" element={<HelpPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/library" element={<LibraryPage />} />
+            <Route
+              path="/library"
+              element={
+                <RoleRoute>
+                  <LibraryPage />
+                </RoleRoute>
+              }
+            />
             <Route
               path="/settings"
               element={
-                <PlaceholderPage
-                  title="Account Settings"
-                  phase="Phase 3 Feature"
-                  description="Personalize your reader profile, typography theme, and notifications."
-                />
+                <RoleRoute>
+                  <SettingsPage />
+                </RoleRoute>
               }
             />
             <Route path="*" element={<NotFoundPage />} />
@@ -85,6 +92,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/p/apply" element={<PendingApprovalPage />} />
           <Route path="/p/apply-status" element={<PendingApprovalPage />} />
 

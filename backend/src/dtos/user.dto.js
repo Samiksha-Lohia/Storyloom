@@ -20,6 +20,8 @@ export class UserDto {
       fontFamily: 'serif',
       theme: 'light',
     };
+    this.termsAcceptedAt = user.termsAcceptedAt || null;
+    this.termsVersion = user.termsVersion || null;
     this.createdAt = user.createdAt;
   }
 

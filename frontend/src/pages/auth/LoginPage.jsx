@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuthCollage from './AuthCollage';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { getRoleHomePath } from '../../utils/roleRedirect';
+import { APP_NAME } from '../../constants/app';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,26 +18,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const redirectByRole = (user) => {
-    // If user came from a specific protected page, redirect back there
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (location.state?.from?.pathname) {
+        navigate(location.state.from.pathname, { replace: true });
+      } else {
+        navigate(getRoleHomePath(user), { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate, location.state]);
+
+  const redirectByRole = (loggedInUser) => {
     if (location.state?.from?.pathname) {
       navigate(location.state.from.pathname);
       return;
     }
-
-    if (user.role === 'writer') {
-      navigate('/w/dashboard');
-    } else if (user.role === 'publisher') {
-      if (user.status === 'pending') {
-        navigate('/p/apply-status');
-      } else {
-        navigate('/p/discover');
-      }
-    } else if (user.role === 'admin') {
-      navigate('/a/overview');
-    } else {
-      navigate('/');
-    }
+    navigate(getRoleHomePath(loggedInUser));
   };
 
   const handleSubmit = async (e) => {
@@ -55,7 +53,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-6">
-      <div className="w-full max-w-4xl bg-white rounded-3xl border border-[#E5E5E5] shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
+      <div className="w-full max-w-4xl bg-paper rounded border border-rule overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
         {/* Left Tinted Collage Panel */}
         <div className="h-full">
           <AuthCollage heading="Welcome back to your story." />
@@ -64,20 +62,20 @@ export default function LoginPage() {
         {/* Right Form Panel */}
         <div className="p-6 md:p-8 flex flex-col justify-center">
           <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#121212] mb-1.5">
+            <h1 className="font-calligraphy text-3xl font-normal text-ink mb-1">
               Log in
             </h1>
-            <p className="text-xs md:text-sm text-[#6B6B6B]">
+            <p className="text-xs text-muted font-body">
               Enter your credentials to continue reading and publishing.
             </p>
           </div>
 
           {/* Reserved Google Sign-in Slot */}
-          <div className="mb-5">
+          <div className="mb-4">
             <button
               type="button"
               disabled
-              className="w-full h-11 px-4 rounded-full border border-[#E5E5E5] bg-slate-50 text-slate-400 text-xs md:text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed select-none"
+              className="w-full h-10 px-4 rounded border border-rule bg-paper text-muted text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed select-none"
             >
               <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24">
                 <path
@@ -89,8 +87,8 @@ export default function LoginPage() {
             </button>
 
             <div className="relative flex items-center justify-center my-4">
-              <div className="border-t border-[#E5E5E5] w-full" />
-              <span className="bg-white px-3 text-[11px] uppercase tracking-wider text-slate-400 font-semibold absolute">
+              <div className="border-t border-rule w-full" />
+              <span className="bg-paper px-3 text-[11px] uppercase tracking-wider text-muted font-semibold absolute">
                 or with email
               </span>
             </div>
@@ -99,7 +97,7 @@ export default function LoginPage() {
           {/* Error Message */}
           {error && (
             <div
-              className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-[#D63B2F] text-xs flex items-start gap-2 select-none"
+              className="mb-4 p-3 rounded bg-paper border border-danger text-danger text-xs flex items-start gap-2 select-none"
               role="alert"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -134,7 +132,7 @@ export default function LoginPage() {
               <div className="flex justify-end mt-1.5">
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-[#FF500A] hover:underline cursor-pointer"
+                  className="text-xs text-accent hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </Link>
@@ -153,9 +151,9 @@ export default function LoginPage() {
           </form>
 
           {/* Sign up link */}
-          <div className="mt-6 text-center text-xs text-[#6B6B6B]">
-            New to SceneCraft?{' '}
-            <Link to="/signup" className="font-semibold text-[#FF500A] hover:underline">
+          <div className="mt-6 text-center text-xs text-muted">
+            New to {APP_NAME}?{' '}
+            <Link to="/signup" className="font-bold text-accent hover:underline">
               Create an account
             </Link>
           </div>
@@ -166,4 +164,3 @@ export default function LoginPage() {
 }
 
 export { LoginPage };
-

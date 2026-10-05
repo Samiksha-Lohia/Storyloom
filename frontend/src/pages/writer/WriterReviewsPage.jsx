@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   Star,
   BookOpen,
-  Filter,
   CheckCircle,
   Check,
   Clock,
   ChevronLeft,
   ChevronRight,
-  Eye,
   MessageSquare,
   Sparkles,
   AlertCircle,
@@ -17,7 +15,6 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Button } from '../../components/common/Button';
-import { Skeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
 import { StarRating } from '../../components/common/StarRating';
 
@@ -89,44 +86,43 @@ export function WriterReviewsPage() {
   const hasActiveFilters = selectedBookId || selectedRating || unreadOnly;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16">
+    <div className="space-y-6 max-w-6xl mx-auto pb-16 text-left">
       {/* ─── Page Header ────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="font-serif text-2xl md:text-3xl font-bold text-[#121212]">
+            <h1 className="text-2xl md:text-3xl font-normal text-ink">
               Reader Reviews
             </h1>
             {unreadCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF500A]/10 text-[#FF500A] border border-[#FF500A]/20">
-                <span className="w-2 h-2 rounded-full bg-[#FF500A] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-paper text-accent border border-accent">
                 {unreadCount} unread
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-paper text-success border border-success">
+                <CheckCircle className="w-3.5 h-3.5" />
                 All caught up
               </span>
             )}
           </div>
-          <p className="text-sm text-[#64748B] mt-1">
+          <p className="text-xs text-muted mt-1">
             Ratings, feedback, and reader impressions across all your published books.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={fetchReviews}
             disabled={loading}
-            className="flex items-center gap-1.5 text-xs text-slate-700"
+            className="flex items-center gap-1.5 text-xs text-ink"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className="w-3.5 h-3.5" />
             Refresh
           </Button>
           <Link to="/w/dashboard">
-            <Button variant="ghost" size="sm" className="text-xs text-[#FF500A]">
+            <Button variant="ghost" size="sm" className="text-xs text-ink hover:text-accent">
               View Dashboard Analytics →
             </Button>
           </Link>
@@ -134,11 +130,11 @@ export function WriterReviewsPage() {
       </div>
 
       {/* ─── Filter Bar ─────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E5] shadow-xs space-y-4">
+      <div className="bg-paper rounded p-4 sm:p-5 border border-rule space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Story Selector */}
           <div className="flex-1 max-w-xs">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Filter by Story
             </label>
             <select
@@ -147,7 +143,7 @@ export function WriterReviewsPage() {
                 setSelectedBookId(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-[#F7F7F7] border border-[#E5E5E5] text-sm text-[#121212] rounded-xl px-3.5 py-2 focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A] transition-all"
+              className="w-full bg-paper border border-rule text-xs font-bold text-ink rounded px-3 py-2 focus:outline-hidden focus:ring-1 focus:ring-ink cursor-pointer"
             >
               <option value="">All Stories ({books.length})</option>
               {books.map((b) => (
@@ -160,7 +156,7 @@ export function WriterReviewsPage() {
 
           {/* Rating filter */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Star Rating
             </label>
             <div className="flex items-center gap-1">
@@ -181,10 +177,10 @@ export function WriterReviewsPage() {
                       setSelectedRating(btn.value);
                       setPage(1);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded text-xs font-bold cursor-pointer ${
                       isActive
-                        ? 'bg-[#121212] text-white shadow-xs'
-                        : 'bg-[#F7F7F7] text-slate-700 hover:bg-slate-200/80 border border-[#E5E5E5]'
+                        ? 'bg-ink text-paper border border-ink'
+                        : 'bg-paper text-muted hover:text-ink border border-rule'
                     }`}
                   >
                     {btn.label}
@@ -196,18 +192,18 @@ export function WriterReviewsPage() {
 
           {/* Unread Toggle */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Status
             </label>
-            <div className="inline-flex rounded-xl bg-[#F7F7F7] p-1 border border-[#E5E5E5]">
+            <div className="inline-flex rounded bg-paper p-1 border border-rule">
               <button
                 type="button"
                 onClick={() => {
                   setUnreadOnly(false);
                   setPage(1);
                 }}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  !unreadOnly ? 'bg-white shadow-xs text-[#121212]' : 'text-slate-500 hover:text-slate-800'
+                className={`px-3 py-1 text-xs font-bold rounded cursor-pointer ${
+                  !unreadOnly ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
                 }`}
               >
                 All Reviews
@@ -218,15 +214,15 @@ export function WriterReviewsPage() {
                   setUnreadOnly(true);
                   setPage(1);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  unreadOnly ? 'bg-[#FF500A] text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded cursor-pointer ${
+                  unreadOnly ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
                 }`}
               >
                 Unread Only
                 {unreadCount > 0 && (
                   <span
-                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                      unreadOnly ? 'bg-white/20 text-white' : 'bg-[#FF500A]/10 text-[#FF500A]'
+                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded border border-rule ${
+                      unreadOnly ? 'bg-paper text-ink' : 'bg-paper text-accent'
                     }`}
                   >
                     {unreadCount}
@@ -238,14 +234,14 @@ export function WriterReviewsPage() {
         </div>
 
         {hasActiveFilters && (
-          <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E5]/60 text-xs">
-            <span className="text-slate-500">
+          <div className="flex items-center justify-between pt-2 border-t border-rule text-xs">
+            <span className="text-muted">
               Showing filtered results ({pagination.total} matching)
             </span>
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-[#FF500A] font-semibold hover:underline cursor-pointer"
+              className="text-xs text-muted hover:text-ink underline cursor-pointer"
             >
               Reset filters
             </button>
@@ -255,10 +251,10 @@ export function WriterReviewsPage() {
 
       {/* ─── Error Banner ───────────────────────────────────────────── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3 text-red-800">
-          <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
-          <p className="text-sm flex-1">{error}</p>
-          <Button size="sm" variant="outline" onClick={fetchReviews}>
+        <div className="bg-paper border border-danger rounded p-4 flex items-center gap-3 text-danger text-xs">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="font-bold flex-1">{error}</p>
+          <Button size="sm" variant="secondary" onClick={fetchReviews}>
             Retry
           </Button>
         </div>
@@ -266,31 +262,20 @@ export function WriterReviewsPage() {
 
       {/* ─── Reviews List ───────────────────────────────────────────── */}
       {loading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-2xl border border-[#E5E5E5] space-y-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-10 h-10 rounded-full" />
-                <div className="space-y-1">
-                  <Skeleton className="w-32 h-4 rounded-md" />
-                  <Skeleton className="w-20 h-3 rounded-md" />
-                </div>
-              </div>
-              <Skeleton className="w-full h-14 rounded-lg" />
-            </div>
-          ))}
+        <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+          Loading…
         </div>
       ) : reviews.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 border border-[#E5E5E5] text-center">
+        <div className="bg-paper rounded p-12 border border-rule text-center">
           {hasActiveFilters ? (
             <div>
-              <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-serif text-lg font-bold text-[#121212]">No matching reviews</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+              <MessageSquare className="w-10 h-10 text-muted mx-auto mb-3" />
+              <h3 className="text-base font-bold text-ink">No matching reviews</h3>
+              <p className="text-xs text-muted mt-1 max-w-md mx-auto">
                 No reviews match your selected filters. Try broadening your story or rating criteria.
               </p>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={handleResetFilters}
                 className="mt-4"
@@ -320,11 +305,7 @@ export function WriterReviewsPage() {
             return (
               <div
                 key={reviewId}
-                className={`bg-white rounded-2xl border transition-all p-5 sm:p-6 ${
-                  isRead
-                    ? 'border-[#E5E5E5]'
-                    : 'border-[#FF500A]/40 ring-1 ring-[#FF500A]/10 bg-linear-to-r from-white via-white to-[#FFF0E8]/20'
-                }`}
+                className="bg-paper rounded border border-rule p-5 sm:p-6 space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* Reader & Meta */}
@@ -333,41 +314,41 @@ export function WriterReviewsPage() {
                       <img
                         src={reader.avatarUrl}
                         alt={reader.name || 'Reader'}
-                        className="w-10 h-10 rounded-full object-cover border border-[#E5E5E5]"
+                        className="w-10 h-10 rounded object-cover border border-rule"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#121212] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded bg-paper border border-rule text-ink flex items-center justify-center font-bold text-sm shrink-0">
                         {(reader.name || reader.username || 'R').charAt(0).toUpperCase()}
                       </div>
                     )}
 
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-sm text-[#121212]">
+                        <span className="font-bold text-xs text-ink">
                           {reader.name || reader.username || 'Anonymous Reader'}
                         </span>
                         {reader.username && (
-                          <span className="text-xs text-slate-400">@{reader.username}</span>
+                          <span className="text-xs text-muted">@{reader.username}</span>
                         )}
                         {!isRead && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF500A] text-white uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold border border-accent text-accent bg-paper uppercase tracking-wider">
                             New
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted">
                         {book.title && (
                           <Link
                             to={`/book/${book.id || book._id}`}
-                            className="inline-flex items-center gap-1 font-medium text-slate-700 hover:text-[#FF500A] transition-colors"
+                            className="inline-flex items-center gap-1 font-bold text-ink hover:text-accent"
                           >
-                            <BookOpen className="w-3.5 h-3.5 text-[#FF500A]" />
+                            <BookOpen className="w-3.5 h-3.5 text-accent" />
                             {book.title}
                           </Link>
                         )}
                         <span>•</span>
-                        <span className="inline-flex items-center gap-1 text-slate-400">
+                        <span className="inline-flex items-center gap-1 text-muted">
                           <Clock className="w-3.5 h-3.5" />
                           {new Date(review.createdAt).toLocaleDateString(undefined, {
                             month: 'short',
@@ -385,8 +366,8 @@ export function WriterReviewsPage() {
 
                     <div>
                       {isRead ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 font-medium py-1">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="inline-flex items-center gap-1 text-xs text-muted font-bold py-1">
+                          <Check className="w-3.5 h-3.5 text-success" />
                           Read
                         </span>
                       ) : (
@@ -394,7 +375,7 @@ export function WriterReviewsPage() {
                           type="button"
                           onClick={() => handleMarkAsRead(reviewId)}
                           disabled={isMarking}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold bg-[#FFF0E8] text-[#FF500A] hover:bg-[#FF500A] hover:text-white transition-all cursor-pointer disabled:opacity-50"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-bold bg-paper border border-rule text-ink hover:border-ink cursor-pointer disabled:opacity-50"
                         >
                           <Check className="w-3.5 h-3.5" />
                           {isMarking ? 'Marking...' : 'Mark as read'}
@@ -405,8 +386,8 @@ export function WriterReviewsPage() {
                 </div>
 
                 {/* Review Body */}
-                <div className="mt-4 pt-3 border-t border-slate-100">
-                  <p className="text-slate-800 text-sm md:text-base leading-relaxed whitespace-pre-line font-serif">
+                <div className="mt-4 pt-3 border-t border-rule">
+                  <p className="text-ink text-xs md:text-sm leading-relaxed whitespace-pre-line font-body">
                     {review.text}
                   </p>
                 </div>
@@ -418,16 +399,16 @@ export function WriterReviewsPage() {
 
       {/* ─── Pagination ─────────────────────────────────────────────── */}
       {!loading && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-6 border-t border-[#E5E5E5]">
-          <p className="text-xs text-slate-500">
-            Page <span className="font-semibold text-[#121212]">{pagination.page}</span> of{' '}
-            <span className="font-semibold text-[#121212]">{pagination.totalPages}</span> (
+        <div className="flex items-center justify-between pt-6 border-t border-rule">
+          <p className="text-xs text-muted">
+            Page <span className="font-bold text-ink">{pagination.page}</span> of{' '}
+            <span className="font-bold text-ink">{pagination.totalPages}</span> (
             {pagination.total} total reviews)
           </p>
 
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
@@ -437,7 +418,7 @@ export function WriterReviewsPage() {
               Previous
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={page >= pagination.totalPages}

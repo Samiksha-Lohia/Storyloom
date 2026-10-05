@@ -22,6 +22,7 @@ const avatarUploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:upload:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${req.user?.id || 'anon'}`,

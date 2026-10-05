@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { redis } from '../config/redis.js';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticate, authenticateOptional } from '../middleware/auth.middleware.js';
 import { authorize, requireActive } from '../middleware/rbac.middleware.js';
 import { uploadBook, uploadCover } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -38,6 +38,7 @@ const bookCreateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:book-create:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${req.user?.id || 'anon'}`,
@@ -45,17 +46,6 @@ const bookCreateLimiter = rateLimit({
     next(new ApiError(429, 'Too many book creation attempts. Please try again later.'));
   },
 });
-
-/**
- * Optional authentication helper:
- * Attaches req.user if a valid token is present without throwing 401 if missing.
- */
-const optionalAuthenticate = (req, res, next) => {
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    return authenticate(req, res, next);
-  }
-  next();
-};
 
 /**
  * POST /api/books
@@ -85,7 +75,7 @@ router.post(
  * Roles: public
  * Returns published catalogue with search, filter, and pagination.
  */
-router.get('/', optionalAuthenticate, validate(queryCatalogueSchema), async (req, res, next) => {
+router.get('/', authenticateOptional, validate(queryCatalogueSchema), async (req, res, next) => {
   try {
     const { results, pagination } = await bookService.getCatalogue(req.query, req.user);
     sendPaginated(res, results, pagination, 'Catalogue retrieved successfully.');
@@ -121,7 +111,7 @@ router.get(
 router.get(
   '/:bookId',
   validate(bookIdParamSchema),
-  optionalAuthenticate,
+  authenticateOptional,
   async (req, res, next) => {
     try {
       const book = await bookService.getBookById(req.params.bookId, req.user);

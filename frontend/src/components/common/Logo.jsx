@@ -1,34 +1,54 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
 import { APP_NAME } from '../../constants/app';
 
-export default function Logo({ size = 'default', showText = true, className = '' }) {
-  const isLarge = size === 'large';
-  const isSmall = size === 'small';
-
-  const iconSizeClass = isLarge ? 'w-10 h-10' : isSmall ? 'w-6 h-6' : 'w-8 h-8';
-  const textSizeClass = isLarge ? 'text-2xl' : isSmall ? 'text-lg' : 'text-xl';
-
+export function StoryloomMark({ size = 28, className = '' }) {
   return (
-    <Link
-      to="/"
-      className={`inline-flex items-center gap-2 font-bold tracking-tight text-[#121212] group select-none ${className}`}
-      aria-label={`${APP_NAME} Home`}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      fill="none"
+      role="img"
+      aria-hidden="true"
+      className={`shrink-0 ${className}`}
     >
-      <div
-        className={`flex items-center justify-center bg-[#FF500A] text-white rounded-xl shadow-sm transition-transform group-hover:scale-105 ${iconSizeClass}`}
-      >
-        <BookOpen className={isLarge ? 'w-6 h-6' : isSmall ? 'w-3.5 h-3.5' : 'w-4.5 h-4.5'} />
-      </div>
+      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M32 17C26 13 17 13 9 16V49C17 46 26 46 32 50" />
+        <path d="M32 17C38 13 47 13 55 16V49C47 46 38 46 32 50" />
+        <path d="M32 17V50" />
+      </g>
+      <path
+        d="M9 33C15 27 20 39 26 33S38 27 44 33S50 39 55 33"
+        stroke="var(--color-accent, #9B2D20)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+export default function Logo({ showText = true, className = '', to = '/' }) {
+  const content = (
+    <span className={`inline-flex items-center gap-2 text-ink select-none ${className}`}>
+      <StoryloomMark size={28} />
       {showText && (
-        <span className={`font-serif tracking-tight font-extrabold ${textSizeClass}`}>
+        <span className="font-calligraphy text-[28px] leading-none text-ink font-normal">
           {APP_NAME}
         </span>
       )}
+    </span>
+  );
+
+  if (!to) return content;
+
+  return (
+    <Link to={to} className="inline-flex items-center focus-visible:outline-none" aria-label={`${APP_NAME} Home`}>
+      {content}
     </Link>
   );
 }
 
 export { Logo };
-

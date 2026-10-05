@@ -80,6 +80,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
       email: 'admin_try@example.com',
       password: 'password123',
       role: 'admin',
+      termsAccepted: true,
     });
     assert.equal(status, 400);
     assert.match(body.message, /Admin cannot be created/i);
@@ -91,6 +92,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
       email: 'pub_incomplete@example.com',
       password: 'password123',
       role: 'publisher',
+      termsAccepted: true,
     });
     assert.equal(status, 400);
     assert.match(body.message, /Company name is required/i);
@@ -104,6 +106,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
       role: 'publisher',
       company: 'Penguin Books',
       website: 'https://penguin.com',
+      termsAccepted: true,
     });
     assert.equal(status, 201);
     assert.equal(body.data.user.role, 'publisher');
@@ -119,6 +122,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
       email: 'reader1@example.com',
       password: 'password123',
       role: 'reader',
+      termsAccepted: true,
     });
     assert.equal(readerRes.status, 201);
     assert.equal(readerRes.body.data.user.role, 'reader');
@@ -130,6 +134,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
       email: 'writer1@example.com',
       password: 'password123',
       role: 'writer',
+      termsAccepted: true,
     });
     assert.equal(writerRes.status, 201);
     assert.equal(writerRes.body.data.user.role, 'writer');

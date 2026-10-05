@@ -14,7 +14,6 @@ export default function Scrubber({
   onPageChange,
 }) {
   const [jumpInput, setJumpInput] = useState('');
-  const [isHoveringTrack, setIsHoveringTrack] = useState(false);
 
   const percentage = pageCount > 0 ? Math.round((currentPage / pageCount) * 100) : 0;
 
@@ -34,29 +33,28 @@ export default function Scrubber({
     }
   };
 
-  // Color schemes for scrubber based on theme
   const getThemeStyles = () => {
     switch (theme) {
       case 'dark':
         return {
-          barBg: 'bg-[#1E1E22]/95 border-[#2E2E34] text-[#E0E0E0]',
-          trackBg: 'bg-[#2A2A32]',
-          tickBg: 'bg-[#FF500A]',
-          inputBg: 'bg-[#2A2A32] border-[#3E3E48] text-white',
+          barBg: 'bg-[#18181A] border-[#333333] text-[#E6E6E6]',
+          trackBg: 'bg-[#2A2A30]',
+          tickBg: 'bg-accent',
+          inputBg: 'bg-[#2A2A30] border-[#3E3E48] text-[#E6E6E6]',
         };
       case 'sepia':
         return {
-          barBg: 'bg-[#EFE6CE]/95 border-[#E2D5B5] text-[#382C1E]',
-          trackBg: 'bg-[#DCD0B0]',
-          tickBg: 'bg-[#FF500A]',
-          inputBg: 'bg-[#FAF4E6] border-[#D6C7A1] text-[#382C1E]',
+          barBg: 'bg-[#F4ECD8] border-[#D9D2C3] text-[#382C1E]',
+          trackBg: 'bg-[#DECFA7]',
+          tickBg: 'bg-accent',
+          inputBg: 'bg-[#FAF4E6] border-[#D9D2C3] text-[#382C1E]',
         };
       default:
         return {
-          barBg: 'bg-white/95 border-stone-200 text-stone-800',
-          trackBg: 'bg-stone-200',
-          tickBg: 'bg-[#FF500A]',
-          inputBg: 'bg-stone-50 border-stone-300 text-stone-900',
+          barBg: 'bg-paper border-rule text-ink',
+          trackBg: 'bg-rule',
+          tickBg: 'bg-accent',
+          inputBg: 'bg-paper border-rule text-ink',
         };
     }
   };
@@ -65,7 +63,7 @@ export default function Scrubber({
 
   return (
     <div
-      className={`fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-md px-4 sm:px-8 py-3 transition-colors shadow-lg ${styles.barBg}`}
+      className={`fixed bottom-0 inset-x-0 z-40 border-t px-4 sm:px-8 py-3 ${styles.barBg}`}
     >
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Current Page & Percentage */}
@@ -73,20 +71,16 @@ export default function Scrubber({
           <span>
             Page <strong className="font-bold">{currentPage}</strong> of {pageCount}
           </span>
-          <span className="opacity-40">•</span>
-          <span className="text-[#FF500A] font-bold">{percentage}% read</span>
+          <span className="text-muted">•</span>
+          <span className="text-accent font-bold">{percentage}% read</span>
         </div>
 
         {/* Center: Draggable Track with Scene Markers */}
-        <div
-          className="flex-1 relative flex items-center mx-2 group"
-          onMouseEnter={() => setIsHoveringTrack(true)}
-          onMouseLeave={() => setIsHoveringTrack(false)}
-        >
+        <div className="flex-1 relative flex items-center mx-2">
           {/* Custom Track Background */}
-          <div className={`absolute inset-x-0 h-1.5 rounded-full overflow-hidden ${styles.trackBg}`}>
+          <div className={`absolute inset-x-0 h-1 rounded overflow-hidden ${styles.trackBg}`}>
             <div
-              className="h-full bg-[#FF500A] transition-all"
+              className="h-full bg-accent"
               style={{ width: `${(currentPage / Math.max(1, pageCount)) * 100}%` }}
             />
           </div>
@@ -101,8 +95,8 @@ export default function Scrubber({
                 type="button"
                 onClick={() => onPageChange(markerPage)}
                 title={`Scene marker at page ${markerPage}`}
-                className="absolute top-1/2 -translate-y-1/2 w-2 h-3.5 bg-amber-500 hover:bg-[#FF500A] rounded-xs shadow-xs transition-transform hover:scale-125 z-10 cursor-pointer"
-                style={{ left: `calc(${leftPercent}% - 4px)` }}
+                className="absolute top-1/2 -translate-y-1/2 w-1.5 h-3 bg-ink rounded-none z-10 cursor-pointer"
+                style={{ left: `calc(${leftPercent}% - 3px)` }}
                 aria-label={`Jump to scene at page ${markerPage}`}
               />
             );
@@ -129,12 +123,12 @@ export default function Scrubber({
             value={jumpInput}
             onChange={(e) => setJumpInput(e.target.value)}
             placeholder="Go to..."
-            className={`w-16 px-2 py-1 text-xs rounded-lg text-center border focus:outline-none focus:ring-1 focus:ring-[#FF500A] ${styles.inputBg}`}
+            className={`w-16 px-2 py-1 text-xs rounded text-center border focus:outline-none focus:border-ink ${styles.inputBg}`}
           />
           <button
             type="submit"
             disabled={!jumpInput}
-            className="p-1 rounded-lg hover:bg-stone-200/50 disabled:opacity-30 transition cursor-pointer"
+            className="p-1 rounded border border-rule hover:bg-rule/40 disabled:opacity-30 cursor-pointer"
             title="Jump to page"
             aria-label="Submit page jump"
           >

@@ -1,4 +1,4 @@
-export const APP_NAME = 'SceneCraft';
+export const APP_NAME = 'Storyloom';
 
 export const GENRES = [
   'Romance',

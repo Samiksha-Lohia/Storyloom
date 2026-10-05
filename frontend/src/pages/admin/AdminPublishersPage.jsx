@@ -1,41 +1,53 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, CheckCircle, XCircle, Clock, ExternalLink, RefreshCw, AlertCircle, Building2 } from 'lucide-react';
+import {
+  Building2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ExternalLink,
+  Shield,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
 import { api } from '../../services/api';
 
-export default function AdminPublishersPage() {
+export function AdminPublishersPage() {
   const [publishers, setPublishers] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
-  const [statusFilter, setStatusFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('pending'); // 'pending' | 'active' | 'all'
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
 
-  // Review modal state
+  // Review Modal State
   const [selectedPublisher, setSelectedPublisher] = useState(null);
-  const [reviewAction, setReviewAction] = useState('approve'); // 'approve' | 'reject'
+  const [reviewAction, setReviewAction] = useState(null); // 'approve' | 'reject'
   const [rejectReason, setRejectReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
-  const fetchPublishers = useCallback(async (page = 1) => {
-    try {
+  const fetchPublishers = useCallback(
+    async (page = 1) => {
       setLoading(true);
       setErrorMsg(null);
-      const res = await api.admin.getPublishers({
-        page,
-        limit: 20,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-      });
-      setPublishers(res.data || []);
-      if (res.pagination) {
-        setPagination(res.pagination);
+      try {
+        const res = await api.admin.getPublishers({
+          status: statusFilter,
+          page,
+          limit: pagination.limit,
+        });
+        setPublishers(res?.data?.publishers || res?.publishers || []);
+        if (res?.data?.pagination || res?.pagination) {
+          setPagination(res?.data?.pagination || res?.pagination);
+        }
+      } catch (err) {
+        console.error('Failed to fetch publishers:', err);
+        setErrorMsg('Failed to load publisher list. Please check administrative permissions.');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to load publishers:', err);
-      setErrorMsg(err.message || 'Failed to load publisher applications.');
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
+    },
+    [statusFilter, pagination.limit]
+  );
 
   useEffect(() => {
     fetchPublishers(1);
@@ -50,13 +62,13 @@ export default function AdminPublishersPage() {
 
   const handleCloseModal = () => {
     setSelectedPublisher(null);
+    setReviewAction(null);
     setRejectReason('');
     setErrorMsg(null);
   };
 
-  const handleExecuteReview = async (e) => {
-    e.preventDefault();
-    if (!selectedPublisher) return;
+  const handleExecuteReview = async () => {
+    if (!selectedPublisher || !reviewAction) return;
 
     if (reviewAction === 'reject' && !rejectReason.trim()) {
       setErrorMsg('A rejection reason is required to notify the applicant.');
@@ -65,22 +77,21 @@ export default function AdminPublishersPage() {
 
     setSubmitting(true);
     setErrorMsg(null);
-
     try {
-      await api.admin.reviewPublisher(selectedPublisher._id, {
-        action: reviewAction,
-        reason: rejectReason.trim(),
-      });
+      if (reviewAction === 'approve') {
+        await api.admin.approvePublisher(selectedPublisher._id);
+        setSuccessMsg(`Approved ${selectedPublisher.name} (${selectedPublisher.publisherProfile?.company || 'Publisher'})`);
+      } else {
+        await api.admin.rejectPublisher(selectedPublisher._id, rejectReason.trim());
+        setSuccessMsg(`Rejected applicant ${selectedPublisher.name}.`);
+      }
 
-      setSuccessMsg(
-        `Publisher application ${reviewAction === 'approve' ? 'approved' : 'rejected'} successfully.`
-      );
-      setTimeout(() => setSuccessMsg(null), 4000);
       handleCloseModal();
       fetchPublishers(pagination.page);
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
-      console.error('Publisher review failed:', err);
-      setErrorMsg(err.message || 'Action failed.');
+      console.error(`Failed to ${reviewAction} publisher:`, err);
+      setErrorMsg(err.message || `Failed to ${reviewAction} application.`);
     } finally {
       setSubmitting(false);
     }
@@ -89,18 +100,18 @@ export default function AdminPublishersPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-purple-600" />
+            <span className="px-2 py-0.5 rounded border border-rule text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-muted" />
               Administrative Verification
             </span>
           </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mt-2">
+          <h1 className="font-calligraphy text-3xl font-normal text-ink mt-2">
             Publisher Applications
           </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+          <p className="text-xs text-muted mt-1 max-w-2xl">
             Review company credentials, verify publishing imprints, and grant catalog pitch panel privileges.
           </p>
         </div>
@@ -109,9 +120,9 @@ export default function AdminPublishersPage() {
           <button
             onClick={() => fetchPublishers(pagination.page)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-paper border border-rule rounded text-xs font-semibold text-ink hover:bg-rule/10 cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className="w-3.5 h-3.5 text-ink" />
             Refresh
           </button>
         </div>
@@ -119,22 +130,22 @@ export default function AdminPublishersPage() {
 
       {/* Success Notification */}
       {successMsg && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-2xs">
-          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3 bg-paper border border-success text-success rounded text-xs font-semibold flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Filters Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+      <div className="flex items-center gap-2 border-b border-rule pb-3">
         {['pending', 'active', 'all'].map((s) => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded text-xs font-bold capitalize cursor-pointer border ${
               statusFilter === s
-                ? 'bg-slate-900 text-white shadow-2xs'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-ink text-paper border-ink'
+                : 'bg-paper border-rule text-muted hover:text-ink'
             }`}
           >
             {s === 'pending' ? 'Pending Review' : s === 'active' ? 'Active / Approved' : 'All Accounts'}
@@ -143,123 +154,121 @@ export default function AdminPublishersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+      <div className="bg-paper border border-rule rounded overflow-hidden">
         {loading ? (
-          <div className="p-8 space-y-4 animate-pulse">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-14 bg-slate-100 rounded-xl"></div>
-            ))}
+          <div className="p-8 text-center text-xs text-muted">
+            Loading…
           </div>
         ) : publishers.length === 0 ? (
           <div className="text-center py-16 p-8">
-            <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="font-serif font-bold text-slate-800 text-lg">No publisher accounts found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              There are currently no publisher applicants matching the "{statusFilter}" filter.
+            <Building2 className="w-8 h-8 text-muted mx-auto mb-3" />
+            <h3 className="font-bold text-ink text-base">No publisher accounts found</h3>
+            <p className="text-xs text-muted max-w-sm mx-auto mt-1">
+              There are currently no publisher applicants matching the &ldquo;{statusFilter}&rdquo; filter.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+              <thead className="bg-paper border-b border-rule text-muted uppercase tracking-wider font-semibold">
                 <tr>
-                  <th className="py-3.5 px-4">Applicant & Email</th>
-                  <th className="py-3.5 px-4">Company & Imprint</th>
-                  <th className="py-3.5 px-4">Catalog / Website</th>
-                  <th className="py-3.5 px-4">Applied Date</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">Applicant &amp; Email</th>
+                  <th className="py-3 px-4">Company &amp; Imprint</th>
+                  <th className="py-3 px-4">Catalog / Website</th>
+                  <th className="py-3 px-4">Applied Date</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-rule text-ink">
                 {publishers.map((pub) => {
                   const profile = pub.publisherProfile || pub.publisherMetadata || {};
                   const isPending = pub.status === 'pending' || profile.reviewStatus === 'pending';
                   const isApproved = pub.status === 'active' && profile.reviewStatus === 'approved';
 
                   return (
-                    <tr key={pub._id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={pub._id} className="hover:bg-rule/10">
                       {/* Name & Email */}
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-slate-900 text-sm">{pub.name}</div>
-                        <div className="text-slate-400 font-mono text-[11px]">{pub.email}</div>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-ink text-sm">{pub.name}</div>
+                        <div className="text-muted font-mono text-[11px]">{pub.email}</div>
                       </td>
 
                       {/* Company & Imprint */}
-                      <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-800">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-ink">
                           {profile.company || 'Not Specified'}
                         </div>
                         {profile.imprint && (
-                          <div className="text-slate-400 text-[11px]">Imprint: {profile.imprint}</div>
+                          <div className="text-muted text-[11px]">Imprint: {profile.imprint}</div>
                         )}
                       </td>
 
                       {/* Website */}
-                      <td className="py-4 px-4">
+                      <td className="py-3 px-4">
                         {profile.website ? (
                           <a
                             href={profile.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#FF500A] hover:underline font-medium"
+                            className="inline-flex items-center gap-1 text-accent hover:underline font-medium"
                           >
                             <span>Visit Site</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
-                          <span className="text-slate-400 italic">None provided</span>
+                          <span className="text-muted italic">None provided</span>
                         )}
                         {profile.catalogSize && (
-                          <div className="text-slate-400 text-[11px] mt-0.5">
+                          <div className="text-muted text-[11px] mt-0.5">
                             {profile.catalogSize} books/yr
                           </div>
                         )}
                       </td>
 
                       {/* Applied Date */}
-                      <td className="py-4 px-4 text-slate-500 font-mono">
+                      <td className="py-3 px-4 text-muted font-mono">
                         {pub.createdAt ? new Date(pub.createdAt).toLocaleDateString() : '—'}
                       </td>
 
                       {/* Status */}
-                      <td className="py-4 px-4">
+                      <td className="py-3 px-4">
                         {isApproved ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-success text-success text-[10px] font-bold uppercase tracking-wider">
                             <CheckCircle className="w-3 h-3" />
                             Approved
                           </span>
                         ) : isPending ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rule text-muted text-[10px] font-bold uppercase tracking-wider">
                             <Clock className="w-3 h-3" />
                             Pending Review
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-danger text-danger text-[10px] font-bold uppercase tracking-wider">
                             <XCircle className="w-3 h-3" />
                             Rejected
                           </span>
                         )}
                         {profile.rejectionReason && (
-                          <div className="text-[10px] text-rose-600 mt-1 max-w-xs truncate" title={profile.rejectionReason}>
+                          <div className="text-[10px] text-danger mt-1 max-w-xs truncate" title={profile.rejectionReason}>
                             Reason: {profile.rejectionReason}
                           </div>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-4 text-right">
+                      <td className="py-3 px-4 text-right">
                         {isPending ? (
                           <div className="inline-flex items-center gap-2">
                             <button
                               onClick={() => handleOpenReviewModal(pub, 'approve')}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                              className="px-2.5 py-1 bg-ink hover:bg-accent text-paper rounded text-xs font-bold cursor-pointer"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleOpenReviewModal(pub, 'reject')}
-                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                              className="px-2.5 py-1 bg-paper hover:bg-rule/10 text-danger border border-danger rounded text-xs font-bold cursor-pointer"
                             >
                               Reject
                             </button>
@@ -267,14 +276,14 @@ export default function AdminPublishersPage() {
                         ) : isApproved ? (
                           <button
                             onClick={() => handleOpenReviewModal(pub, 'reject')}
-                            className="px-2.5 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                            className="px-2.5 py-1 text-muted hover:text-danger rounded text-xs font-semibold cursor-pointer"
                           >
                             Revoke Approval
                           </button>
                         ) : (
                           <button
                             onClick={() => handleOpenReviewModal(pub, 'approve')}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                            className="px-2.5 py-1 bg-paper border border-rule hover:bg-rule/10 text-ink rounded text-xs font-bold cursor-pointer"
                           >
                             Re-Approve
                           </button>
@@ -291,68 +300,68 @@ export default function AdminPublishersPage() {
 
       {/* Review Modal */}
       {selectedPublisher && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-5 text-left">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-serif font-bold text-slate-900 text-lg">
+        <div className="fixed inset-0 bg-ink/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-paper border border-rule rounded max-w-md w-full p-6 space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-rule pb-3">
+              <h3 className="font-bold text-ink text-base">
                 {reviewAction === 'approve' ? 'Approve Publisher' : 'Reject Application'}
               </h3>
               <button
                 onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+                className="text-muted hover:text-ink p-1 rounded cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="text-xs text-slate-600 space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+            <div className="text-xs text-muted space-y-2 bg-paper p-3 rounded border border-rule">
               <p>
-                <strong>Applicant:</strong> {selectedPublisher.name} ({selectedPublisher.email})
+                <strong className="text-ink">Applicant:</strong> {selectedPublisher.name} ({selectedPublisher.email})
               </p>
               <p>
-                <strong>Company:</strong>{' '}
+                <strong className="text-ink">Company:</strong>{' '}
                 {selectedPublisher.publisherProfile?.company || 'None specified'}
               </p>
               {reviewAction === 'approve' ? (
-                <p className="text-emerald-700 pt-1">
-                  Approving this account will set their status to <strong>active</strong>, granting full access to catalogue pitch panels, reader analytics, and private wishlists. An audit log and email notification will be generated.
+                <p className="text-success pt-1">
+                  Approving this account will set their status to <strong>active</strong>, granting full access to catalogue pitch panels, reader analytics, and private wishlists.
                 </p>
               ) : (
-                <p className="text-rose-700 pt-1">
-                  Rejecting this applicant will reset their role to <strong>reader</strong> and record your explanation in their file and applicant notification.
+                <p className="text-danger pt-1">
+                  Rejecting this applicant will reset their role to <strong>reader</strong> and record your explanation.
                 </p>
               )}
             </div>
 
             {reviewAction === 'reject' && (
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Rejection Reason <span className="text-rose-500">*</span>
+                <label className="text-xs font-bold text-muted block">
+                  Rejection Reason <span className="text-danger">*</span>
                 </label>
                 <textarea
                   rows={3}
                   required
-                  placeholder="Explain why this publisher application could not be verified (e.g. Unverified company email, missing publishing credentials)..."
+                  placeholder="Explain why this publisher application could not be verified..."
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                  className="w-full p-2.5 bg-paper border border-rule rounded text-xs text-ink placeholder:text-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                 />
               </div>
             )}
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+              <div className="p-3 bg-paper border border-danger text-danger rounded text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={handleCloseModal}
                 disabled={submitting}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                className="px-3.5 py-1.5 border border-rule rounded text-xs font-semibold text-muted hover:text-ink cursor-pointer"
               >
                 Cancel
               </button>
@@ -360,10 +369,10 @@ export default function AdminPublishersPage() {
                 type="button"
                 onClick={handleExecuteReview}
                 disabled={submitting}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white shadow-2xs cursor-pointer ${
+                className={`px-4 py-1.5 rounded text-xs font-bold cursor-pointer ${
                   reviewAction === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-rose-600 hover:bg-rose-700'
+                    ? 'bg-ink text-paper hover:bg-accent'
+                    : 'bg-paper text-danger border border-danger hover:bg-rule/10'
                 }`}
               >
                 {submitting
@@ -379,3 +388,5 @@ export default function AdminPublishersPage() {
     </div>
   );
 }
+
+export default AdminPublishersPage;

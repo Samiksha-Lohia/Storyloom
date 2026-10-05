@@ -405,45 +405,40 @@ export function ConversationsPage() {
     activeConvo?.status === 'closed' || activeConvo?.status === 'declined';
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+    <div className="max-w-7xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col bg-paper border border-rule rounded overflow-hidden">
       <div className="flex-1 flex min-h-0">
         {/* ─── LEFT PANE: Conversation List ──────────────────────────────── */}
         <div
-          className={`w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col bg-slate-50/50 shrink-0 ${
+          className={`w-full md:w-80 lg:w-96 border-r border-rule flex flex-col bg-paper shrink-0 ${
             mobilePane === 'thread' ? 'hidden md:flex' : 'flex'
           }`}
         >
           {/* List Header */}
-          <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
+          <div className="p-4 border-b border-rule bg-paper flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[#FF500A]" />
-              <h2 className="font-serif font-bold text-slate-900 text-base">
+              <MessageSquare className="w-4 h-4 text-ink" />
+              <h2 className="font-bold text-ink text-base">
                 Messages
               </h2>
             </div>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-muted font-medium">
               {conversations.length} Active
             </span>
           </div>
 
           {/* List Content */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-rule">
             {loadingConversations ? (
-              <div className="p-4 space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-slate-200/60 rounded-xl animate-pulse"
-                  />
-                ))}
+              <div className="p-4 text-center text-xs text-muted">
+                Loading…
               </div>
             ) : conversations.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 space-y-2">
-                <MessageSquare className="w-8 h-8 mx-auto text-slate-300" />
-                <p className="text-xs font-semibold text-slate-600">
+              <div className="p-8 text-center text-muted space-y-2">
+                <MessageSquare className="w-8 h-8 mx-auto text-muted" />
+                <p className="text-xs font-semibold text-ink">
                   No active conversations
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-muted">
                   Accepted publishing requests will appear here.
                 </p>
               </div>
@@ -460,14 +455,14 @@ export function ConversationsPage() {
                       setActiveConvo(convo);
                       setMobilePane('thread');
                     }}
-                    className={`w-full p-4 text-left flex items-start gap-3 transition-colors cursor-pointer ${
+                    className={`w-full p-4 text-left flex items-start gap-3 cursor-pointer ${
                       isSelected
-                        ? 'bg-orange-50/80 border-l-4 border-l-[#FF500A]'
-                        : 'hover:bg-slate-100/70'
+                        ? 'bg-rule/10 border-l-2 border-l-ink'
+                        : 'hover:bg-rule/5'
                     }`}
                   >
                     {/* Thumbnail */}
-                    <div className="w-12 h-16 bg-slate-200 rounded-lg overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+                    <div className="w-12 h-16 bg-paper rounded overflow-hidden shrink-0 border border-rule">
                       {book.coverUrl ? (
                         <img
                           src={book.coverUrl}
@@ -475,7 +470,7 @@ export function ConversationsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-muted">
                           <BookOpen className="w-4 h-4" />
                         </div>
                       )}
@@ -484,11 +479,11 @@ export function ConversationsPage() {
                     {/* Meta info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-semibold text-xs text-slate-900 truncate">
+                        <span className="font-semibold text-xs text-ink truncate">
                           {other.name}
                         </span>
                         {convo.lastMessageAt && (
-                          <span className="text-[10px] text-slate-400 shrink-0">
+                          <span className="text-[10px] text-muted shrink-0">
                             {new Date(convo.lastMessageAt).toLocaleDateString([], {
                               month: 'short',
                               day: 'numeric',
@@ -497,16 +492,16 @@ export function ConversationsPage() {
                         )}
                       </div>
 
-                      <p className="text-[11px] text-slate-500 font-serif truncate mt-0.5">
+                      <p className="text-[11px] text-muted truncate mt-0.5">
                         {book.title || 'Untitled Manuscript'}
                       </p>
 
                       <div className="flex items-center justify-between mt-1.5">
-                        <p className="text-xs text-slate-600 truncate max-w-[180px]">
+                        <p className="text-xs text-muted truncate max-w-[180px]">
                           {convo.lastMessage?.text || 'Conversation opened.'}
                         </p>
                         {convo.unreadCount > 0 && (
-                          <span className="px-1.5 py-0.5 bg-[#FF500A] text-white text-[10px] font-bold rounded-full min-w-4 text-center">
+                          <span className="px-1.5 py-0.5 bg-ink text-paper text-[10px] font-bold rounded min-w-4 text-center">
                             {convo.unreadCount}
                           </span>
                         )}
@@ -521,30 +516,30 @@ export function ConversationsPage() {
 
         {/* ─── RIGHT PANE: Chat Thread ───────────────────────────────────── */}
         <div
-          className={`flex-1 flex flex-col bg-white min-w-0 ${
+          className={`flex-1 flex flex-col bg-paper min-w-0 ${
             mobilePane === 'list' ? 'hidden md:flex' : 'flex'
           }`}
         >
           {activeConvo ? (
             <>
               {/* Thread Header */}
-              <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-3 bg-white sticky top-0 z-10">
+              <div className="p-4 border-b border-rule flex items-center justify-between gap-3 bg-paper sticky top-0 z-10">
                 <div className="flex items-center gap-3 min-w-0">
                   {/* Mobile Back Button */}
                   <button
                     onClick={() => setMobilePane('list')}
-                    className="md:hidden p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                    className="md:hidden p-1 text-muted hover:text-ink rounded cursor-pointer"
                     title="Back to list"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-4 h-4" />
                   </button>
 
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-bold border border-slate-200 shrink-0">
+                  <div className="w-8 h-8 rounded border border-rule flex items-center justify-center text-ink font-bold text-xs shrink-0">
                     {currentCounterpart.avatarUrl ? (
                       <img
                         src={currentCounterpart.avatarUrl}
                         alt={currentCounterpart.name}
-                        className="w-full h-full rounded-full object-cover"
+                        className="w-full h-full rounded object-cover"
                       />
                     ) : (
                       currentCounterpart.name?.charAt(0) || 'U'
@@ -553,16 +548,16 @@ export function ConversationsPage() {
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-serif font-bold text-slate-900 text-sm truncate">
+                      <h3 className="font-bold text-ink text-sm truncate">
                         {currentCounterpart.name}
                       </h3>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-slate-100 text-slate-700">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-rule font-bold uppercase text-muted">
                         {currentCounterpart.role}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-muted truncate">
                       Re:{' '}
-                      <span className="font-semibold text-slate-700">
+                      <span className="font-semibold text-ink">
                         {activeConvo.bookId?.title || 'Book Project'}
                       </span>
                     </p>
@@ -577,40 +572,40 @@ export function ConversationsPage() {
                       onClick={handleToggleContactSharing}
                       disabled={isConversationClosed}
                       title="Click to toggle external contact sharing permission"
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold border cursor-pointer ${
                         activeConvo.contactSharingEnabled
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                          : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                          ? 'bg-paper text-success border-success'
+                          : 'bg-paper text-muted border-rule hover:border-ink'
                       }`}
                     >
                       {activeConvo.contactSharingEnabled ? (
                         <>
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-success" />
                           <span>Contact Sharing: ON</span>
                         </>
                       ) : (
                         <>
-                          <Shield className="w-3.5 h-3.5 text-slate-500" />
+                          <Shield className="w-3.5 h-3.5 text-muted" />
                           <span>Contact Sharing: OFF</span>
                         </>
                       )}
                     </button>
                   ) : (
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border border-rule ${
                         activeConvo.contactSharingEnabled
-                          ? 'bg-emerald-50 text-emerald-800'
-                          : 'bg-slate-100 text-slate-600'
+                          ? 'text-success'
+                          : 'text-muted'
                       }`}
                     >
                       {activeConvo.contactSharingEnabled ? (
                         <>
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-success" />
                           <span>Direct Contacts Permitted</span>
                         </>
                       ) : (
                         <>
-                          <Shield className="w-3.5 h-3.5 text-slate-400" />
+                          <Shield className="w-3.5 h-3.5 text-muted" />
                           <span>Platform Only (Contact Filter On)</span>
                         </>
                       )}
@@ -629,18 +624,18 @@ export function ConversationsPage() {
 
               {/* Contact Sharing Status Banner */}
               {activeConvo.contactSharingEnabled ? (
-                <div className="bg-emerald-50/70 border-b border-emerald-200/60 px-4 py-2 text-[11px] text-emerald-800 flex items-center justify-between">
+                <div className="bg-paper border-b border-rule px-4 py-2 text-[11px] text-success flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <ShieldCheck className="w-4 h-4 text-success shrink-0" />
                     <span>
                       Direct contact sharing is <strong>enabled</strong> by the author. Phone numbers, emails, and external links are allowed.
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="bg-amber-50/80 border-b border-amber-200 px-4 py-2 text-[11px] text-amber-900 flex items-center justify-between">
+                <div className="bg-paper border-b border-rule px-4 py-2 text-[11px] text-muted flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                    <ShieldAlert className="w-4 h-4 text-muted shrink-0" />
                     <span>
                       Contact sharing is <strong>off</strong>. Messages containing emails, phone numbers, or URLs will be blocked for safety.
                     </span>
@@ -651,7 +646,7 @@ export function ConversationsPage() {
               {/* Message List */}
               <div
                 ref={messageListRef}
-                className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-slate-50/30"
+                className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-paper"
                 aria-live="polite"
               >
                 {/* Load More Button */}
@@ -660,7 +655,7 @@ export function ConversationsPage() {
                     <button
                       onClick={handleLoadOlder}
                       disabled={loadingMore}
-                      className="px-3 py-1 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                      className="px-3 py-1 bg-paper border border-rule text-ink rounded text-xs font-semibold hover:bg-rule/10 cursor-pointer"
                     >
                       {loadingMore ? 'Loading older...' : '↑ Load Older Messages'}
                     </button>
@@ -668,23 +663,16 @@ export function ConversationsPage() {
                 )}
 
                 {loadingMessages ? (
-                  <div className="space-y-4 py-8">
-                    {[...Array(3)].map((_, i) => (
-                      <div
-                        key={i}
-                        className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className="w-64 h-14 bg-slate-200/70 rounded-2xl animate-pulse" />
-                      </div>
-                    ))}
+                  <div className="py-8 text-center text-xs text-muted">
+                    Loading…
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="text-center py-16 text-slate-400 space-y-2">
-                    <MessageSquare className="w-10 h-10 mx-auto text-slate-300" />
-                    <h4 className="font-serif font-bold text-slate-700 text-sm">
+                  <div className="text-center py-16 text-muted space-y-2">
+                    <MessageSquare className="w-8 h-8 mx-auto text-muted" />
+                    <h4 className="font-bold text-ink text-sm">
                       Start the Conversation
                     </h4>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    <p className="text-xs text-muted max-w-sm mx-auto">
                       Discuss manuscript development, rights acquisition, and contract milestones.
                     </p>
                   </div>
@@ -702,18 +690,18 @@ export function ConversationsPage() {
                         }`}
                       >
                         <div
-                          className={`max-w-lg md:max-w-xl rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs ${
+                          className={`max-w-lg md:max-w-xl rounded px-4 py-2 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words ${
                             isOwn
-                              ? 'bg-slate-900 text-white rounded-br-xs'
-                              : 'bg-white text-slate-900 border border-slate-200 rounded-bl-xs'
-                          } ${msg.status === 'failed' ? 'border-2 border-rose-500' : ''}`}
+                              ? 'bg-ink text-paper'
+                              : 'bg-paper text-ink border border-rule'
+                          } ${msg.status === 'failed' ? 'border border-danger' : ''}`}
                         >
                           {/* Plain text only rendering for strict XSS safety */}
                           <span>{msg.text}</span>
                         </div>
 
                         {/* Message status & timestamp */}
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1 px-1">
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted mt-1 px-1">
                           <span>
                             {msg.createdAt
                               ? new Date(msg.createdAt).toLocaleTimeString([], {
@@ -726,21 +714,21 @@ export function ConversationsPage() {
                           {isOwn && (
                             <>
                               {msg.status === 'sending' ? (
-                                <Clock className="w-3 h-3 text-slate-400 animate-spin" />
+                                <Clock className="w-3 h-3 text-muted" />
                               ) : msg.status === 'failed' ? (
                                 <button
                                   onClick={() => handleRetry(msg)}
-                                  className="text-rose-600 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                                  className="text-danger font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                                 >
                                   <AlertCircle className="w-3 h-3" /> Retry
                                 </button>
                               ) : msg.readAt ? (
                                 <CheckCheck
-                                  className="w-3.5 h-3.5 text-blue-500"
+                                  className="w-3.5 h-3.5 text-accent"
                                   title={`Read ${new Date(msg.readAt).toLocaleTimeString()}`}
                                 />
                               ) : (
-                                <Check className="w-3.5 h-3.5 text-slate-400" title="Delivered" />
+                                <Check className="w-3.5 h-3.5 text-muted" title="Delivered" />
                               )}
                             </>
                           )}
@@ -752,13 +740,8 @@ export function ConversationsPage() {
 
                 {/* Counterpart Typing Indicator */}
                 {isTypingCounterpart && (
-                  <div className="flex items-center gap-2 text-xs text-slate-500 italic bg-white/80 p-2 rounded-xl border border-slate-200 w-fit">
-                    <span className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-[#FF500A] rounded-full animate-bounce" />
-                      <span className="w-1.5 h-1.5 bg-[#FF500A] rounded-full animate-bounce [animation-delay:0.2s]" />
-                      <span className="w-1.5 h-1.5 bg-[#FF500A] rounded-full animate-bounce [animation-delay:0.4s]" />
-                    </span>
-                    <span>{currentCounterpart.name} is typing...</span>
+                  <div className="text-xs text-muted italic p-2 border border-rule rounded bg-paper w-fit">
+                    {currentCounterpart.name} is typing…
                   </div>
                 )}
 
@@ -767,14 +750,14 @@ export function ConversationsPage() {
 
               {/* Error banner */}
               {sendError && (
-                <div className="p-2.5 bg-rose-50 border-t border-rose-200 text-rose-700 text-xs flex items-center justify-between px-4">
+                <div className="p-2.5 bg-paper border-t border-danger text-danger text-xs flex items-center justify-between px-4">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{sendError}</span>
                   </div>
                   <button
                     onClick={() => setSendError(null)}
-                    className="text-xs font-bold hover:underline"
+                    className="text-xs font-bold hover:underline cursor-pointer"
                   >
                     Dismiss
                   </button>
@@ -783,8 +766,8 @@ export function ConversationsPage() {
 
               {/* Message Input Bar */}
               {isConversationClosed ? (
-                <div className="p-4 bg-slate-100 border-t border-slate-200 text-center text-xs text-slate-600 flex items-center justify-center gap-2">
-                  <Lock className="w-4 h-4 text-slate-500" />
+                <div className="p-4 bg-paper border-t border-rule text-center text-xs text-muted flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4 text-muted" />
                   <span>
                     This conversation is closed. No further messages can be submitted.
                   </span>
@@ -792,10 +775,10 @@ export function ConversationsPage() {
               ) : (
                 <form
                   onSubmit={handleSendMessage}
-                  className="p-3 md:p-4 border-t border-slate-200 bg-white"
+                  className="p-3 md:p-4 border-t border-rule bg-paper"
                 >
                   <div className="flex items-end gap-2">
-                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl focus-within:ring-2 focus-within:ring-[#FF500A]/30 focus-within:border-[#FF500A] transition-all">
+                    <div className="flex-1 bg-paper border border-rule rounded focus-within:ring-1 focus-within:ring-ink">
                       <textarea
                         rows={2}
                         value={inputText}
@@ -809,9 +792,9 @@ export function ConversationsPage() {
                         aria-label={`Message ${currentCounterpart.name}`}
                         placeholder={`Message ${currentCounterpart.name}...`}
                         maxLength={3000}
-                        className="w-full bg-transparent p-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden resize-none"
+                        className="w-full bg-transparent p-3 text-xs sm:text-sm text-ink placeholder:text-muted focus:outline-hidden resize-none"
                       />
-                      <div className="flex justify-between items-center px-3 pb-2 text-[10px] text-slate-400">
+                      <div className="flex justify-between items-center px-3 pb-2 text-[10px] text-muted">
                         <span>Press Enter to send, Shift+Enter for new line</span>
                         <span>{inputText.length}/3000</span>
                       </div>
@@ -820,7 +803,7 @@ export function ConversationsPage() {
                     <button
                       type="submit"
                       disabled={!inputText.trim()}
-                      className="p-3.5 bg-slate-900 hover:bg-[#FF500A] text-white rounded-2xl transition-colors disabled:opacity-40 disabled:hover:bg-slate-900 shadow-xs cursor-pointer shrink-0"
+                      className="p-3 bg-ink hover:bg-accent text-paper rounded disabled:opacity-40 cursor-pointer shrink-0"
                       title="Send message"
                       aria-label="Send message"
                     >
@@ -831,12 +814,12 @@ export function ConversationsPage() {
               )}
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
-              <MessageSquare className="w-12 h-12 text-slate-300 mb-3" />
-              <h3 className="font-serif font-bold text-slate-800 text-lg">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted">
+              <MessageSquare className="w-8 h-8 text-muted mb-3" />
+              <h3 className="font-bold text-ink text-base">
                 No Conversation Selected
               </h3>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
+              <p className="text-xs text-muted max-w-sm mt-1">
                 Select a conversation from the sidebar to view deal details and chat in real-time.
               </p>
             </div>

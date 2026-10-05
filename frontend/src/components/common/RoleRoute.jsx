@@ -10,9 +10,8 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
 
   if (loading) {
     return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8">
-        <div className="w-8 h-8 rounded-full border-3 border-[#FF500A] border-t-transparent animate-spin" />
-        <p className="mt-3 text-sm text-[#6B6B6B]">Loading your account...</p>
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 bg-paper text-ink">
+        <p className="text-sm font-bold text-muted">Loading…</p>
       </div>
     );
   }
@@ -25,20 +24,20 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
   // If pending publisher, render the waiting for approval screen
   if (role === 'publisher' && status === 'pending') {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto">
-        <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
-          <Clock className="w-8 h-8" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto bg-paper text-ink">
+        <div className="w-10 h-10 rounded border border-rule flex items-center justify-center mb-4 text-ink">
+          <Clock className="w-4 h-4" />
         </div>
-        <h2 className="text-2xl font-bold font-serif text-[#121212] mb-2">
+        <h2 className="text-xl font-bold text-ink mb-2">
           Publisher Application Under Review
         </h2>
-        <p className="text-sm text-[#6B6B6B] leading-relaxed mb-6">
+        <p className="text-sm text-muted leading-relaxed mb-6 font-body">
           Thank you for applying as a verified publisher. An administrator is currently reviewing
           your company details ({user.publisherProfile?.company || 'Publisher'}). You will be able
           to browse catalogue pitch views and send publishing requests once approved.
         </p>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => (window.location.href = '/')}>
+          <Button variant="secondary" onClick={() => (window.location.href = '/')}>
             Browse as Reader
           </Button>
         </div>
@@ -49,16 +48,16 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
   // If role is restricted and user does not have an allowed role
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-        <div className="w-16 h-16 rounded-full bg-red-50 text-[#D63B2F] flex items-center justify-center mb-4">
-          <ShieldAlert className="w-8 h-8" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto bg-paper text-ink">
+        <div className="w-10 h-10 rounded border border-danger text-danger flex items-center justify-center mb-4">
+          <ShieldAlert className="w-4 h-4" />
         </div>
-        <h2 className="text-2xl font-bold font-serif text-[#121212] mb-2">
+        <h2 className="text-xl font-bold text-ink mb-2">
           Access Restricted
         </h2>
-        <p className="text-sm text-[#6B6B6B] mb-6">
+        <p className="text-sm text-muted mb-6 font-body">
           This area is designated for {allowedRoles.join(', ')} roles. Your current account role is{' '}
-          <span className="font-semibold text-[#121212] capitalize">{role}</span>.
+          <span className="font-bold text-ink capitalize">{role}</span>.
         </p>
         <Button variant="primary" onClick={() => (window.location.href = '/')}>
           Return to Home
@@ -71,4 +70,3 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
 }
 
 export { RoleRoute };
-

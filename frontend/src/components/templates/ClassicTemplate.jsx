@@ -1,7 +1,5 @@
 import React from 'react';
 import { CoverImage } from '../common/CoverImage';
-import { StarRating } from '../common/StarRating';
-import { Chip } from '../common/Chip';
 import { Eye, BookOpen, Star, Clock } from 'lucide-react';
 
 export function ClassicTemplate({
@@ -21,22 +19,21 @@ export function ClassicTemplate({
   renderTabsSection,
   renderRelatedBooks,
   renderMatureWarning,
-  isPreview,
 }) {
   return (
     <div
-      className="book-template-classic space-y-10 pb-16 transition-colors"
+      className="book-template-classic space-y-8 pb-16 font-body text-ink"
       style={{ '--accent': accent }}
     >
       {/* 18+ Warning */}
       {renderMatureWarning()}
 
       {/* Main Classic Header (Cover Left, Details Right) */}
-      <section className="bg-white rounded-3xl border border-[#E5E5E5] p-6 sm:p-8 lg:p-10 shadow-xs">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+      <section className="bg-paper rounded border border-rule p-6 sm:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
           {/* Cover Column */}
           <div className="md:col-span-4 lg:col-span-3 flex flex-col items-center">
-            <div className="w-48 sm:w-56 md:w-full max-w-[240px] aspect-[2/3] rounded-2xl overflow-hidden shadow-lg border border-[#E5E5E5] bg-[#F7F7F7] flex items-center justify-center">
+            <div className="w-48 sm:w-56 md:w-full max-w-[240px] aspect-[2/3] rounded overflow-hidden border border-rule bg-paper flex items-center justify-center">
               {coverUrl ? (
                 <img
                   src={coverUrl}
@@ -55,133 +52,101 @@ export function ClassicTemplate({
             </div>
 
             {/* Author Credit */}
-            <div className="mt-4 text-center">
-              <span className="text-xs text-[#64748B] block">Written by</span>
-              <span className="font-serif font-bold text-[#121212] text-sm">
+            <div className="mt-3 text-center">
+              <span className="text-xs text-muted block">Written by</span>
+              <span className="font-bold text-ink text-sm">
                 {authorName}
               </span>
               {authorUsername && (
-                <span className="text-[11px] text-slate-400 block">@{authorUsername}</span>
+                <span className="text-[11px] text-muted block">@{authorUsername}</span>
               )}
             </div>
           </div>
 
           {/* Details Column */}
-          <div className="md:col-span-8 lg:col-span-9 flex flex-col justify-between space-y-6">
+          <div className="md:col-span-8 lg:col-span-9 flex flex-col justify-between space-y-5">
             <div className="space-y-4">
               {/* Category & Status Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                <span
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-                    color: 'var(--accent)',
-                  }}
-                  className="text-xs font-bold px-3 py-1 rounded-full"
-                >
+                <span className="text-xs font-bold px-2 py-0.5 rounded border border-rule text-ink bg-paper">
                   {book?.genre || 'General Fiction'}
                 </span>
-                <span
-                  className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                    book?.status === 'published'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}
-                >
+                <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-rule text-muted bg-paper">
                   {book?.status || 'draft'}
                 </span>
                 {book?.mature && (
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ink text-paper">
                     18+
                   </span>
                 )}
               </div>
 
-              {/* Title */}
-              <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#121212] tracking-tight leading-tight">
+              {/* Title: Petit Formal Script >= 28px, normal letter spacing, never bold */}
+              <h1 className="font-calligraphy text-3xl sm:text-4xl lg:text-5xl font-normal text-ink leading-tight">
                 {book?.title || 'Untitled Story'}
               </h1>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-[#E5E5E5] text-sm">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  >
-                    <Eye style={{ color: 'var(--accent)' }} className="w-4 h-4" />
-                  </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 border-y border-rule text-xs">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-ink shrink-0" />
                   <div>
-                    <span className="font-bold text-[#121212] block leading-tight">
+                    <span className="font-bold text-ink block leading-tight">
                       {formatNumber(book?.stats?.reads || 0)}
                     </span>
-                    <span className="text-[11px] text-[#64748B]">Reads</span>
+                    <span className="text-[11px] text-muted">Reads</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  <div
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  >
-                    <Star style={{ color: 'var(--accent)' }} className="w-4 h-4 fill-current" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-ink shrink-0" />
                   <div>
-                    <span className="font-bold text-[#121212] block leading-tight">
+                    <span className="font-bold text-ink block leading-tight">
                       {book?.stats?.ratingAvg ? book.stats.ratingAvg.toFixed(1) : 'New'}
                     </span>
-                    <span className="text-[11px] text-[#64748B]">
+                    <span className="text-[11px] text-muted">
                       {formatNumber(book?.stats?.ratingCount || 0)} reviews
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  <div
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  >
-                    <BookOpen style={{ color: 'var(--accent)' }} className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-ink shrink-0" />
                   <div>
-                    <span className="font-bold text-[#121212] block leading-tight">
+                    <span className="font-bold text-ink block leading-tight">
                       {book?.pageCount || 1}
                     </span>
-                    <span className="text-[11px] text-[#64748B]">Pages</span>
+                    <span className="text-[11px] text-muted">Pages</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  <div
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)' }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  >
-                    <Clock style={{ color: 'var(--accent)' }} className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-ink shrink-0" />
                   <div>
-                    <span className="font-bold text-[#121212] block leading-tight">
+                    <span className="font-bold text-ink block leading-tight">
                       {readingTimeText}
                     </span>
-                    <span className="text-[11px] text-[#64748B]">Est. Time</span>
+                    <span className="text-[11px] text-muted">Est. Time</span>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2">
+              <div className="pt-1">
                 {renderActionButtons()}
               </div>
 
               {/* Tags */}
               {book?.tags && book.tags.length > 0 && (
-                <div className="pt-2">
-                  <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block mb-2">
+                <div className="pt-1">
+                  <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-1.5">
                     Tags
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {book.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs bg-[#F7F7F7] text-slate-700 px-3 py-1 rounded-full font-medium border border-[#E5E5E5]"
+                        className="text-xs bg-paper text-ink px-2 py-0.5 rounded font-bold border border-rule"
                       >
                         #{tag}
                       </span>
@@ -191,19 +156,18 @@ export function ClassicTemplate({
               )}
 
               {/* Synopsis */}
-              <div className="pt-2">
-                <h2 className="text-xs font-bold text-[#64748B] uppercase tracking-wider mb-2">
+              <div className="pt-1">
+                <h2 className="text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Synopsis
                 </h2>
-                <p className="text-slate-800 text-sm md:text-base leading-relaxed whitespace-pre-line font-serif">
+                <p className="text-ink text-sm leading-relaxed whitespace-pre-line">
                   {displayDesc}
                 </p>
                 {isLongDesc && (
                   <button
                     type="button"
                     onClick={() => setDescExpanded(!descExpanded)}
-                    style={{ color: 'var(--accent)' }}
-                    className="mt-2 text-xs font-bold hover:underline cursor-pointer"
+                    className="mt-1 text-xs font-bold text-accent hover:underline cursor-pointer"
                   >
                     {descExpanded ? 'Show less' : 'Read more...'}
                   </button>
@@ -212,7 +176,7 @@ export function ClassicTemplate({
             </div>
 
             {/* Footer metadata */}
-            <div className="pt-4 border-t border-[#E5E5E5] flex flex-wrap items-center justify-between text-xs text-[#64748B] gap-2">
+            <div className="pt-3 border-t border-rule flex flex-wrap items-center justify-between text-xs text-muted gap-2">
               <span>Updated on {updatedDate}</span>
               <span>Language: {book?.language?.toUpperCase() || 'EN'}</span>
             </div>
@@ -230,3 +194,4 @@ export function ClassicTemplate({
 }
 
 export default ClassicTemplate;
+

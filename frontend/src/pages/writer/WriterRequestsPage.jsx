@@ -33,23 +33,23 @@ const STATUS_TABS = [
 
 const STATUS_BADGES = {
   pending: {
-    bg: 'bg-amber-50 text-amber-800 border-amber-200',
+    bg: 'bg-paper text-muted border-rule',
     label: 'Pending Your Decision',
   },
   accepted: {
-    bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    bg: 'bg-paper text-success border-success',
     label: 'Accepted / In Talks',
   },
   declined: {
-    bg: 'bg-rose-50 text-rose-800 border-rose-200',
+    bg: 'bg-paper text-danger border-danger',
     label: 'Declined (30d Cooldown)',
   },
   withdrawn: {
-    bg: 'bg-slate-100 text-slate-700 border-slate-200',
+    bg: 'bg-paper text-muted border-rule',
     label: 'Withdrawn by Publisher',
   },
   closed: {
-    bg: 'bg-slate-100 text-slate-600 border-slate-200',
+    bg: 'bg-paper text-muted border-rule',
     label: 'Closed',
   },
 };
@@ -144,25 +144,25 @@ export function WriterRequestsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6 text-left">
       {/* Header */}
-      <div className="border-b border-slate-200/80 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-[#FF500A] flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-rule text-muted flex items-center gap-1.5">
               <Inbox className="w-3.5 h-3.5" />
               Publisher Inbox
             </span>
           </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mt-2">
+          <h1 className="text-3xl font-normal text-ink mt-2">
             Publishing Offers & Inquiries
           </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+          <p className="text-xs text-muted mt-1 max-w-2xl">
             Review formal acquisition proposals and inquiries from verified publishers. Accepting an offer opens a secure, private communication channel.
           </p>
         </div>
 
         <Link
           to="/w/chat"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-[#FF500A] transition-all shrink-0 shadow-2xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-ink hover:opacity-90 text-paper rounded text-xs font-bold shrink-0"
         >
           <MessageSquare className="w-4 h-4" />
           Active Conversations
@@ -170,7 +170,7 @@ export function WriterRequestsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 border-b border-rule overflow-x-auto pb-1">
         {STATUS_TABS.map((tab) => {
           const isActive = statusFilter === tab.id;
           return (
@@ -180,10 +180,10 @@ export function WriterRequestsPage() {
                 setStatusFilter(tab.id);
                 setPage(1);
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-ink text-paper border border-ink'
+                  : 'text-muted hover:text-ink bg-paper border border-rule'
               }`}
             >
               {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
@@ -195,34 +195,32 @@ export function WriterRequestsPage() {
 
       {/* Requests list */}
       {loading ? (
-        <div className="space-y-4 animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-44 bg-slate-100 rounded-2xl border border-slate-200" />
-          ))}
+        <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+          Loading…
         </div>
       ) : error ? (
-        <div className="p-6 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-sm">
+        <div className="p-4 bg-paper border border-rule text-danger rounded flex items-center gap-3 text-xs">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
           <button
             onClick={fetchRequests}
-            className="ml-auto underline font-semibold text-xs"
+            className="ml-auto underline font-bold cursor-pointer"
           >
             Retry
           </button>
         </div>
       ) : requests.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl p-8">
-          <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-serif font-bold text-slate-800 text-lg">No Inquiries Found</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-6">
+        <div className="text-center py-16 bg-paper border border-rule rounded p-8">
+          <Inbox className="w-10 h-10 text-muted mx-auto mb-3" />
+          <h3 className="font-bold text-ink text-base">No Inquiries Found</h3>
+          <p className="text-xs text-muted max-w-md mx-auto mt-1 mb-6">
             {statusFilter === 'all'
               ? 'You have not received any publishing proposals yet. Keep publishing and sharing your stories!'
               : `You have no proposals currently categorized as '${statusFilter}'.`}
           </p>
           <Link
             to="/w/books"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FF500A] text-white rounded-xl text-xs font-bold hover:bg-[#e04505] transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-paper rounded text-xs font-bold"
           >
             Manage Your Books
             <ArrowRight className="w-3.5 h-3.5" />
@@ -238,12 +236,12 @@ export function WriterRequestsPage() {
             return (
               <div
                 key={req._id}
-                className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-md transition-all shadow-2xs flex flex-col lg:flex-row gap-6 justify-between"
+                className="bg-paper border border-rule rounded p-6 flex flex-col lg:flex-row gap-6 justify-between"
               >
                 {/* Left/Middle Content */}
                 <div className="flex flex-col sm:flex-row gap-5 min-w-0 flex-1">
                   {/* Book thumbnail */}
-                  <div className="w-20 h-28 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-200 shadow-2xs">
+                  <div className="w-20 aspect-[2/3] bg-paper rounded overflow-hidden shrink-0 border border-rule">
                     {book.coverUrl ? (
                       <img
                         src={book.coverUrl}
@@ -251,7 +249,7 @@ export function WriterRequestsPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-slate-400">
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-muted">
                         <BookOpen className="w-6 h-6 mb-1" />
                         <span className="text-[9px] line-clamp-2">{book.title}</span>
                       </div>
@@ -262,50 +260,50 @@ export function WriterRequestsPage() {
                   <div className="space-y-3 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.bg}`}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badge.bg}`}
                       >
                         {badge.label}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-muted">
                         Received {new Date(req.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     <div>
-                      <h2 className="font-serif font-bold text-slate-900 text-lg line-clamp-1">
+                      <h2 className="font-bold text-ink text-base line-clamp-1">
                         Offer for "{book.title || 'Untitled'}"
                       </h2>
                     </div>
 
                     {/* Publisher Meta Box */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs text-slate-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-paper border border-rule rounded p-3 text-xs text-ink">
                       <div className="flex items-center gap-1.5">
-                        <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <Building className="w-3.5 h-3.5 text-muted shrink-0" />
                         <span className="truncate">
                           <strong>{req.company || publisher.company || 'Publisher'}</strong>
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <User className="w-3.5 h-3.5 text-muted shrink-0" />
                         <span className="truncate">{req.contactName || publisher.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <Mail className="w-3.5 h-3.5 text-muted shrink-0" />
                         <span className="truncate">{req.contactEmail || publisher.email}</span>
                       </div>
                     </div>
 
                     {/* Commercial Terms & Message */}
-                    <div className="space-y-1.5 text-xs text-slate-700">
-                      <div className="p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl space-y-1">
-                        <span className="font-bold text-amber-900 uppercase text-[10px] tracking-wider block">
+                    <div className="space-y-1.5 text-xs text-ink">
+                      <div className="p-3 bg-paper border border-rule rounded space-y-1">
+                        <span className="font-bold text-muted uppercase text-[10px] tracking-wider block">
                           Proposed Commercial Terms
                         </span>
-                        <p className="font-medium text-slate-900">{req.proposedTerms}</p>
+                        <p className="font-bold text-ink">{req.proposedTerms}</p>
                       </div>
 
                       {req.message && (
-                        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 italic">
+                        <div className="p-3 bg-paper border border-rule rounded text-muted italic">
                           "{req.message}"
                         </div>
                       )}
@@ -313,13 +311,13 @@ export function WriterRequestsPage() {
                       {/* Rights Requested */}
                       {req.rights && req.rights.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                          <span className="text-[11px] font-semibold text-slate-500">
+                          <span className="text-[11px] font-bold text-muted">
                             Requested Rights:
                           </span>
                           {req.rights.map((right) => (
                             <span
                               key={right}
-                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 uppercase"
+                              className="px-2 py-0.5 rounded bg-paper border border-rule text-[10px] font-bold text-muted uppercase"
                             >
                               {right.replace('_', ' ')}
                             </span>
@@ -331,16 +329,16 @@ export function WriterRequestsPage() {
                 </div>
 
                 {/* Right Action Column */}
-                <div className="flex flex-col justify-between items-stretch lg:items-end gap-3 shrink-0 lg:w-48 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                <div className="flex flex-col justify-between items-stretch lg:items-end gap-3 shrink-0 lg:w-48 pt-3 lg:pt-0 border-t lg:border-t-0 border-rule">
                   <div className="space-y-1 text-left lg:text-right">
                     {req.status === 'accepted' && (
-                      <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1 lg:justify-end">
+                      <span className="text-xs text-success font-bold flex items-center gap-1 lg:justify-end">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Conversation Active
                       </span>
                     )}
                     {req.status === 'declined' && (
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-muted">
                         {req.note ? `Note: "${req.note}"` : 'Decline cooldown active'}
                       </p>
                     )}
@@ -354,7 +352,7 @@ export function WriterRequestsPage() {
                             setActiveModal({ type: 'accept', request: req });
                             setModalNote('');
                           }}
-                          className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-accent hover:bg-accent-hover text-paper rounded text-xs font-bold cursor-pointer"
                         >
                           <Check className="w-3.5 h-3.5" />
                           Accept Offer
@@ -364,7 +362,7 @@ export function WriterRequestsPage() {
                             setActiveModal({ type: 'decline', request: req });
                             setModalNote('');
                           }}
-                          className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-paper hover:border-danger text-danger border border-rule rounded text-xs font-bold cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                           Decline
@@ -376,7 +374,7 @@ export function WriterRequestsPage() {
                       <>
                         <button
                           onClick={() => navigate(`/w/chat?convo=${req.conversationId || ''}`)}
-                          className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-ink hover:opacity-90 text-paper rounded text-xs font-bold cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                           Open Chat
@@ -386,7 +384,7 @@ export function WriterRequestsPage() {
                             setActiveModal({ type: 'close', request: req });
                             setModalNote('');
                           }}
-                          className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 bg-paper hover:border-ink text-ink border border-rule rounded text-xs font-bold cursor-pointer"
                         >
                           <Archive className="w-3.5 h-3.5" />
                           Close Deal
@@ -395,14 +393,14 @@ export function WriterRequestsPage() {
                     )}
 
                     {/* Secondary actions: Block & Report */}
-                    <div className="flex items-center justify-between pt-1 text-slate-400">
+                    <div className="flex items-center justify-between pt-1 text-muted">
                       <button
                         onClick={() => {
                           setActiveModal({ type: 'block', request: req });
                           setModalNote('');
                         }}
                         title="Block this publisher from contacting you"
-                        className="text-[11px] text-slate-500 hover:text-rose-600 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-[11px] text-muted hover:text-danger inline-flex items-center gap-1 cursor-pointer font-bold"
                       >
                         <Ban className="w-3 h-3" />
                         Block
@@ -429,17 +427,17 @@ export function WriterRequestsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3.5 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold bg-white disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-1.5 border border-rule rounded text-xs font-bold bg-paper text-ink hover:border-ink disabled:opacity-50 cursor-pointer"
           >
             Previous
           </button>
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-xs text-muted">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3.5 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold bg-white disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-1.5 border border-rule rounded text-xs font-bold bg-paper text-ink hover:border-ink disabled:opacity-50 cursor-pointer"
           >
             Next
           </button>
@@ -448,26 +446,26 @@ export function WriterRequestsPage() {
 
       {/* Interactive Action Modals */}
       {activeModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-paper rounded max-w-md w-full p-6 space-y-4 border border-rule">
             {/* Accept */}
             {activeModal.type === 'accept' && (
               <>
-                <div className="flex items-center gap-3 text-emerald-600">
-                  <CheckCircle2 className="w-6 h-6" />
-                  <h3 className="font-serif font-bold text-lg text-slate-900">
+                <div className="flex items-center gap-3 text-accent">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <h3 className="font-bold text-base text-ink">
                     Accept Publishing Offer
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   Accepting this offer opens an official direct messaging channel with{' '}
-                  <strong className="text-slate-900">
+                  <strong className="text-ink">
                     {activeModal.request?.company || 'the publisher'}
                   </strong>
                   . You can discuss contract details, rights, and next steps in complete privacy.
                 </p>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-muted mb-1">
                     Optional Acceptance Note / Greeting:
                   </label>
                   <textarea
@@ -475,7 +473,7 @@ export function WriterRequestsPage() {
                     value={modalNote}
                     onChange={(e) => setModalNote(e.target.value)}
                     placeholder="Hello, thank you for your interest! I look forward to discussing..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                    className="w-full bg-paper border border-rule rounded p-3 text-xs text-ink placeholder-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                   />
                 </div>
               </>
@@ -484,17 +482,17 @@ export function WriterRequestsPage() {
             {/* Decline */}
             {activeModal.type === 'decline' && (
               <>
-                <div className="flex items-center gap-3 text-rose-600">
-                  <XCircle className="w-6 h-6" />
-                  <h3 className="font-serif font-bold text-lg text-slate-900">
+                <div className="flex items-center gap-3 text-danger">
+                  <XCircle className="w-5 h-5" />
+                  <h3 className="font-bold text-base text-ink">
                     Decline Publishing Offer
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   Declining will notify the publisher. Note: A 30-day cooldown will prevent this publisher from re-submitting a new proposal for this specific book during this window.
                 </p>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-muted mb-1">
                     Reason / Polite Note (Optional):
                   </label>
                   <textarea
@@ -502,7 +500,7 @@ export function WriterRequestsPage() {
                     value={modalNote}
                     onChange={(e) => setModalNote(e.target.value)}
                     placeholder="Thank you for your interest, however at this time I am seeking different terms/commitments..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500"
+                    className="w-full bg-paper border border-rule rounded p-3 text-xs text-ink placeholder-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                   />
                 </div>
               </>
@@ -511,17 +509,17 @@ export function WriterRequestsPage() {
             {/* Close */}
             {activeModal.type === 'close' && (
               <>
-                <div className="flex items-center gap-3 text-slate-700">
-                  <Archive className="w-6 h-6" />
-                  <h3 className="font-serif font-bold text-lg text-slate-900">
+                <div className="flex items-center gap-3 text-ink">
+                  <Archive className="w-5 h-5" />
+                  <h3 className="font-bold text-base text-ink">
                     Close Proposal / Talks
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   Mark this negotiation as closed. The active conversation will be locked from sending new messages.
                 </p>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-muted mb-1">
                     Closing Note (Optional):
                   </label>
                   <textarea
@@ -529,7 +527,7 @@ export function WriterRequestsPage() {
                     value={modalNote}
                     onChange={(e) => setModalNote(e.target.value)}
                     placeholder="Contract signed / negotiations concluded..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500"
+                    className="w-full bg-paper border border-rule rounded p-3 text-xs text-ink placeholder-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                   />
                 </div>
               </>
@@ -538,17 +536,17 @@ export function WriterRequestsPage() {
             {/* Block */}
             {activeModal.type === 'block' && (
               <>
-                <div className="flex items-center gap-3 text-rose-600">
-                  <ShieldAlert className="w-6 h-6" />
-                  <h3 className="font-serif font-bold text-lg text-slate-900">
+                <div className="flex items-center gap-3 text-danger">
+                  <ShieldAlert className="w-5 h-5" />
+                  <h3 className="font-bold text-base text-ink">
                     Block Publisher
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed">
                   Blocking this publisher will immediately prevent them from sending any future proposals to you across all your books.
                 </p>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-muted mb-1">
                     Reason for blocking (Internal record):
                   </label>
                   <textarea
@@ -556,7 +554,7 @@ export function WriterRequestsPage() {
                     value={modalNote}
                     onChange={(e) => setModalNote(e.target.value)}
                     placeholder="Unwanted solicitations, offensive conduct..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500"
+                    className="w-full bg-paper border border-rule rounded p-3 text-xs text-ink placeholder-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                   />
                 </div>
               </>
@@ -568,7 +566,7 @@ export function WriterRequestsPage() {
                 type="button"
                 onClick={() => setActiveModal(null)}
                 disabled={modalLoading}
-                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                className="px-4 py-2 border border-rule text-ink rounded text-xs font-bold hover:border-ink cursor-pointer bg-paper"
               >
                 Cancel
               </button>
@@ -576,12 +574,12 @@ export function WriterRequestsPage() {
                 type="button"
                 onClick={handleModalAction}
                 disabled={modalLoading}
-                className={`px-4 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 py-2 text-paper rounded text-xs font-bold cursor-pointer flex items-center gap-1.5 ${
                   activeModal.type === 'accept'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    ? 'bg-accent hover:bg-accent-hover'
                     : activeModal.type === 'decline' || activeModal.type === 'block'
-                    ? 'bg-rose-600 hover:bg-rose-700'
-                    : 'bg-slate-800 hover:bg-slate-900'
+                    ? 'bg-danger hover:opacity-90'
+                    : 'bg-ink hover:opacity-90'
                 }`}
               >
                 {modalLoading ? 'Processing...' : 'Confirm'}

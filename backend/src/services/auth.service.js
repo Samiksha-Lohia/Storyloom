@@ -2,10 +2,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import config from '../config/env.js';
 import userRepository from '../repositories/user.repository.js';
+import User from '../models/user.model.js';
+import mailerService from './mailer.service.js';
 import { BadRequestError, ConflictError, UnauthorizedError, ForbiddenError } from '../utilities/custom-errors.js';
 import { UserDto } from '../dtos/user.dto.js';
 import { redis } from '../config/redis.js';
 import { USER_ROLES, USER_STATUSES } from '../constants/user-roles.js';
+import { TERMS_VERSION } from '../constants/terms.js';
 
 /**
  * Parses JWT expiry string to seconds.
@@ -72,6 +75,8 @@ const generateTokenPair = async (user) => {
   // Store refresh token in Redis
   const ttl = parseExpiryToSeconds(config.jwt.refreshExpiry);
   await redis.set(`refresh_token:${jti}`, userId, 'EX', ttl);
+  await redis.sadd(`user_refresh_tokens:${userId}`, jti);
+  await redis.expire(`user_refresh_tokens:${userId}`, ttl);
 
   return { accessToken, refreshToken };
 };
@@ -98,6 +103,10 @@ const register = async (name, email, password, options = {}) => {
     throw new BadRequestError('Admin accounts cannot be created via registration.');
   }
 
+  if (options.termsAccepted === false) {
+    throw new BadRequestError('You must accept the Terms of Service and Privacy Policy.');
+  }
+
   let status = USER_STATUSES.ACTIVE;
   let publisherProfile = undefined;
 
@@ -122,6 +131,8 @@ const register = async (name, email, password, options = {}) => {
       passwordHash: password,
       role,
       status,
+      termsAcceptedAt: new Date(),
+      termsVersion: TERMS_VERSION,
       ...(publisherProfile && { publisherProfile }),
     });
 
@@ -223,7 +234,130 @@ const logout = async (refreshToken) => {
 
   if (payload.jti) {
     await redis.del(`refresh_token:${payload.jti}`);
+    if (payload.sub) {
+      await redis.srem(`user_refresh_tokens:${payload.sub}`, payload.jti);
+    }
   }
 };
 
-export { register, login, refreshTokens, logout, generateTokenPair };
+/**
+ * Invalidate all active refresh tokens for a specific user ID.
+ * @param {string} userId
+ */
+const invalidateAllUserRefreshTokens = async (userId) => {
+  const strId = userId.toString();
+  try {
+    const jtis = await redis.smembers(`user_refresh_tokens:${strId}`);
+    if (jtis && jtis.length > 0) {
+      const keys = jtis.map((jti) => `refresh_token:${jti}`);
+      await redis.del(...keys);
+      await redis.del(`user_refresh_tokens:${strId}`);
+    }
+
+    // Also scan as fallback in case any tokens were created without the set
+    let cursor = '0';
+    do {
+      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', 'refresh_token:*', 'COUNT', 100);
+      cursor = nextCursor;
+      for (const key of keys) {
+        const val = await redis.get(key);
+        if (val === strId) {
+          await redis.del(key);
+        }
+      }
+    } while (cursor !== '0');
+  } catch (err) {
+    // Non-blocking fallback
+  }
+};
+
+/**
+ * Generate password reset token, save hashed token with 30m expiry,
+ * send email via mailer.service.js, and return generic response.
+ * @param {string} email
+ * @returns {Promise<{ message: string }>}
+ */
+const forgotPassword = async (email) => {
+  const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
+  const user = await userRepository.findByEmail(normalizedEmail);
+
+  if (user) {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    await user.save();
+
+    const frontendBaseUrl = (config.frontendUrl || config.corsAllowedOrigins?.[0] || 'http://localhost:3000').replace(/\/+$/, '');
+    const resetUrl = `${frontendBaseUrl}/reset-password?token=${rawToken}`;
+
+    await mailerService.sendEmail({
+      to: user.email,
+      subject: 'SceneCraft - Password Reset Request',
+      text: `Hello ${user.name},\n\nYou requested a password reset. Please click the following link to reset your password (valid for 30 minutes):\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.\n`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Password Reset Request</h2>
+          <p>Hello ${user.name},</p>
+          <p>We received a request to reset your password for your SceneCraft account. Click the button below to reset it. This link is valid for 30 minutes.</p>
+          <p style="margin: 24px 0;">
+            <a href="${resetUrl}" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+          </p>
+          <p>Or copy and paste this link in your browser:</p>
+          <p><a href="${resetUrl}">${resetUrl}</a></p>
+          <p style="color: #64748b; font-size: 14px; margin-top: 32px;">If you did not make this request, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+  }
+
+  // Always return identical generic 200 response to avoid email enumeration
+  return { message: 'If an account exists with this email, password reset instructions have been sent.' };
+};
+
+/**
+ * Reset user password with token and invalidate all refresh tokens.
+ * @param {string} token
+ * @param {string} newPassword
+ * @returns {Promise<{ message: string }>}
+ */
+const resetPassword = async (token, newPassword) => {
+  if (!token) {
+    throw new BadRequestError('Reset token is required.');
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token.trim()).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new BadRequestError('Invalid or expired password reset token.');
+  }
+
+  // Update password (pre-save hook will hash passwordHash)
+  user.passwordHash = newPassword;
+  user.passwordResetToken = null;
+  user.passwordResetExpires = null;
+  await user.save();
+
+  // Invalidate all refresh tokens for this user
+  await invalidateAllUserRefreshTokens(user._id.toString());
+
+  return { message: 'Password has been reset successfully. Please log in with your new password.' };
+};
+
+export {
+  register,
+  login,
+  refreshTokens,
+  logout,
+  generateTokenPair,
+  forgotPassword,
+  resetPassword,
+  invalidateAllUserRefreshTokens,
+};
+

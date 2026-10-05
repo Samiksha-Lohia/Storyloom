@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { Logo } from '../../components/common/Logo';
 import { AuthCollage } from './AuthCollage';
+import { APP_NAME } from '../../constants/app';
+import { getRoleHomePath } from '../../utils/roleRedirect';
+
+const ROLES = [
+  { id: 'reader', label: 'Reader', desc: 'Read & react' },
+  { id: 'writer', label: 'Writer', desc: 'Publish stories' },
+  { id: 'publisher', label: 'Apply as publisher', desc: 'Scout talent' },
+];
 
 export function SignupPage() {
-  const { register } = useAuth();
+  const { register, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [role, setRole] = useState('reader');
@@ -18,12 +26,22 @@ export function SignupPage() {
     company: '',
     website: '',
     note: '',
-    agreeTerms: true,
+    agreeTerms: false,
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState('');
+
+  const roleRefs = useRef({});
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(getRoleHomePath(user), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const calculatePasswordStrength = (pass) => {
     if (!pass) return { score: 0, label: '', color: 'bg-stone-200' };
@@ -41,6 +59,22 @@ export function SignupPage() {
 
   const strength = calculatePasswordStrength(formData.password);
 
+  const focusFirstInvalidField = (fieldNames) => {
+    const fieldOrder = ['name', 'email', 'password', 'company', 'website', 'note', 'agreeTerms'];
+    for (const field of fieldOrder) {
+      if (fieldNames.includes(field)) {
+        if (field === 'agreeTerms') {
+          const el = document.getElementById('signup-terms');
+          if (el) el.focus();
+        } else {
+          const el = document.getElementById(`signup-${field}`);
+          if (el) el.focus();
+        }
+        break;
+      }
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -53,12 +87,29 @@ export function SignupPage() {
     setGeneralError('');
   };
 
+  const handleRoleKeyDown = (e, currentIdx) => {
+    let nextIdx = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIdx = (currentIdx + 1) % ROLES.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIdx = (currentIdx - 1 + ROLES.length) % ROLES.length;
+    }
+    if (nextIdx !== null) {
+      const nextRole = ROLES[nextIdx].id;
+      setRole(nextRole);
+      setErrors({});
+      roleRefs.current[nextRole]?.focus();
+    }
+  };
+
   const validate = () => {
     const errs = {};
     if (!formData.name.trim()) errs.name = 'Full name is required';
     if (!formData.email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errs.email = 'Email address is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
       errs.email = 'Please enter a valid email address';
     }
     if (!formData.password) {
@@ -71,6 +122,22 @@ export function SignupPage() {
       if (!formData.company.trim()) {
         errs.company = 'Company / organization name is required for publishers';
       }
+      if (!formData.website.trim()) {
+        errs.website = 'Company website is required for publishers';
+      } else {
+        let site = formData.website.trim();
+        if (!/^https?:\/\//i.test(site)) {
+          site = `https://${site}`;
+        }
+        try {
+          const parsed = new URL(site);
+          if (!parsed.hostname || !parsed.hostname.includes('.')) {
+            errs.website = 'Please enter a valid website URL';
+          }
+        } catch {
+          errs.website = 'Please enter a valid website URL';
+        }
+      }
     }
 
     if (!formData.agreeTerms) {
@@ -78,7 +145,12 @@ export function SignupPage() {
     }
 
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const errorKeys = Object.keys(errs);
+    if (errorKeys.length > 0) {
+      focusFirstInvalidField(errorKeys);
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -107,77 +179,91 @@ export function SignupPage() {
         payload.note = formData.note.trim();
       }
 
-      await register(payload);
-
-      if (role === 'publisher') {
-        // Pending approval screen
-        navigate('/p/apply-status');
-      } else if (role === 'writer') {
-        navigate('/w/dashboard');
-      } else {
-        navigate('/');
-      }
-
+      const res = await register(payload);
+      const registeredUser = res?.user || { role, status: role === 'publisher' ? 'pending' : 'active' };
+      navigate(getRoleHomePath(registeredUser));
     } catch (err) {
-      // Never reveal specific user existence, keep message clear and generic
-      setGeneralError(err.message || 'Unable to complete sign-up. Please verify your details.');
+      if (err.status === 409 || err.code === 11000) {
+        setErrors((prev) => ({
+          ...prev,
+          email: (
+            <span>
+              An account with this email already exists.{' '}
+              <Link to="/login" className="font-bold underline text-[#C2410C] hover:text-[#9A3412]">
+                Log in instead?
+              </Link>
+            </span>
+          ),
+        }));
+        focusFirstInvalidField(['email']);
+      } else if (Array.isArray(err.errors) && err.errors.length > 0) {
+        const backendFieldErrors = {};
+        const fieldKeys = [];
+        err.errors.forEach((item) => {
+          const fieldKey = item.field === 'termsAccepted' ? 'agreeTerms' : item.field;
+          backendFieldErrors[fieldKey] = item.message;
+          fieldKeys.push(fieldKey);
+        });
+        setErrors((prev) => ({ ...prev, ...backendFieldErrors }));
+        focusFirstInvalidField(fieldKeys);
+      } else {
+        setGeneralError(err.message || 'Unable to complete sign-up. Please verify your details.');
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col md:flex-row">
-      {/* Left: Collage (Visual panel) */}
-      <AuthCollage />
+    <div className="min-h-screen bg-paper flex flex-col md:flex-row">
+      {/* Left: Collage (Visual panel / mobile top banner) */}
+      <div className="w-full md:w-1/2 p-3 sm:p-4 md:p-6 lg:p-8 shrink-0">
+        <AuthCollage />
+      </div>
 
       {/* Right: Signup Form */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-14 xl:px-20 max-w-xl mx-auto md:max-w-none md:w-1/2 overflow-y-auto">
+      <div className="flex-1 flex flex-col justify-center px-6 py-8 lg:px-14 xl:px-20 max-w-xl mx-auto md:max-w-none md:w-1/2 overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
-          {/* Mobile-only Logo */}
-          <div className="md:hidden mb-6 flex justify-center">
-            <Logo size="lg" />
-          </div>
-
           <div className="mb-6">
-            <h1 className="font-heading text-3xl font-extrabold text-stone-900 tracking-tight">
-              Join SceneCraft
+            <h1 className="font-calligraphy text-3xl font-normal text-ink tracking-tight">
+              Join {APP_NAME}
             </h1>
-            <p className="text-stone-600 mt-2 text-sm">
+            <p className="text-muted mt-2 text-sm font-body">
               Discover original stories, write your own narrative, or scout next-gen talent.
             </p>
           </div>
 
           {/* Role Chooser */}
-          <div className="mb-6">
-            <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+          <div className="mb-5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">
               I want to join as:
             </label>
             <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Account type">
-              {[
-                { id: 'reader', label: 'Reader', desc: 'Read & react' },
-                { id: 'writer', label: 'Writer', desc: 'Publish stories' },
-                { id: 'publisher', label: 'Publisher', desc: 'Scout talent' },
-              ].map((r) => {
+              {ROLES.map((r, idx) => {
                 const active = role === r.id;
                 return (
                   <button
+                    ref={(el) => {
+                      roleRefs.current[r.id] = el;
+                    }}
                     key={r.id}
                     type="button"
                     role="radio"
                     aria-checked={active}
+                    tabIndex={active ? 0 : -1}
+                    onKeyDown={(e) => handleRoleKeyDown(e, idx)}
                     onClick={() => {
                       setRole(r.id);
                       setErrors({});
                     }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                    className={`flex flex-col items-center justify-center p-3 rounded border text-center cursor-pointer ${
                       active
-                        ? 'border-[#FF500A] bg-[#FFF0E8] text-[#FF500A] ring-2 ring-[#FF500A]/30 shadow-xs'
-                        : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50'
+                        ? 'border-accent bg-paper text-accent font-bold'
+                        : 'border-rule bg-paper text-ink hover:border-muted'
                     }`}
                   >
-                    <span className="font-bold text-sm">{r.label}</span>
-                    <span className="text-[11px] opacity-75 mt-0.5">{r.desc}</span>
+                    <span className="font-bold text-xs sm:text-sm leading-tight">{r.label}</span>
+                    <span className="text-[11px] text-muted mt-0.5">{r.desc}</span>
                   </button>
                 );
               })}
@@ -187,24 +273,19 @@ export function SignupPage() {
           {generalError && (
             <div
               role="alert"
-              className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium flex items-center gap-2"
+              className="mb-5 p-3 bg-paper border border-danger rounded text-danger text-xs font-medium flex items-center gap-2"
             >
-              <svg className="w-4 h-4 shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
               <span>{generalError}</span>
             </div>
           )}
 
           {/* Reserved Google Sign-in Slot */}
           <div className="mb-5">
-            <button
-              type="button"
-              disabled
-              title="Google authentication will be enabled in a future release"
-              className="w-full h-11 flex items-center justify-center gap-3 px-4 rounded-full border border-stone-200 bg-stone-100 text-stone-400 font-medium text-sm cursor-not-allowed transition"
+            <div
+              aria-disabled="true"
+              className="w-full py-2 px-3 rounded border border-rule bg-paper text-muted font-medium text-xs flex items-center justify-center gap-2 select-none"
             >
-              <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 opacity-50 shrink-0" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -222,14 +303,14 @@ export function SignupPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Sign up with Google (coming soon)</span>
-            </button>
-            <div className="relative my-4">
+              <span>Google sign-in coming soon</span>
+            </div>
+            <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-stone-200" />
+                <div className="w-full border-t border-rule" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-stone-50 px-2 text-stone-500 font-semibold">Or with email</span>
+              <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
+                <span className="bg-paper px-2 text-muted font-semibold">Or with email</span>
               </div>
             </div>
           </div>
@@ -260,53 +341,59 @@ export function SignupPage() {
               required
             />
 
-            <div>
+            <div className="space-y-1">
               <Input
                 id="signup-password"
                 label="Password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="At least 8 characters"
                 value={formData.password}
                 onChange={handleChange}
                 error={errors.password}
                 required
+                rightAction={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="text-muted hover:text-ink p-1 rounded cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }
               />
-              {/* Password strength meter */}
+              <p className="text-[11px] text-muted">At least 8 characters</p>
+
+              {/* Password strength meter - advisory */}
               {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500 mb-1">
+                <div className="pt-1">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-muted mb-1">
                     <span>Password strength:</span>
-                    <span className="text-stone-700">{strength.label}</span>
+                    <span className="text-ink">{strength.label}</span>
                   </div>
-                  <div className="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden flex gap-1">
+                  <div className="h-1 w-full bg-rule rounded overflow-hidden flex gap-1">
                     {[1, 2, 3, 4].map((step) => (
                       <div
                         key={step}
-                        className={`h-full flex-1 transition-all ${
-                          strength.score >= step ? strength.color : 'bg-stone-200'
+                        className={`h-full flex-1 ${
+                          strength.score >= step ? 'bg-ink' : 'bg-rule'
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-[11px] text-stone-500 mt-1">
-                    Tip: Use uppercase, numbers, and symbols to boost security.
-                  </p>
                 </div>
               )}
             </div>
 
             {/* Publisher Extra Fields */}
             {role === 'publisher' && (
-              <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-3">
+              <div className="p-4 bg-paper border border-rule rounded space-y-3">
                 <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
                   <div>
-                    <h2 className="text-xs font-bold text-amber-900">Publisher Verification Notice</h2>
-                    <p className="text-xs text-amber-800/90 mt-0.5">
-                      Publisher accounts require manual administrator review before catalogue scout access is granted.
+                    <h2 className="text-xs font-bold text-ink">Publisher Verification Notice</h2>
+                    <p className="text-xs text-muted mt-0.5">
+                      Publisher accounts require administrator review before catalogue scout access is granted.
                     </p>
                   </div>
                 </div>
@@ -332,10 +419,14 @@ export function SignupPage() {
                   value={formData.website}
                   onChange={handleChange}
                   error={errors.website}
+                  required
                 />
 
                 <div>
-                  <label htmlFor="signup-note" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
+                  <label
+                    htmlFor="signup-note"
+                    className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5"
+                  >
                     Note for review team (optional)
                   </label>
                   <textarea
@@ -345,8 +436,11 @@ export function SignupPage() {
                     placeholder="Tell us about the genres or talent you scout..."
                     value={formData.note}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-lg text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF500A] focus:border-transparent transition"
+                    className="w-full px-3 py-2 bg-paper border border-rule rounded text-xs text-ink focus:outline-none focus:border-ink font-body"
                   />
+                  {errors.note && (
+                    <p className="text-xs text-danger font-medium mt-1">{errors.note}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -355,26 +449,39 @@ export function SignupPage() {
             <div className="pt-2">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
+                  id="signup-terms"
                   type="checkbox"
                   name="agreeTerms"
                   checked={formData.agreeTerms}
                   onChange={handleChange}
-                  className="mt-1 h-4 w-4 rounded border-stone-300 text-[#FF500A] focus:ring-[#FF500A]"
+                  aria-invalid={errors.agreeTerms ? 'true' : undefined}
+                  aria-describedby={errors.agreeTerms ? 'signup-terms-error' : undefined}
+                  className="mt-1 h-4 w-4 rounded border-rule text-ink focus:ring-0"
                 />
-                <span className="text-xs text-stone-600 leading-relaxed">
+                <span className="text-xs text-muted leading-relaxed font-body">
                   I agree to the{' '}
-                  <Link to="/terms" target="_blank" className="font-semibold text-stone-800 underline hover:text-[#FF500A]">
+                  <Link
+                    to="/terms"
+                    target="_blank"
+                    className="font-semibold text-ink underline hover:text-accent"
+                  >
                     Terms of Service
                   </Link>{' '}
                   and acknowledge the{' '}
-                  <Link to="/privacy" target="_blank" className="font-semibold text-stone-800 underline hover:text-[#FF500A]">
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    className="font-semibold text-ink underline hover:text-accent"
+                  >
                     Privacy Policy
                   </Link>
                   .
                 </span>
               </label>
               {errors.agreeTerms && (
-                <p className="text-xs text-red-600 mt-1 font-medium">{errors.agreeTerms}</p>
+                <div id="signup-terms-error" role="alert" className="text-xs text-danger mt-1 font-medium">
+                  {errors.agreeTerms}
+                </div>
               )}
             </div>
 
@@ -390,9 +497,9 @@ export function SignupPage() {
           </form>
 
           {/* Footer note */}
-          <p className="text-center text-xs text-stone-500 mt-6">
+          <p className="text-center text-xs text-muted mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="font-bold text-[#FF500A] hover:underline">
+            <Link to="/login" className="font-bold text-accent hover:underline">
               Log in
             </Link>
           </p>
@@ -401,3 +508,5 @@ export function SignupPage() {
     </div>
   );
 }
+
+export default SignupPage;

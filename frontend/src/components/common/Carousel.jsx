@@ -31,7 +31,7 @@ export default function Carousel({
     const scrollAmount = el.clientWidth * 0.75;
     el.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
   };
 
@@ -44,12 +44,12 @@ export default function Carousel({
   };
 
   return (
-    <section className={`relative w-full group/carousel ${className}`}>
+    <section className={`relative w-full ${className}`}>
       {/* Header with Title and Desktop Nav Buttons */}
       {(title || viewAllLink) && (
         <div className="flex items-center justify-between mb-4">
           {title && (
-            <h2 className="text-xl md:text-2xl font-bold font-serif text-[#121212]">
+            <h2 className="text-xl md:text-2xl font-bold font-body text-ink">
               {title}
             </h2>
           )}
@@ -58,13 +58,13 @@ export default function Carousel({
             {viewAllLink}
 
             {/* Desktop Carousel Controls */}
-            <div className="hidden sm:flex items-center gap-1.5 ml-2">
+            <div className="hidden sm:flex items-center gap-1 ml-2">
               <button
                 type="button"
                 aria-label="Previous items"
                 disabled={!canScrollLeft}
                 onClick={() => scroll('left')}
-                className="w-8 h-8 rounded-full border border-[#E5E5E5] flex items-center justify-center text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -73,7 +73,7 @@ export default function Carousel({
                 aria-label="Next items"
                 disabled={!canScrollRight}
                 onClick={() => scroll('right')}
-                className="w-8 h-8 rounded-full border border-[#E5E5E5] flex items-center justify-center text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -90,18 +90,18 @@ export default function Carousel({
             aria-label="Previous items"
             disabled={!canScrollLeft}
             onClick={() => scroll('left')}
-            className={`hidden sm:flex absolute -left-3.5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border border-stone-200 bg-white/95 backdrop-blur-xs text-stone-700 items-center justify-center shadow-md hover:bg-stone-50 disabled:opacity-0 disabled:pointer-events-none transition-all cursor-pointer`}
+            className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded border border-rule bg-paper text-ink items-center justify-center hover:border-ink disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             type="button"
             aria-label="Next items"
             disabled={!canScrollRight}
             onClick={() => scroll('right')}
-            className={`hidden sm:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border border-stone-200 bg-white/95 backdrop-blur-xs text-stone-700 items-center justify-center shadow-md hover:bg-stone-50 disabled:opacity-0 disabled:pointer-events-none transition-all cursor-pointer`}
+            className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded border border-rule bg-paper text-ink items-center justify-center hover:border-ink disabled:opacity-0 disabled:pointer-events-none cursor-pointer"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </>
       )}
@@ -114,7 +114,7 @@ export default function Carousel({
         tabIndex={0}
         role="region"
         aria-label={ariaLabel || title || 'Carousel'}
-        className="flex gap-4 md:gap-5 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth scrollbar-none snap-x snap-mandatory focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF500A]"
+        className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none snap-x snap-mandatory focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {children}
@@ -124,4 +124,5 @@ export default function Carousel({
 }
 
 export { Carousel };
+
 

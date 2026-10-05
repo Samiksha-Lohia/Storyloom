@@ -4,12 +4,9 @@ import { api } from '../../services/api';
 import StarWishlistButton from '../../components/common/StarWishlistButton';
 import { 
   Search, 
-  Filter, 
   Star, 
   BookOpen, 
-  TrendingUp, 
   CheckCircle, 
-  SlidersHorizontal,
   Sparkles,
   Layers
 } from 'lucide-react';
@@ -105,17 +102,17 @@ export function PublisherDiscoverPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-rule text-muted">
               Publisher Talent Scouting
             </span>
           </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mt-2">
+          <h1 className="text-3xl font-normal text-ink mt-2">
             Manuscript Discovery
           </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+          <p className="text-xs text-muted mt-1 max-w-2xl">
             Evaluate high-performing stories with deep audience traction, AI story metrics, and pitch decks.
           </p>
         </div>
@@ -127,13 +124,13 @@ export function PublisherDiscoverPage() {
               setOnlyWishlisted(!onlyWishlisted);
               setPage(1);
             }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded text-xs font-bold border cursor-pointer ${
               onlyWishlisted
-                ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                ? 'bg-accent text-paper border-accent'
+                : 'bg-paper border-rule text-ink hover:border-ink'
             }`}
           >
-            <Star className={`w-4 h-4 ${onlyWishlisted ? 'fill-white' : 'text-amber-500'}`} />
+            <Star className={`w-4 h-4 ${onlyWishlisted ? 'fill-paper text-paper' : 'text-accent'}`} />
             <span>Wishlisted Only</span>
           </button>
 
@@ -143,7 +140,7 @@ export function PublisherDiscoverPage() {
               setSort(e.target.value);
               setPage(1);
             }}
-            className="px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden"
+            className="px-3.5 py-2 bg-paper border border-rule rounded text-xs font-bold text-ink focus:outline-hidden"
           >
             <option value="rating">Top Rated</option>
             <option value="reads">Most Reads</option>
@@ -153,32 +150,32 @@ export function PublisherDiscoverPage() {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs space-y-4">
+      <div className="bg-paper border border-rule rounded p-4 md:p-5 space-y-4">
         {/* Search Input */}
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <Search className="w-4 h-4 text-muted absolute left-3.5 top-3" />
             <input
               type="text"
               placeholder="Search by title, synopsis, author name, or key themes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/20 focus:border-[#FF500A] transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-paper border border-rule rounded text-xs text-ink placeholder-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-2 bg-[#FF500A] text-white rounded-xl text-xs font-bold hover:bg-[#e04505] transition-all cursor-pointer"
+            className="px-5 py-2 bg-accent text-paper rounded text-xs font-bold hover:bg-accent-hover cursor-pointer"
           >
             Search
           </button>
         </form>
 
         {/* Filter Chips Rows */}
-        <div className="space-y-3 pt-2 border-t border-slate-100 text-xs">
+        <div className="space-y-3 pt-2 border-t border-rule text-xs">
           {/* Genre Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span className="text-slate-400 font-semibold shrink-0">Genre:</span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-muted font-bold shrink-0">Genre:</span>
             {GENRES.map((g) => (
               <button
                 key={g}
@@ -186,10 +183,10 @@ export function PublisherDiscoverPage() {
                   setSelectedGenre(g);
                   setPage(1);
                 }}
-                className={`px-3 py-1 rounded-lg shrink-0 font-medium transition-colors cursor-pointer ${
+                className={`px-3 py-1 rounded shrink-0 font-bold cursor-pointer ${
                   selectedGenre === g
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-ink text-paper border border-ink'
+                    : 'bg-paper text-muted border border-rule hover:border-ink hover:text-ink'
                 }`}
               >
                 {g}
@@ -200,15 +197,15 @@ export function PublisherDiscoverPage() {
           {/* Rating, Completion, Length Dropdowns / Chips */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Rating Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-              <Star className="w-3.5 h-3.5 text-amber-500" />
+            <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
+              <Star className="w-3.5 h-3.5 text-accent" />
               <select
                 value={minRating}
                 onChange={(e) => {
                   setMinRating(e.target.value);
                   setPage(1);
                 }}
-                className="bg-transparent text-xs font-semibold text-slate-700 focus:outline-hidden"
+                className="bg-transparent text-xs font-bold text-ink focus:outline-hidden cursor-pointer"
               >
                 {RATING_FILTERS.map((f) => (
                   <option key={f.value} value={f.value}>
@@ -219,15 +216,15 @@ export function PublisherDiscoverPage() {
             </div>
 
             {/* Completion Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
+              <CheckCircle className="w-3.5 h-3.5 text-success" />
               <select
                 value={completionMin}
                 onChange={(e) => {
                   setCompletionMin(e.target.value);
                   setPage(1);
                 }}
-                className="bg-transparent text-xs font-semibold text-slate-700 focus:outline-hidden"
+                className="bg-transparent text-xs font-bold text-ink focus:outline-hidden cursor-pointer"
               >
                 {COMPLETION_FILTERS.map((f) => (
                   <option key={f.value} value={f.value}>
@@ -238,15 +235,15 @@ export function PublisherDiscoverPage() {
             </div>
 
             {/* Length Bucket Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-              <Layers className="w-3.5 h-3.5 text-indigo-500" />
+            <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
+              <Layers className="w-3.5 h-3.5 text-muted" />
               <select
                 value={lengthBucket}
                 onChange={(e) => {
                   setLengthBucket(e.target.value);
                   setPage(1);
                 }}
-                className="bg-transparent text-xs font-semibold text-slate-700 focus:outline-hidden"
+                className="bg-transparent text-xs font-bold text-ink focus:outline-hidden cursor-pointer"
               >
                 {LENGTH_FILTERS.map((f) => (
                   <option key={f.value} value={f.value}>
@@ -266,7 +263,7 @@ export function PublisherDiscoverPage() {
                   setSelectedGenre('All');
                   setPage(1);
                 }}
-                className="text-[11px] text-slate-400 hover:text-slate-700 underline cursor-pointer ml-auto"
+                className="text-xs text-muted hover:text-ink underline cursor-pointer ml-auto"
               >
                 Reset Filters
               </button>
@@ -277,16 +274,14 @@ export function PublisherDiscoverPage() {
 
       {/* Book Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-slate-100 rounded-2xl h-80"></div>
-          ))}
+        <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+          Loading…
         </div>
       ) : books.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl p-8">
-          <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-serif font-bold text-slate-800 text-lg">No manuscripts found</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+        <div className="text-center py-16 bg-paper border border-rule rounded p-8">
+          <BookOpen className="w-10 h-10 text-muted mx-auto mb-3" />
+          <h3 className="font-bold text-ink text-base">No manuscripts found</h3>
+          <p className="text-xs text-muted max-w-md mx-auto mt-1">
             Try adjusting your search criteria or resetting filters to scout other published stories.
           </p>
         </div>
@@ -298,21 +293,21 @@ export function PublisherDiscoverPage() {
             return (
               <div
                 key={bookId}
-                className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-paper border border-rule rounded overflow-hidden flex flex-col justify-between"
               >
                 <div>
                   {/* Cover & Overlay */}
-                  <div className="relative aspect-[3/4] bg-slate-100 overflow-hidden">
+                  <div className="relative aspect-[2/3] bg-paper overflow-hidden border-b border-rule">
                     {book.coverUrl ? (
                       <img
                         src={book.coverUrl}
                         alt={book.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-200 text-slate-400 font-serif">
+                      <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-paper text-muted">
                         <BookOpen className="w-8 h-8 mb-2" />
-                        <span className="text-xs font-semibold">{book.title}</span>
+                        <span className="text-xs font-bold">{book.title}</span>
                       </div>
                     )}
 
@@ -327,7 +322,7 @@ export function PublisherDiscoverPage() {
 
                     {/* Genre badge */}
                     <div className="absolute bottom-3 left-3 z-10">
-                      <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/75 text-white backdrop-blur-xs">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-ink text-paper">
                         {book.genre || 'General'}
                       </span>
                     </div>
@@ -335,17 +330,17 @@ export function PublisherDiscoverPage() {
 
                   {/* Details */}
                   <div className="p-4 space-y-2">
-                    <h3 className="font-serif font-bold text-slate-900 text-base line-clamp-1 group-hover:text-[#FF500A] transition-colors">
+                    <h3 className="font-bold text-ink text-sm line-clamp-1">
                       {book.title}
                     </h3>
 
                     {/* Author link */}
                     {author && (
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-muted">
                         by{' '}
                         <Link
                           to={`/writer/${author.username || author._id}`}
-                          className="font-semibold text-slate-700 hover:text-[#FF500A] transition-colors"
+                          className="font-bold text-ink hover:text-accent"
                         >
                           {author.name || author.username}
                         </Link>
@@ -353,22 +348,22 @@ export function PublisherDiscoverPage() {
                     )}
 
                     {/* Metric Chips */}
-                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100 text-center text-[11px]">
-                      <div className="p-1.5 bg-slate-50 rounded-lg">
-                        <span className="block text-slate-400 text-[9px] uppercase font-semibold">Rating</span>
-                        <span className="font-bold text-amber-600">
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-rule text-center text-[11px]">
+                      <div className="p-1.5 bg-paper border border-rule rounded">
+                        <span className="block text-muted text-[9px] uppercase font-bold">Rating</span>
+                        <span className="font-bold text-ink">
                           ★ {Number(book.stats?.ratingAvg || 0).toFixed(1)}
                         </span>
                       </div>
-                      <div className="p-1.5 bg-slate-50 rounded-lg">
-                        <span className="block text-slate-400 text-[9px] uppercase font-semibold">Reads</span>
-                        <span className="font-bold text-slate-700">
+                      <div className="p-1.5 bg-paper border border-rule rounded">
+                        <span className="block text-muted text-[9px] uppercase font-bold">Reads</span>
+                        <span className="font-bold text-ink">
                           {book.stats?.reads || 0}
                         </span>
                       </div>
-                      <div className="p-1.5 bg-slate-50 rounded-lg">
-                        <span className="block text-slate-400 text-[9px] uppercase font-semibold">Completion</span>
-                        <span className="font-bold text-emerald-600">
+                      <div className="p-1.5 bg-paper border border-rule rounded">
+                        <span className="block text-muted text-[9px] uppercase font-bold">Completion</span>
+                        <span className="font-bold text-ink">
                           {book.stats?.completionRate || 0}%
                         </span>
                       </div>
@@ -380,7 +375,7 @@ export function PublisherDiscoverPage() {
                 <div className="p-4 pt-0">
                   <Link
                     to={`/p/book/${bookId}`}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-slate-900 hover:bg-[#FF500A] text-white rounded-xl text-xs font-bold transition-colors shadow-2xs"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent hover:bg-accent-hover text-paper rounded text-xs font-bold"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     Review Pitch Deck
@@ -398,17 +393,17 @@ export function PublisherDiscoverPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3.5 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold bg-white disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-1.5 border border-rule rounded text-xs font-bold bg-paper text-ink hover:border-ink disabled:opacity-50 cursor-pointer"
           >
             Previous
           </button>
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-xs text-muted">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3.5 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold bg-white disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-1.5 border border-rule rounded text-xs font-bold bg-paper text-ink hover:border-ink disabled:opacity-50 cursor-pointer"
           >
             Next
           </button>

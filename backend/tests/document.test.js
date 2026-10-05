@@ -99,6 +99,7 @@ describe('Document API Integration Tests', () => {
       name: 'New User',
       email: 'newuser@example.com',
       password: 'password123',
+      termsAccepted: true,
     });
     assert.equal(status, 201);
     assert.ok(body.data.user);
@@ -110,6 +111,7 @@ describe('Document API Integration Tests', () => {
       name: 'Login Test',
       email: 'logintest@example.com',
       password: 'password123',
+      termsAccepted: true,
     });
     const { status, body } = await req('POST', '/auth/login', {
       email: 'logintest@example.com',
@@ -126,11 +128,12 @@ describe('Document API Integration Tests', () => {
       name: 'Logout Test',
       email: 'logouttest@example.com',
       password: 'password123',
+      termsAccepted: true,
     });
-    const { refreshToken } = reg.body.data.tokens;
+    const { accessToken, refreshToken } = reg.body.data.tokens;
 
     // Logout
-    const { status } = await req('POST', '/auth/logout', { refreshToken });
+    const { status } = await req('POST', '/auth/logout', { refreshToken }, accessToken);
     assert.equal(status, 200);
 
     // Refresh should now fail
@@ -150,6 +153,7 @@ describe('Document API Integration Tests', () => {
       name: 'Wrong Pass',
       email: 'wrongpass@example.com',
       password: 'correctpassword',
+      termsAccepted: true,
     });
     const { status } = await req('POST', '/auth/login', {
       email: 'wrongpass@example.com',

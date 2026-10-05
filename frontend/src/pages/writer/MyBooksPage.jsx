@@ -14,7 +14,6 @@ import {
 import { api } from '../../services/api';
 import { Button } from '../../components/common/Button';
 import CoverImage from '../../components/common/CoverImage';
-import { Skeleton } from '../../components/common/Skeleton';
 
 export function MyBooksPage() {
   const [books, setBooks] = useState([]);
@@ -83,35 +82,35 @@ export function MyBooksPage() {
     switch (book.status) {
       case 'published':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper text-success border border-success">
+            <span className="w-2 h-2 rounded bg-success" />
             Published
           </span>
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-            <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper text-muted border border-rule">
+            <RefreshCw className="w-3 h-3 text-muted" />
             Processing
           </span>
         );
       case 'draft':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-stone-100 text-stone-700 border border-stone-200">
-            <Clock className="w-3 h-3 text-stone-500" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper text-muted border border-rule">
+            <Clock className="w-3 h-3 text-muted" />
             Draft
           </span>
         );
       case 'unpublished':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
-            <span className="w-2 h-2 rounded-full bg-rose-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper text-danger border border-danger">
+            <span className="w-2 h-2 rounded bg-danger" />
             Unpublished
           </span>
         );
       default:
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-stone-100 text-stone-600">
+          <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper border border-rule text-muted">
             {book.status}
           </span>
         );
@@ -119,23 +118,23 @@ export function MyBooksPage() {
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-8 text-left">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#FF500A]">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
             Writer Studio
           </span>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-stone-900 mt-1">
+          <h1 className="text-3xl sm:text-4xl font-normal text-ink mt-1">
             My Stories & Manuscripts
           </h1>
-          <p className="text-stone-600 text-sm mt-1">
+          <p className="text-muted text-xs mt-1">
             Manage your serialized books, monitor AI pipeline breakdown, and publish new chapters.
           </p>
         </div>
 
         <Link to="/w/books/new">
-          <Button variant="primary" size="md" className="flex items-center gap-2 shadow-xs hover:shadow-md">
+          <Button variant="primary" size="md" className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Publish New Story
           </Button>
@@ -144,13 +143,13 @@ export function MyBooksPage() {
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-center gap-3">
+        <div className="p-4 rounded bg-paper border border-rule text-danger text-xs flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
           <button
             type="button"
             onClick={fetchBooks}
-            className="ml-auto text-xs font-bold underline hover:text-red-900"
+            className="ml-auto text-xs font-bold underline cursor-pointer"
           >
             Retry
           </button>
@@ -159,26 +158,17 @@ export function MyBooksPage() {
 
       {/* Loading state */}
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-3xl border border-stone-200 p-6 flex gap-6 animate-pulse">
-              <Skeleton className="w-24 h-36 rounded-xl shrink-0" />
-              <div className="flex-1 space-y-3">
-                <Skeleton className="w-32 h-6 rounded-full" />
-                <Skeleton className="w-3/4 h-8 rounded-lg" />
-                <Skeleton className="w-full h-12 rounded-lg" />
-              </div>
-            </div>
-          ))}
+        <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+          Loading…
         </div>
       ) : books.length === 0 ? (
         /* Empty State */
-        <div className="bg-white rounded-3xl border border-dashed border-stone-200 p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#FFF0E8] text-[#FF500A] flex items-center justify-center mx-auto">
-            <BookOpen className="w-8 h-8" />
+        <div className="bg-paper rounded border border-rule p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded border border-rule text-accent flex items-center justify-center mx-auto">
+            <BookOpen className="w-6 h-6" />
           </div>
-          <h2 className="font-heading text-xl font-bold text-stone-900">No Stories Published Yet</h2>
-          <p className="text-stone-500 text-sm max-w-md mx-auto">
+          <h2 className="text-base font-bold text-ink">No Stories Published Yet</h2>
+          <p className="text-muted text-xs max-w-md mx-auto">
             Upload your first manuscript to begin automatic scene breakdown, character intelligence, and reader pagination.
           </p>
           <div className="pt-2">
@@ -202,11 +192,11 @@ export function MyBooksPage() {
             return (
               <div
                 key={bookId}
-                className="bg-white rounded-3xl border border-stone-200 hover:border-stone-300 p-6 transition-all shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+                className="bg-paper rounded border border-rule p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
               >
                 {/* Book Info */}
                 <div className="flex items-start gap-5 w-full md:w-auto">
-                  <div className="w-20 sm:w-24 h-30 sm:h-36 shrink-0 rounded-xl overflow-hidden shadow-xs border border-stone-100">
+                  <div className="w-20 sm:w-24 aspect-[2/3] shrink-0 rounded overflow-hidden border border-rule">
                     <CoverImage
                       url={book.coverUrl}
                       title={book.title}
@@ -219,25 +209,25 @@ export function MyBooksPage() {
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                       {getStatusBadge(book)}
-                      <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-muted uppercase tracking-wider">
                         {book.genre || 'General'}
                       </span>
                       {book.mature && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-stone-200 text-stone-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-rule text-muted">
                           18+
                         </span>
                       )}
                     </div>
 
-                    <h2 className="font-heading text-lg sm:text-xl font-bold text-stone-900 leading-snug">
+                    <h2 className="text-base sm:text-lg font-bold text-ink leading-snug">
                       {book.title}
                     </h2>
 
-                    <p className="text-xs text-stone-500 line-clamp-2 max-w-xl">
+                    <p className="text-xs text-muted line-clamp-2 max-w-xl">
                       {book.blurb || 'No synopsis provided.'}
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500 pt-1">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted pt-1">
                       <span>📄 {book.pageCount || 0} Pages</span>
                       <span>👁 {(book.stats?.reads || 0).toLocaleString()} Reads</span>
                       <span>★ {(book.stats?.ratingAvg || 0).toFixed(1)} Rating</span>
@@ -246,7 +236,7 @@ export function MyBooksPage() {
                 </div>
 
                 {/* Actions Row */}
-                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end border-t md:border-t-0 pt-4 md:pt-0 border-stone-100">
+                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end border-t md:border-t-0 pt-4 md:pt-0 border-rule">
                   {/* Reader Preview */}
                   <Link to={`/read/${bookId}`}>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1.5" title="Read in Reader">
@@ -265,7 +255,7 @@ export function MyBooksPage() {
 
                   {/* Insights */}
                   <Link to={`/w/books/${bookId}/insights`}>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-[#FF500A]" title="Narrative Insights">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-accent" title="Narrative Insights">
                       <Sparkles className="w-3.5 h-3.5" />
                       Insights
                     </Button>
@@ -278,7 +268,7 @@ export function MyBooksPage() {
                       size="sm"
                       onClick={() => handleUnpublish(bookId)}
                       disabled={currentAction === 'unpublishing'}
-                      className="text-stone-700"
+                      className="text-ink"
                     >
                       {currentAction === 'unpublishing' ? 'Unpublishing...' : 'Unpublish'}
                     </Button>
@@ -289,12 +279,11 @@ export function MyBooksPage() {
                         size="sm"
                         onClick={() => handlePublish(bookId)}
                         disabled={!canPublish || currentAction === 'publishing'}
-                        className="shadow-xs"
                       >
                         {currentAction === 'publishing' ? 'Publishing...' : 'Publish'}
                       </Button>
                       {!canPublish && (
-                        <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-stone-900 text-white text-[11px] font-medium py-1.5 px-3 rounded-xl whitespace-nowrap shadow-lg z-20">
+                        <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-paper border border-rule text-ink text-[11px] font-bold py-1.5 px-3 rounded whitespace-nowrap z-20">
                           {isProcessing
                             ? 'Manuscript parsing must complete first'
                             : 'Story must have at least 1 page to publish'}
@@ -307,7 +296,7 @@ export function MyBooksPage() {
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(book)}
-                    className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                    className="p-2 rounded text-muted hover:text-danger hover:border-danger border border-transparent hover:border-rule cursor-pointer"
                     aria-label="Delete Story"
                     title="Delete Story"
                   >
@@ -322,20 +311,20 @@ export function MyBooksPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-4 shadow-xl border border-stone-200">
-            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-paper rounded max-w-md w-full p-6 sm:p-8 space-y-4 border border-rule">
+            <div className="w-10 h-10 rounded border border-rule text-danger flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-heading text-xl font-bold text-stone-900">
+              <h3 className="text-base font-bold text-ink">
                 Delete "{deleteTarget.title}"?
               </h3>
-              <p className="text-stone-600 text-xs sm:text-sm mt-1.5 leading-relaxed">
+              <p className="text-muted text-xs mt-1.5 leading-relaxed">
                 This action cannot be undone. All parsed manuscript pages, scene markers, and reader records for this story will be permanently removed.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-rule">
               <Button
                 variant="ghost"
                 size="md"
@@ -344,15 +333,14 @@ export function MyBooksPage() {
               >
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                size="md"
+              <button
+                type="button"
                 onClick={handleDelete}
                 disabled={actionLoading[deleteTarget._id] === 'deleting'}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-danger hover:opacity-90 text-paper rounded text-xs font-bold px-4 py-2 cursor-pointer"
               >
                 {actionLoading[deleteTarget._id] === 'deleting' ? 'Deleting...' : 'Delete Story'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -360,3 +348,5 @@ export function MyBooksPage() {
     </div>
   );
 }
+
+export default MyBooksPage;

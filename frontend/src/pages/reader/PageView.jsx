@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 
 export default function PageView({
   pageText,
@@ -9,42 +8,19 @@ export default function PageView({
   twoPageSpread = false,
   language = 'en',
   settings = {},
-  direction = 1, // 1 for next, -1 for prev
 }) {
-  const prefersReducedMotion = useReducedMotion();
-
   const fontSize = settings.fontSize || 18;
   const lineHeight = settings.lineHeight || 1.6;
-  const fontFamily = settings.fontFamily === 'sans' ? 'Nunito Sans, sans-serif' : 'Lora, Georgia, serif';
-
-  const variants = prefersReducedMotion
-    ? {
-        enter: { opacity: 0 },
-        center: { opacity: 1 },
-        exit: { opacity: 0 },
-      }
-    : {
-        enter: (dir) => ({
-          x: dir > 0 ? 50 : -50,
-          opacity: 0,
-        }),
-        center: {
-          x: 0,
-          opacity: 1,
-          transition: { duration: 0.22, ease: 'easeOut' },
-        },
-        exit: (dir) => ({
-          x: dir > 0 ? -50 : 50,
-          opacity: 0,
-          transition: { duration: 0.18, ease: 'easeIn' },
-        }),
-      };
+  const fontFamily =
+    settings.fontFamily === 'sans'
+      ? 'system-ui, -apple-system, sans-serif'
+      : "'Courier Prime', monospace";
 
   // Format page content into paragraphs
   const renderFormattedText = (text) => {
     if (!text || text.trim().length === 0) {
       return (
-        <div className="text-center py-20 italic opacity-40">
+        <div className="text-center py-20 italic text-muted">
           (Empty page)
         </div>
       );
@@ -64,14 +40,9 @@ export default function PageView({
   };
 
   return (
-    <motion.div
+    <div
       key={`page-${pageNumber}`}
-      custom={direction}
-      variants={variants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 select-text"
+      className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 select-text text-ink"
       role="document"
       lang={language}
       style={{
@@ -82,11 +53,11 @@ export default function PageView({
     >
       {twoPageSpread && nextPageText !== null ? (
         /* Two-Page Spread (Desktop >= 1024px) */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:divide-x lg:divide-stone-300/30">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:divide-x lg:divide-rule">
           {/* Left Page */}
           <div className="flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(pageText)}</div>
-            <div className="pt-8 text-center text-xs opacity-40 select-none font-mono">
+            <div className="pt-8 text-center text-xs text-muted select-none">
               — {pageNumber} —
             </div>
           </div>
@@ -94,7 +65,7 @@ export default function PageView({
           {/* Right Page */}
           <div className="lg:pl-12 flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(nextPageText)}</div>
-            <div className="pt-8 text-center text-xs opacity-40 select-none font-mono">
+            <div className="pt-8 text-center text-xs text-muted select-none">
               — {pageNumber + 1} —
             </div>
           </div>
@@ -103,11 +74,12 @@ export default function PageView({
         /* Single Page View */
         <div className="max-w-2xl mx-auto flex flex-col justify-between min-h-[65vh]">
           <div className="space-y-1">{renderFormattedText(pageText)}</div>
-          <div className="pt-8 text-center text-xs opacity-40 select-none font-mono">
+          <div className="pt-8 text-center text-xs text-muted select-none">
             — {pageNumber} —
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
+

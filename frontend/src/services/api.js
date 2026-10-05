@@ -1,4 +1,6 @@
-// SceneCraft Frontend API Service
+import { socketClient } from './socket';
+
+// Storyloom Frontend API Service
 const getApiBase = () => {
   let base = import.meta.env.VITE_API_URL || '/api';
   if (base.startsWith('http')) {
@@ -10,6 +12,105 @@ const getApiBase = () => {
   return base;
 };
 const API_BASE = getApiBase();
+
+// Single-flight token refresh state
+let refreshPromise = null;
+
+const isAuthEndpoint = (url) => {
+  const path = typeof url === 'string' ? url : url?.url || '';
+  return (
+    path.includes('/auth/login') ||
+    path.includes('/auth/register') ||
+    path.includes('/auth/refresh') ||
+    path.includes('/auth/forgot-password') ||
+    path.includes('/auth/reset-password')
+  );
+};
+
+const clearAuthAndRedirect = () => {
+  localStorage.removeItem('scenecraft_access_token');
+  localStorage.removeItem('scenecraft_refresh_token');
+  localStorage.removeItem('scenecraft_user');
+  if (
+    typeof window !== 'undefined' &&
+    !window.location.pathname.startsWith('/login') &&
+    !window.location.pathname.startsWith('/signup')
+  ) {
+    window.location.href = '/login';
+  }
+};
+
+const refreshAccessToken = async () => {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = localStorage.getItem('scenecraft_refresh_token');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const res = await window.fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Refresh token rejected');
+      }
+
+      const json = await res.json();
+      const tokens = json.data;
+      if (!tokens?.accessToken || !tokens?.refreshToken) {
+        throw new Error('Invalid token response structure');
+      }
+
+      localStorage.setItem('scenecraft_access_token', tokens.accessToken);
+      localStorage.setItem('scenecraft_refresh_token', tokens.refreshToken);
+
+      try {
+        socketClient.reconnect();
+      } catch (_err) {
+        // Socket reconnect failure shouldn't fail HTTP token refresh
+      }
+
+      return tokens.accessToken;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+};
+
+// Central request wrapper for all API calls
+const request = async (url, options = {}, isRetry = false) => {
+  const res = await window.fetch(url, options);
+
+  if (res.status === 401 && !isRetry && !isAuthEndpoint(url)) {
+    try {
+      const newAccessToken = await refreshAccessToken();
+      const updatedHeaders = { ...(options.headers || {}) };
+      if (updatedHeaders instanceof Headers) {
+        updatedHeaders.set('Authorization', `Bearer ${newAccessToken}`);
+      } else {
+        updatedHeaders['Authorization'] = `Bearer ${newAccessToken}`;
+      }
+      return await request(url, { ...options, headers: updatedHeaders }, true);
+    } catch (err) {
+      clearAuthAndRedirect();
+      const error = new Error('Session expired. Please log in again.');
+      error.status = 401;
+      throw error;
+    }
+  }
+
+  return res;
+};
+
+// Module-level fetch override so all API methods use the central request wrapper
+const fetch = (url, options) => request(url, options);
 
 // Helper to get headers with authentication token
 const getHeaders = (isMultipart = false) => {
@@ -27,19 +128,11 @@ const getHeaders = (isMultipart = false) => {
 // Handle response checks
 const handleResponse = async (response) => {
   if (!response.ok) {
-    if (response.status === 401) {
-      localStorage.removeItem('scenecraft_access_token');
-      localStorage.removeItem('scenecraft_refresh_token');
-      localStorage.removeItem('scenecraft_user');
-      // If unauthorized and not already on login/signup, redirect to login
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/signup')) {
-        window.location.href = '/login';
-      }
-    }
     const data = await response.json().catch(() => ({}));
     const errorMsg = data.message || `API Error (Status ${response.status})`;
     const error = new Error(errorMsg);
     if (data.code) error.code = data.code;
+    if (data.errors) error.errors = data.errors;
     error.status = response.status;
     throw error;
   }
@@ -61,6 +154,7 @@ export const api = {
           company: obj.company || obj.publisherMetadata?.company,
           website: obj.website || obj.publisherMetadata?.website,
           note: obj.note || obj.publisherMetadata?.note,
+          termsAccepted: obj.termsAccepted,
         };
       } else {
         payload = {
@@ -71,6 +165,7 @@ export const api = {
           company: options.company,
           website: options.website,
           note: options.note,
+          termsAccepted: options.termsAccepted,
         };
       }
 
@@ -141,6 +236,24 @@ export const api = {
 
     isAuthenticated() {
       return !!localStorage.getItem('scenecraft_access_token');
+    },
+
+    async forgotPassword(email) {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ email }),
+      });
+      return handleResponse(res);
+    },
+
+    async resetPassword(token, password) {
+      const res = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ token, password }),
+      });
+      return handleResponse(res);
     },
   },
 

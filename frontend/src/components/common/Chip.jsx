@@ -7,12 +7,11 @@ export default function Chip({
   onClick,
   className = '',
   size = 'default',
-  variant = 'default',
 }) {
   const sizeStyles = {
-    sm: 'text-xs px-2.5 py-1',
-    default: 'text-xs md:text-sm px-3.5 py-1.5',
-    lg: 'text-sm px-4 py-2',
+    sm: 'text-xs px-2 py-0.5',
+    default: 'text-xs md:text-sm px-3 py-1',
+    lg: 'text-sm px-3.5 py-1.5',
   };
 
   const isClickable = Boolean(onClick);
@@ -22,13 +21,13 @@ export default function Chip({
       type="button"
       disabled={!isClickable}
       onClick={onClick}
-      className={`inline-flex items-center justify-center font-medium rounded-full transition-colors select-none ${
+      className={`inline-flex items-center justify-center font-bold rounded border select-none ${
         sizeStyles[size] || sizeStyles.default
       } ${
         active
-          ? 'bg-[#FF500A] text-white shadow-xs'
-          : 'bg-[#FFF0E8] text-[#FF500A] hover:bg-[#FFE3D4]'
-      } ${isClickable ? 'cursor-pointer active:scale-95' : 'cursor-default'} ${className}`}
+          ? 'bg-ink text-paper border-ink'
+          : 'bg-paper text-ink border-rule hover:border-ink hover:text-accent'
+      } ${isClickable ? 'cursor-pointer' : 'cursor-default'} ${className}`}
     >
       {children || label}
     </button>
@@ -36,4 +35,5 @@ export default function Chip({
 }
 
 export { Chip };
+
 

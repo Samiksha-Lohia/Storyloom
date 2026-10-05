@@ -18,6 +18,18 @@ const bootstrap = async () => {
   // redis client is already initialised in config/redis.js; just log its state
   redis.on('ready', () => logger.info('Redis ready'));
 
+  // ─── AI Keys Check ────────────────────────────────────────────────────────
+  const { apiKey1, apiKey2, apiKey3 } = config.ai.openrouter;
+  if (!apiKey1) {
+    logger.warn('[AI Pipeline] OPENROUTER_API_KEY_1 is empty. Stages running on local fallback: scenes, timeline');
+  }
+  if (!apiKey2) {
+    logger.warn('[AI Pipeline] OPENROUTER_API_KEY_2 is empty. Stages running on local fallback: characters, continuity');
+  }
+  if (!apiKey3) {
+    logger.warn('[AI Pipeline] OPENROUTER_API_KEY_3 is empty. Stages running on local fallback: relationships');
+  }
+
   // ─── Create Express App ───────────────────────────────────────────────────
   const app = createApp();
   const httpServer = http.createServer(app);

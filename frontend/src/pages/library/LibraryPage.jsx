@@ -1,90 +1,75 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   Bookmark,
   CheckCircle,
-  Clock,
   MoreVertical,
   Trash2,
-  ChevronRight,
-  Sparkles,
   ArrowRight,
   BookMarked,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { CoverImage } from '../../components/common/CoverImage';
 import { Button } from '../../components/common/Button';
+import { CoverImage } from '../../components/common/CoverImage';
 import { EmptyState } from '../../components/common/EmptyState';
+import { APP_NAME } from '../../constants/app';
 
 const TABS = [
-  { id: 'reading', label: 'Currently Reading', status: 'reading', icon: BookOpen },
-  { id: 'want_to_read', label: 'Want to Read', status: 'want_to_read', icon: Bookmark },
-  { id: 'finished', label: 'Finished', status: 'finished', icon: CheckCircle },
+  { id: 'reading', label: 'Currently Reading', icon: BookOpen },
+  { id: 'want_to_read', label: 'Want to Read', icon: Bookmark },
+  { id: 'finished', label: 'Completed', icon: CheckCircle },
 ];
 
 export function LibraryPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('reading');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [error, setError] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [menuOpenId, setMenuOpenId] = useState(null);
 
-  // Redirect to login if guest
   useEffect(() => {
-    if (!user && !localStorage.getItem('scenecraft_access_token')) {
-      navigate('/login?redirect=/library');
-    }
-  }, [user, navigate]);
+    fetchShelf();
+  }, [activeTab]);
 
-  const loadLibrary = useCallback(async () => {
-    if (!user) return;
+  const fetchShelf = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
-      const data = await api.me.getLibrary({ status: activeTab, limit: 50 });
-      setItems(data?.items || []);
+      const res = await api.library.getShelf(activeTab);
+      setItems(res?.data?.items || res?.items || []);
     } catch (err) {
-      setError(err.message || 'Failed to load your library.');
+      console.error('Failed to load library items:', err);
+      setError('Could not load your library. Please try refreshing.');
     } finally {
       setLoading(false);
     }
-  }, [user, activeTab]);
+  };
 
-  useEffect(() => {
-    loadLibrary();
-  }, [loadLibrary]);
-
-  // Handle status update
-  const handleStatusChange = async (bookId, nextStatus) => {
+  const handleStatusChange = async (bookId, newStatus) => {
+    setActionLoadingId(bookId);
+    setMenuOpenId(null);
     try {
-      setActionLoadingId(bookId);
-      await api.me.updateLibraryBook(bookId, { status: nextStatus });
-      setMenuOpenId(null);
-      await loadLibrary();
+      await api.library.updateStatus(bookId, newStatus);
+      setItems((prev) => prev.filter((item) => (item.book?._id || item.bookId) !== bookId));
     } catch (err) {
-      alert(`Could not update reading status: ${err.message}`);
+      alert(err.message || 'Failed to update reading status.');
     } finally {
       setActionLoadingId(null);
     }
   };
 
-  // Handle remove from library
-  const handleRemove = async (bookId, title) => {
-    if (!window.confirm(`Remove "${title || 'this book'}" from your library?`)) {
-      return;
-    }
+  const handleRemove = async (bookId, bookTitle) => {
+    if (!window.confirm(`Remove "${bookTitle}" from your shelf?`)) return;
+    setActionLoadingId(bookId);
+    setMenuOpenId(null);
     try {
-      setActionLoadingId(bookId);
-      await api.me.removeLibraryBook(bookId);
-      setMenuOpenId(null);
-      setItems((prev) => prev.filter((item) => (item.book?.id || item.bookId) !== bookId));
+      await api.library.remove(bookId);
+      setItems((prev) => prev.filter((item) => (item.book?._id || item.bookId) !== bookId));
     } catch (err) {
-      alert(`Failed to remove book: ${err.message}`);
+      alert(err.message || 'Failed to remove from library.');
     } finally {
       setActionLoadingId(null);
     }
@@ -93,17 +78,13 @@ export function LibraryPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
       {/* Page Title & Heading */}
-      <div className="border-b border-stone-200 pb-6">
+      <div className="border-b border-rule pb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#FF500A] mb-1">
-              <BookMarked className="w-4 h-4" />
-              <span>Personal Shelf</span>
-            </div>
-            <h1 className="font-heading font-black text-3xl sm:text-4xl text-stone-900 tracking-tight">
+            <h1 className="font-calligraphy text-3xl sm:text-4xl font-normal text-ink">
               My Library
             </h1>
-            <p className="text-sm text-stone-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               Track your serialized reading progression, bookmarked chapters, and saved manuscripts.
             </p>
           </div>
@@ -130,10 +111,10 @@ export function LibraryPage() {
                   setActiveTab(tab.id);
                   setMenuOpenId(null);
                 }}
-                className={`flex items-center gap-2 pb-3 font-heading font-bold text-sm sm:text-base border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'border-[#FF500A] text-[#FF500A]'
-                    : 'border-transparent text-stone-500 hover:text-stone-800'
+                    ? 'border-ink text-ink'
+                    : 'border-transparent text-muted hover:text-ink'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -146,28 +127,15 @@ export function LibraryPage() {
 
       {/* Error Notice */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700">
+        <div className="p-3 bg-paper border border-danger rounded text-xs text-danger">
           {error}
         </div>
       )}
 
       {/* Library Grid / List */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white border border-stone-200 rounded-2xl p-4 flex gap-4 animate-pulse"
-            >
-              <div className="w-24 h-36 bg-stone-200 rounded-xl shrink-0" />
-              <div className="flex-1 space-y-3 pt-2">
-                <div className="h-4 bg-stone-200 rounded-md w-3/4" />
-                <div className="h-3 bg-stone-100 rounded-md w-1/2" />
-                <div className="h-2 bg-stone-100 rounded-md w-full mt-4" />
-                <div className="h-8 bg-stone-200 rounded-xl w-full mt-4" />
-              </div>
-            </div>
-          ))}
+        <div className="p-8 text-center text-xs text-muted">
+          Loading…
         </div>
       ) : items.length === 0 ? (
         <div className="py-12">
@@ -175,7 +143,7 @@ export function LibraryPage() {
             <EmptyState
               title="No stories currently in progress"
               description="Pick up where you left off or dive into a brand new narrative from our curated catalogue."
-              icon={<BookOpen className="w-10 h-10 text-stone-400" />}
+              icon={<BookOpen className="w-8 h-8 text-muted" />}
               actionLabel="Browse Stories"
               onAction={() => navigate('/browse')}
             />
@@ -184,7 +152,7 @@ export function LibraryPage() {
             <EmptyState
               title="Your reading wishlist is empty"
               description="Save compelling stories to your personal library so you never forget what to read next."
-              icon={<Bookmark className="w-10 h-10 text-stone-400" />}
+              icon={<Bookmark className="w-8 h-8 text-muted" />}
               actionLabel="Discover Next Read"
               onAction={() => navigate('/browse')}
             />
@@ -193,7 +161,7 @@ export function LibraryPage() {
             <EmptyState
               title="No finished stories yet"
               description="When you complete the final chapter of a story, it will appear here as a reading accomplishment."
-              icon={<CheckCircle className="w-10 h-10 text-stone-400" />}
+              icon={<CheckCircle className="w-8 h-8 text-muted" />}
               actionLabel="Explore Popular Books"
               onAction={() => navigate('/browse')}
             />
@@ -207,20 +175,19 @@ export function LibraryPage() {
             const bookId = book.id || book._id || item.bookId;
             const pageCount = book.pageCount || 1;
             const currentPage = Math.max(1, item.currentPage || 1);
-            const furthestPage = Math.max(1, item.furthestPage || currentPage);
             const progressPercent = Math.min(100, Math.round((currentPage / pageCount) * 100));
 
             return (
               <div
                 key={item.id || bookId}
-                className="bg-white border border-stone-200 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative group"
+                className="bg-paper border border-rule rounded p-4 flex flex-col justify-between relative"
               >
                 <div>
                   <div className="flex gap-4">
                     {/* Cover image (2:3 Aspect ratio) */}
                     <div className="w-24 sm:w-28 shrink-0">
                       <Link to={`/book/${bookId}`}>
-                        <div className="rounded-xl overflow-hidden shadow-xs border border-stone-200 aspect-2/3">
+                        <div className="rounded overflow-hidden border border-rule aspect-2/3">
                           <CoverImage
                             publicId={book.coverPublicId}
                             title={book.title}
@@ -236,7 +203,7 @@ export function LibraryPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-1">
                         <Link to={`/book/${bookId}`}>
-                          <h3 className="font-heading font-bold text-base text-stone-900 line-clamp-2 hover:text-[#FF500A] transition leading-snug">
+                          <h3 className="font-bold text-sm text-ink line-clamp-2 hover:text-accent leading-snug">
                             {book.title}
                           </h3>
                         </Link>
@@ -248,7 +215,7 @@ export function LibraryPage() {
                             onClick={() =>
                               setMenuOpenId(menuOpenId === bookId ? null : bookId)
                             }
-                            className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition cursor-pointer"
+                            className="p-1 text-muted hover:text-ink border border-transparent hover:border-rule rounded cursor-pointer"
                             aria-label="Options"
                           >
                             <MoreVertical className="w-4 h-4" />
@@ -256,17 +223,17 @@ export function LibraryPage() {
 
                           {/* Dropdown Menu */}
                           {menuOpenId === bookId && (
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-stone-200 rounded-2xl shadow-xl py-1.5 z-20 text-xs font-semibold animate-fade-in">
-                              <span className="block px-3 py-1 text-[10px] text-stone-400 uppercase tracking-wider font-bold">
+                            <div className="absolute right-0 top-full mt-1 w-44 bg-paper border border-rule rounded py-1.5 z-20 text-xs font-semibold">
+                              <span className="block px-3 py-1 text-[10px] text-muted uppercase tracking-wider font-bold">
                                 Move status:
                               </span>
                               {activeTab !== 'reading' && (
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(bookId, 'reading')}
-                                  className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2 cursor-pointer"
+                                  className="w-full text-left px-3 py-1.5 hover:bg-rule/10 text-ink flex items-center gap-2 cursor-pointer"
                                 >
-                                  <BookOpen className="w-3.5 h-3.5 text-[#FF500A]" />
+                                  <BookOpen className="w-3.5 h-3.5 text-ink" />
                                   <span>Currently Reading</span>
                                 </button>
                               )}
@@ -274,9 +241,9 @@ export function LibraryPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(bookId, 'want_to_read')}
-                                  className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2 cursor-pointer"
+                                  className="w-full text-left px-3 py-1.5 hover:bg-rule/10 text-ink flex items-center gap-2 cursor-pointer"
                                 >
-                                  <Bookmark className="w-3.5 h-3.5 text-amber-500" />
+                                  <Bookmark className="w-3.5 h-3.5 text-ink" />
                                   <span>Want to Read</span>
                                 </button>
                               )}
@@ -284,17 +251,17 @@ export function LibraryPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(bookId, 'finished')}
-                                  className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-stone-700 flex items-center gap-2 cursor-pointer"
+                                  className="w-full text-left px-3 py-1.5 hover:bg-rule/10 text-ink flex items-center gap-2 cursor-pointer"
                                 >
-                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                                  <CheckCircle className="w-3.5 h-3.5 text-success" />
                                   <span>Mark Finished</span>
                                 </button>
                               )}
-                              <div className="border-t border-stone-100 my-1" />
+                              <div className="border-t border-rule my-1" />
                               <button
                                 type="button"
                                 onClick={() => handleRemove(bookId, book.title)}
-                                className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer"
+                                className="w-full text-left px-3 py-1.5 hover:bg-rule/10 text-danger flex items-center gap-2 cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                                 <span>Remove from Shelf</span>
@@ -304,16 +271,16 @@ export function LibraryPage() {
                         </div>
                       </div>
 
-                      <span className="text-xs text-stone-500 block truncate mt-0.5">
-                        {book.writer?.name || 'SceneCraft Author'}
+                      <span className="text-xs text-muted block truncate mt-0.5">
+                        {book.writer?.name || `${APP_NAME} Author`}
                       </span>
 
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-rule text-muted">
                           {book.genre || 'General'}
                         </span>
                         {book.mature && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-stone-200 text-stone-800">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-rule text-ink">
                             18+
                           </span>
                         )}
@@ -322,22 +289,22 @@ export function LibraryPage() {
                   </div>
 
                   {/* Progress Bar & Reading Stats */}
-                  <div className="mt-4 pt-3 border-t border-stone-100 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs text-stone-500">
-                      <span className="font-semibold text-stone-700">
+                  <div className="mt-4 pt-3 border-t border-rule space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted">
+                      <span className="font-semibold text-ink">
                         {activeTab === 'finished'
                           ? 'Story Completed'
                           : `Page ${currentPage} of ${pageCount}`}
                       </span>
-                      <span className="font-mono text-[11px] font-bold text-[#FF500A]">
+                      <span className="font-mono text-[11px] font-bold text-ink">
                         {progressPercent}%
                       </span>
                     </div>
 
                     {/* Progress Track */}
-                    <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-rule/30 rounded overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#FF500A] to-amber-500 rounded-full transition-all duration-300"
+                        className="h-full bg-ink rounded"
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>

@@ -22,8 +22,8 @@ const THEMES = [
     id: 'light',
     label: 'Light',
     bg: '#FAF9F5',
-    text: '#1E1E1E',
-    border: '#E8E6DF',
+    text: '#1C1917',
+    border: '#D9D2C3',
     icon: Sun,
   },
   {
@@ -31,7 +31,7 @@ const THEMES = [
     label: 'Sepia',
     bg: '#F4ECD8',
     text: '#382C1E',
-    border: '#E2D5B5',
+    border: '#D9D2C3',
     icon: Coffee,
   },
   {
@@ -39,7 +39,7 @@ const THEMES = [
     label: 'Dark',
     bg: '#18181A',
     text: '#E6E6E6',
-    border: '#2A2A30',
+    border: '#333333',
     icon: Moon,
   },
 ];
@@ -55,35 +55,30 @@ export default function ReaderSettingsPopover({
   const currentTheme = settings?.theme || 'light';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-2xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
       <div
-        className="w-full max-w-sm rounded-3xl p-6 shadow-2xl border transition-all animate-in fade-in zoom-in-95 duration-150"
-        style={{
-          backgroundColor: currentTheme === 'dark' ? '#202024' : currentTheme === 'sepia' ? '#F6EEDB' : '#FFFFFF',
-          color: currentTheme === 'dark' ? '#E6E6E6' : currentTheme === 'sepia' ? '#382C1E' : '#121212',
-          borderColor: currentTheme === 'dark' ? '#33333C' : currentTheme === 'sepia' ? '#DECFA7' : '#E5E5E5',
-        }}
+        className="w-full max-w-sm rounded p-6 border bg-paper text-ink border-rule"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-stone-200/40 mb-5">
+        <div className="flex items-center justify-between pb-3 border-b border-rule mb-4">
           <div className="flex items-center gap-2">
-            <Type className="w-4 h-4 text-[#FF500A]" />
-            <h3 className="font-heading font-bold text-base">Reader Preferences</h3>
+            <Type className="w-4 h-4 text-ink" />
+            <h3 className="font-bold text-sm text-ink">Reader Preferences</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-stone-200/50 transition opacity-70 hover:opacity-100"
+            className="p-1 rounded hover:bg-rule/40 text-ink cursor-pointer"
             aria-label="Close settings"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-5 text-xs font-semibold">
+        <div className="space-y-4 text-xs">
           {/* Theme Selector */}
           <div>
-            <label className="block uppercase tracking-wider text-[11px] opacity-70 mb-2">
+            <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Color Theme
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -95,15 +90,15 @@ export default function ReaderSettingsPopover({
                     key={t.id}
                     type="button"
                     onClick={() => onUpdateSettings({ theme: t.id })}
-                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`flex flex-col items-center justify-center py-2 px-2 rounded border cursor-pointer ${
                       isSelected
-                        ? 'border-[#FF500A] shadow-xs'
-                        : 'border-transparent hover:border-stone-300/60'
+                        ? 'border-ink font-bold'
+                        : 'border-rule hover:border-muted text-muted'
                     }`}
                     style={{ backgroundColor: t.bg, color: t.text }}
                   >
                     <Icon className="w-4 h-4 mb-1" />
-                    <span className="text-[11px] font-bold">{t.label}</span>
+                    <span className="text-[11px]">{t.label}</span>
                   </button>
                 );
               })}
@@ -112,51 +107,51 @@ export default function ReaderSettingsPopover({
 
           {/* Font Family */}
           <div>
-            <label className="block uppercase tracking-wider text-[11px] opacity-70 mb-2">
+            <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Typeface
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => onUpdateSettings({ fontFamily: 'serif' })}
-                className={`py-2 px-3 rounded-xl border text-center transition cursor-pointer font-serif text-sm ${
+                className={`py-2 px-3 rounded border text-center cursor-pointer text-xs ${
                   currentFontFamily === 'serif'
-                    ? 'border-[#FF500A] bg-[#FF500A]/10 text-[#FF500A] font-bold'
-                    : 'border-stone-200/60 hover:border-stone-300'
+                    ? 'border-accent bg-paper text-accent font-bold'
+                    : 'border-rule hover:border-muted text-ink'
                 }`}
               >
-                Serif (Lora)
+                Typewriter
               </button>
               <button
                 type="button"
                 onClick={() => onUpdateSettings({ fontFamily: 'sans' })}
-                className={`py-2 px-3 rounded-xl border text-center transition cursor-pointer font-sans text-sm ${
+                className={`py-2 px-3 rounded border text-center cursor-pointer text-xs ${
                   currentFontFamily === 'sans'
-                    ? 'border-[#FF500A] bg-[#FF500A]/10 text-[#FF500A] font-bold'
-                    : 'border-stone-200/60 hover:border-stone-300'
+                    ? 'border-accent bg-paper text-accent font-bold'
+                    : 'border-rule hover:border-muted text-ink'
                 }`}
               >
-                Sans (Nunito)
+                Plain
               </button>
             </div>
           </div>
 
           {/* Font Size */}
           <div>
-            <div className="flex items-center justify-between uppercase tracking-wider text-[11px] opacity-70 mb-2">
+            <div className="flex items-center justify-between uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               <span>Text Size</span>
               <span>{currentFontSize}px</span>
             </div>
-            <div className="flex items-center justify-between gap-1.5 p-1 rounded-2xl bg-stone-200/30">
+            <div className="flex items-center justify-between gap-1 border border-rule rounded p-1">
               {FONT_SIZES.map((s) => (
                 <button
                   key={s.value}
                   type="button"
                   onClick={() => onUpdateSettings({ fontSize: s.value })}
-                  className={`flex-1 py-1.5 text-xs rounded-xl transition cursor-pointer ${
+                  className={`flex-1 py-1 text-xs rounded cursor-pointer ${
                     currentFontSize === s.value
-                      ? 'bg-[#FF500A] text-white font-bold shadow-xs'
-                      : 'hover:bg-stone-300/40 opacity-80'
+                      ? 'bg-accent text-paper font-bold'
+                      : 'hover:bg-rule/40 text-ink'
                   }`}
                 >
                   {s.label}
@@ -167,19 +162,19 @@ export default function ReaderSettingsPopover({
 
           {/* Line Height */}
           <div>
-            <label className="block uppercase tracking-wider text-[11px] opacity-70 mb-2">
+            <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Line Spacing
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1">
               {LINE_HEIGHTS.map((lh) => (
                 <button
                   key={lh.value}
                   type="button"
                   onClick={() => onUpdateSettings({ lineHeight: lh.value })}
-                  className={`py-1.5 px-1 text-center rounded-xl border text-[11px] transition cursor-pointer ${
+                  className={`py-1.5 px-1 text-center rounded border text-[11px] cursor-pointer ${
                     Math.abs(currentLineHeight - lh.value) < 0.05
-                      ? 'border-[#FF500A] bg-[#FF500A]/10 text-[#FF500A] font-bold'
-                      : 'border-stone-200/60 hover:border-stone-300'
+                      ? 'border-accent text-accent font-bold'
+                      : 'border-rule hover:border-muted text-ink'
                   }`}
                 >
                   {lh.label}
@@ -190,7 +185,7 @@ export default function ReaderSettingsPopover({
         </div>
 
         {/* Footer Note */}
-        <div className="mt-6 pt-4 border-t border-stone-200/40 text-[11px] opacity-60 text-center">
+        <div className="mt-5 pt-3 border-t border-rule text-[11px] text-muted text-center">
           Preferences sync automatically across devices.
         </div>
       </div>

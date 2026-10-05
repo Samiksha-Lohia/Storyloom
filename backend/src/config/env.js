@@ -49,6 +49,7 @@ const envVarsSchema = Joi.object()
     OPENROUTER_MODEL_2: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 2'),
     OPENROUTER_MODEL_3: Joi.string().default('google/gemini-2.5-flash').description('OpenRouter Model 3'),
     OPENROUTER_MAX_TOKENS: Joi.number().integer().default(4096).description('OpenRouter Max Tokens'),
+    FRONTEND_URL: Joi.string().optional().allow('').description('Frontend URL for CORS and reset links'),
     CORS_ORIGIN: Joi.string().optional().allow('').description('Comma-separated allowed origins for CORS'),
     CLOUDINARY_CLOUD_NAME: Joi.string().when('NODE_ENV', {
       is: 'production',
@@ -67,6 +68,7 @@ const envVarsSchema = Joi.object()
     }).description('Cloudinary API Secret'),
     ADMIN_EMAIL: Joi.string().optional().allow('').description('Admin email for initial seed'),
     ADMIN_PASSWORD: Joi.string().optional().allow('').description('Admin password for initial seed'),
+    RATE_LIMIT_REGISTER_PER_HOUR: Joi.number().default(10).description('Max registrations per IP per hour'),
   })
   .unknown();
 
@@ -107,16 +109,35 @@ const config = {
       bucketName: envVars.AWS_S3_BUCKET_NAME,
     },
   },
+  frontendUrl: envVars.FRONTEND_URL || '',
   corsAllowedOrigins: (() => {
-    const corsOrigin = envVars.CORS_ORIGIN;
-    if (!corsOrigin) {
+    const isProduction = envVars.NODE_ENV === 'production';
+    const corsOrigin = envVars.CORS_ORIGIN ? envVars.CORS_ORIGIN.trim() : '';
+    const frontendUrl = envVars.FRONTEND_URL ? envVars.FRONTEND_URL.trim() : '';
+
+    if (isProduction) {
+      if (!corsOrigin && !frontendUrl) {
+        throw new Error('Production environment error: CORS_ORIGIN or FRONTEND_URL must be specified.');
+      }
+    }
+
+    if (!corsOrigin && !frontendUrl) {
       return '*';
     }
-    const origins = corsOrigin.split(',').map((o) => o.trim());
-    if (origins.includes('*')) {
-      return '*';
+
+    const origins = [];
+    if (frontendUrl) {
+      origins.push(frontendUrl.replace(/\/+$/, ''));
     }
-    return origins;
+    if (corsOrigin) {
+      const parts = corsOrigin.split(',').map((o) => o.trim().replace(/\/+$/, ''));
+      if (!isProduction && parts.includes('*')) {
+        return '*';
+      }
+      origins.push(...parts.filter((o) => o && o !== '*'));
+    }
+
+    return Array.from(new Set(origins));
   })(),
   ai: {
     provider: 'openrouter',
@@ -138,6 +159,9 @@ const config = {
   admin: {
     email: envVars.ADMIN_EMAIL || '',
     password: envVars.ADMIN_PASSWORD || '',
+  },
+  rateLimit: {
+    registerPerHour: envVars.RATE_LIMIT_REGISTER_PER_HOUR,
   },
 };
 

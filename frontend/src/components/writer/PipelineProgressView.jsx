@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
   CheckCircle2,
-  Clock,
   AlertCircle,
-  RefreshCw,
   BookOpen,
   ExternalLink,
 } from 'lucide-react';
@@ -50,25 +47,25 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
   const getStageStatus = (stageId) => {
     const job = jobs.find((j) => j.stage === stageId);
     if (!job) return 'pending';
-    return job.status; // 'pending' | 'running' | 'completed' | 'failed'
+    return job.status;
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6 font-body text-ink">
       {/* Top Banner & Status */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-stone-100">
+      <div className="bg-paper rounded border border-rule p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-rule">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF0E8] text-[#FF500A]">
+              <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-paper border border-rule text-ink">
                 {publishSuccess || book?.status === 'published' ? 'Published' : isPaginated ? 'Draft (Ready to Publish)' : 'Processing'}
               </span>
-              <span className="text-xs text-stone-500">• 10 AI Analysis Stages</span>
+              <span className="text-xs text-muted">• 10 Analysis Stages</span>
             </div>
-            <h1 className="font-heading text-2xl sm:text-3xl font-black text-stone-900">
+            <h1 className="font-calligraphy text-3xl font-normal text-ink">
               {book?.title || 'Processing Manuscript'}
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 mt-1">
+            <p className="text-xs text-muted mt-1">
               {currentStageText}
             </p>
           </div>
@@ -78,18 +75,17 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
             {isPaginated && !publishSuccess && book?.status !== 'published' && (
               <Button
                 variant="primary"
-                size="md"
+                size="default"
                 onClick={handlePublish}
                 disabled={publishing}
-                className="shadow-sm hover:shadow-md"
               >
-                {publishing ? 'Publishing...' : 'Publish Story'}
+                {publishing ? 'Publishing…' : 'Publish Story'}
               </Button>
             )}
 
             {publishSuccess || book?.status === 'published' ? (
               <Link to={`/book/${bookId}`}>
-                <Button variant="secondary" size="md" className="flex items-center gap-2">
+                <Button variant="secondary" size="default" className="flex items-center gap-2">
                   View Story Page
                   <ExternalLink className="w-4 h-4" />
                 </Button>
@@ -98,7 +94,7 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
 
             {bookId && (
               <Link to={`/read/${bookId}`}>
-                <Button variant="ghost" size="md" className="flex items-center gap-2">
+                <Button variant="ghost" size="default" className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
                   Reader Preview
                 </Button>
@@ -110,28 +106,26 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
         {/* Overall Progress Bar */}
         <div className="pt-6 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold">
-            <span className="text-stone-700">Overall Narrative Intelligence Progress</span>
-            <span className="text-[#FF500A]">{overallProgress}%</span>
+            <span className="text-ink">Pipeline Progress</span>
+            <span className="text-accent">{overallProgress}%</span>
           </div>
-          <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-[#FF500A] rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${overallProgress}%` }}
-              transition={{ ease: 'easeOut', duration: 0.5 }}
+          <div className="w-full h-2 bg-paper rounded border border-rule overflow-hidden">
+            <div
+              className="h-full bg-accent"
+              style={{ width: `${overallProgress}%` }}
             />
           </div>
         </div>
 
         {/* Feedback / Errors */}
         {publishError && (
-          <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+          <div className="mt-4 p-3 rounded border border-danger text-danger text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{publishError}</span>
           </div>
         )}
         {publishSuccess && (
-          <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2 font-medium">
+          <div className="mt-4 p-3 rounded border border-success text-success text-xs flex items-center gap-2 font-bold">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>Your story is now published and visible on the catalogue!</span>
           </div>
@@ -139,22 +133,22 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
       </div>
 
       {/* 10 Pipeline Stages Grid */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-8 shadow-xs">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-paper rounded border border-rule p-6">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-rule">
           <div>
-            <h2 className="font-heading text-lg font-bold text-stone-900">Analysis Pipeline Stages</h2>
-            <p className="text-xs text-stone-500">
+            <h2 className="text-base font-bold text-ink">Analysis Pipeline Stages</h2>
+            <p className="text-xs text-muted">
               Each stage parses and unlocks narrative intelligence layers.
             </p>
           </div>
           {isPaginated && (
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold text-success border border-success px-2 py-0.5 rounded">
               Paginator verified ({effectivePageCount} pages)
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {PIPELINE_STAGES.map((stage, idx) => {
             const status = getStageStatus(stage.id);
             const isCurrent = activeStage === stage.id;
@@ -164,56 +158,56 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
             return (
               <div
                 key={stage.id}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`p-3 rounded border ${
                   isCurrent
-                    ? 'border-[#FF500A] bg-[#FFF0E8]/20 shadow-xs'
+                    ? 'border-accent bg-paper'
                     : isCompleted
-                    ? 'border-emerald-200 bg-emerald-50/20'
+                    ? 'border-rule bg-rule/10'
                     : isFailed
-                    ? 'border-red-200 bg-red-50/20'
-                    : 'border-stone-100 bg-stone-50/40 text-stone-400'
+                    ? 'border-danger bg-paper text-danger'
+                    : 'border-rule/40 bg-paper text-muted'
                 }`}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-mono font-bold text-stone-400 mt-0.5">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-xs font-bold text-muted mt-0.5">
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <div>
                       <h4
-                        className={`text-sm font-bold ${
+                        className={`text-xs font-bold ${
                           isCurrent
-                            ? 'text-[#FF500A]'
+                            ? 'text-accent'
                             : isCompleted
-                            ? 'text-stone-900'
+                            ? 'text-ink'
                             : isFailed
-                            ? 'text-red-700'
-                            : 'text-stone-500'
+                            ? 'text-danger'
+                            : 'text-muted'
                         }`}
                       >
                         {stage.label}
                       </h4>
-                      <p className="text-xs text-stone-500 mt-0.5">{stage.desc}</p>
+                      <p className="text-[11px] text-muted mt-0.5">{stage.desc}</p>
                     </div>
                   </div>
 
                   {/* Status Indicator */}
                   <div className="shrink-0 ml-2">
                     {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <span className="text-success text-xs font-bold">Done</span>
                     ) : isCurrent ? (
-                      <RefreshCw className="w-5 h-5 text-[#FF500A] animate-spin" />
+                      <span className="text-accent text-xs font-bold">Loading…</span>
                     ) : isFailed ? (
                       <button
                         type="button"
                         onClick={() => retryStage(stage.id)}
-                        className="text-red-600 hover:text-red-800 transition"
+                        className="text-danger hover:underline text-xs font-bold cursor-pointer"
                         title="Retry stage"
                       >
-                        <RefreshCw className="w-5 h-5" />
+                        Retry
                       </button>
                     ) : (
-                      <Clock className="w-5 h-5 text-stone-300" />
+                      <span className="text-muted text-xs">Queued</span>
                     )}
                   </div>
                 </div>
@@ -224,8 +218,8 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
       </div>
 
       {/* Footer Navigation */}
-      <div className="flex justify-between items-center text-xs text-stone-500 px-2">
-        <Link to="/w/books" className="hover:text-stone-900 transition flex items-center gap-1 font-semibold">
+      <div className="flex justify-between items-center text-xs text-muted px-1">
+        <Link to="/w/books" className="hover:text-ink hover:underline flex items-center gap-1 font-bold">
           ← Back to My Books
         </Link>
         <span>Changes saved automatically</span>
@@ -233,3 +227,4 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
     </div>
   );
 }
+

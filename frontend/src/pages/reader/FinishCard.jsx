@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Star, MessageSquare, CheckCheck, BookOpen, ArrowLeft } from 'lucide-react';
+import { Star, MessageSquare, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 
 export default function FinishCard({
@@ -12,24 +12,24 @@ export default function FinishCard({
     switch (theme) {
       case 'dark':
         return {
-          cardBg: 'bg-[#202024] border-[#303038] text-[#E6E6E6]',
-          badgeBg: 'bg-[#FF500A]/20 text-[#FF500A]',
-          subtext: 'text-stone-400',
-          itemBg: 'bg-[#282830] border-[#383842]',
+          cardBg: 'bg-[#18181A] border-[#333333] text-[#E6E6E6]',
+          badgeBg: 'border-[#333333] text-accent',
+          subtext: 'text-muted',
+          itemBg: 'bg-[#2A2A30] border-[#333333]',
         };
       case 'sepia':
         return {
-          cardBg: 'bg-[#FAF4E6] border-[#DECFA7] text-[#382C1E]',
-          badgeBg: 'bg-[#FF500A]/15 text-[#FF500A]',
+          cardBg: 'bg-[#F4ECD8] border-[#D9D2C3] text-[#382C1E]',
+          badgeBg: 'border-[#D9D2C3] text-accent',
           subtext: 'text-[#6C5B48]',
-          itemBg: 'bg-[#F2E8D2] border-[#DECFA7]',
+          itemBg: 'bg-[#FAF4E6] border-[#D9D2C3]',
         };
       default:
         return {
-          cardBg: 'bg-white border-stone-200 text-stone-900',
-          badgeBg: 'bg-[#FFF0E8] text-[#FF500A]',
-          subtext: 'text-stone-500',
-          itemBg: 'bg-stone-50 border-stone-200',
+          cardBg: 'bg-paper border-rule text-ink',
+          badgeBg: 'border-rule text-accent',
+          subtext: 'text-muted',
+          itemBg: 'bg-paper border-rule',
         };
     }
   };
@@ -37,68 +37,63 @@ export default function FinishCard({
   const styles = getThemeStyles();
 
   return (
-    <div className="max-w-xl mx-auto py-8 px-4 text-center space-y-6 animate-in fade-in duration-300">
-      <div className={`p-8 sm:p-10 rounded-3xl border shadow-sm space-y-6 ${styles.cardBg}`}>
-        {/* Trophy icon */}
-        <div className="w-16 h-16 rounded-3xl bg-[#FFF0E8] text-[#FF500A] flex items-center justify-center mx-auto shadow-xs">
-          <Trophy className="w-8 h-8" />
-        </div>
-
+    <div className="max-w-xl mx-auto py-8 px-4 text-center space-y-6">
+      <div className={`p-8 rounded border space-y-6 ${styles.cardBg}`}>
         {/* Title & Congratulations */}
         <div className="space-y-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${styles.badgeBg}`}>
+          <span className={`px-2.5 py-0.5 rounded border text-xs font-bold uppercase tracking-wider inline-block ${styles.badgeBg}`}>
             Story Completed
           </span>
-          <h2 className="font-heading text-2xl sm:text-3xl font-black">
-            You Finished Reading!
+          <h2 className="font-bold text-2xl text-ink">
+            You Finished Reading
           </h2>
           <p className={`text-xs sm:text-sm ${styles.subtext}`}>
-            Congratulations on completing <strong className="font-bold">"{book.title}"</strong>. Your reading progress has been marked as finished in your library.
+            You completed <strong className="font-bold text-ink">"{book.title}"</strong>. Your reading progress has been marked as finished.
           </p>
         </div>
 
-        {/* Rating & Review (Phase 5 Preview) */}
-        <div className={`p-5 rounded-2xl border text-left space-y-3 ${styles.itemBg}`}>
+        {/* Rating & Review */}
+        <div className={`p-4 rounded border text-left space-y-3 ${styles.itemBg}`}>
           <div className="flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5">
-              <Star className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
+              <Star className="w-4 h-4 text-muted" />
               Rate this Story
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
               Coming in Phase 5
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-stone-300 opacity-60 cursor-not-allowed">
+          <div className="flex items-center gap-2 text-muted opacity-60 cursor-not-allowed">
             {[1, 2, 3, 4, 5].map((s) => (
-              <span key={s} className="text-2xl">★</span>
+              <span key={s} className="text-xl">★</span>
             ))}
           </div>
 
-          <div className="pt-2 border-t border-stone-200/40 flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5">
-              <MessageSquare className="w-4 h-4 text-blue-500" />
+          <div className="pt-2 border-t border-rule flex items-center justify-between">
+            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
+              <MessageSquare className="w-4 h-4 text-muted" />
               Write a Review
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
               Coming in Phase 5
             </span>
           </div>
         </div>
 
-        {/* Similar Books (Phase 5 Preview) */}
-        <div className={`p-5 rounded-2xl border text-left space-y-2 ${styles.itemBg}`}>
+        {/* Similar Books */}
+        <div className={`p-4 rounded border text-left space-y-2 ${styles.itemBg}`}>
           <div className="flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5">
-              <BookOpen className="w-4 h-4 text-[#FF500A]" />
+            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
+              <BookOpen className="w-4 h-4 text-muted" />
               Similar Stories in {book.genre || 'General'}
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-stone-200/60 text-stone-600 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
               Coming in Phase 5
             </span>
           </div>
           <p className={`text-xs ${styles.subtext}`}>
-            Personalized narrative recommendations will appear here based on pacing and themes.
+            Personalized narrative recommendations will appear here.
           </p>
         </div>
 

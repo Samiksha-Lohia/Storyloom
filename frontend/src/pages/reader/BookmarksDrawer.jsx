@@ -34,24 +34,24 @@ export default function BookmarksDrawer({
     switch (theme) {
       case 'dark':
         return {
-          bg: 'bg-[#1E1E22]',
-          text: 'text-[#E0E0E0]',
-          border: 'border-[#2E2E34]',
-          cardBg: 'bg-[#2A2A32] hover:bg-[#34343E]',
+          bg: 'bg-[#18181A]',
+          text: 'text-[#E6E6E6]',
+          border: 'border-[#333333]',
+          cardBg: 'bg-[#2A2A30] hover:bg-[#34343E]',
         };
       case 'sepia':
         return {
           bg: 'bg-[#F4ECD8]',
           text: 'text-[#382C1E]',
-          border: 'border-[#DECFA7]',
+          border: 'border-[#D9D2C3]',
           cardBg: 'bg-[#FAF4E6] hover:bg-[#FFF9EE]',
         };
       default:
         return {
-          bg: 'bg-white',
-          text: 'text-stone-900',
-          border: 'border-stone-200',
-          cardBg: 'bg-stone-50 hover:bg-stone-100',
+          bg: 'bg-paper',
+          text: 'text-ink',
+          border: 'border-rule',
+          cardBg: 'bg-paper hover:bg-rule/30',
         };
     }
   };
@@ -59,31 +59,31 @@ export default function BookmarksDrawer({
   const styles = getThemeStyles();
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-2xs">
+    <div className="fixed inset-0 z-50 flex justify-end bg-ink/40">
       <div
-        className={`w-full max-w-sm h-full flex flex-col border-l shadow-2xl transition-all ${styles.bg} ${styles.text} ${styles.border}`}
+        className={`w-full max-w-sm h-full flex flex-col border-l ${styles.bg} ${styles.text} ${styles.border}`}
       >
         {/* Header */}
-        <div className={`p-5 border-b flex items-center justify-between ${styles.border}`}>
+        <div className={`p-4 border-b flex items-center justify-between ${styles.border}`}>
           <div className="flex items-center gap-2">
-            <Bookmark className="w-5 h-5 text-[#FF500A]" />
-            <h3 className="font-heading font-bold text-lg">Saved Bookmarks</h3>
+            <Bookmark className="w-4 h-4 text-ink" />
+            <h3 className="font-bold text-sm">Saved Bookmarks</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-stone-200/50 transition cursor-pointer"
+            className="p-1 rounded hover:bg-rule/40 text-ink cursor-pointer"
             aria-label="Close bookmarks"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Bookmarks List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {bookmarks.length === 0 ? (
-            <div className="text-center py-12 px-4 space-y-2 opacity-60">
-              <Bookmark className="w-10 h-10 mx-auto text-stone-300" />
+            <div className="text-center py-12 px-4 space-y-2 text-muted">
+              <Bookmark className="w-4 h-4 mx-auto text-muted" />
               <p className="text-sm font-semibold">No bookmarks yet</p>
               <p className="text-xs max-w-xs mx-auto">
                 Tap the "Mark" button in the reading toolbar to save your place or mark a favourite passage.
@@ -104,7 +104,7 @@ export default function BookmarksDrawer({
               return (
                 <div
                   key={bm._id || `${bm.offset}-${index}`}
-                  className={`p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${styles.cardBg} ${styles.border}`}
+                  className={`p-3 rounded border flex items-center justify-between gap-3 ${styles.cardBg} ${styles.border}`}
                 >
                   <button
                     type="button"
@@ -116,11 +116,11 @@ export default function BookmarksDrawer({
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm">Page {page}</span>
-                      <span className="text-[10px] opacity-60 font-mono">
+                      <span className="text-[10px] text-muted font-mono">
                         (char {bm.offset})
                       </span>
                     </div>
-                    <span className="text-[11px] opacity-60 block mt-0.5">{dateStr}</span>
+                    <span className="text-[11px] text-muted block mt-0.5">{dateStr}</span>
                   </button>
 
                   <div className="flex items-center gap-1 shrink-0">
@@ -130,7 +130,7 @@ export default function BookmarksDrawer({
                         onJumpToPage(page);
                         onClose();
                       }}
-                      className="p-1.5 rounded-xl hover:bg-stone-200/50 text-[#FF500A] transition cursor-pointer"
+                      className="p-1 rounded hover:bg-rule/40 text-accent cursor-pointer"
                       title="Jump to page"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -138,7 +138,7 @@ export default function BookmarksDrawer({
                     <button
                       type="button"
                       onClick={() => onRemoveBookmark(bm.offset)}
-                      className="p-1.5 rounded-xl hover:bg-red-100/50 text-stone-400 hover:text-red-600 transition cursor-pointer"
+                      className="p-1 rounded hover:bg-danger/20 text-muted hover:text-danger cursor-pointer"
                       title="Remove bookmark"
                     >
                       <Trash2 className="w-4 h-4" />

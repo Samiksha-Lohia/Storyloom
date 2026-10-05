@@ -20,7 +20,7 @@ export default function BookCard({ book, rank, className = '' }) {
     book.authorId?.name ||
     book.author?.name ||
     book.author?.username ||
-    'SceneCraft Author';
+    'Storyloom Author';
 
   const reads = book.stats?.reads ?? book.stats?.readCount ?? 0;
   const rating = book.stats?.ratingAvg ?? book.stats?.rating ?? 0;
@@ -29,10 +29,10 @@ export default function BookCard({ book, rank, className = '' }) {
   return (
     <Link
       to={`/book/${bookId}`}
-      className={`group flex flex-col gap-2.5 transition-transform duration-200 hover:-translate-y-1 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF500A] focus-visible:ring-offset-4 rounded-xl ${className}`}
+      className={`group flex flex-col gap-2 select-none rounded border border-rule bg-paper p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${className}`}
     >
-      {/* 2:3 Cover with soft hover shadow */}
-      <div className="relative overflow-hidden rounded-xl shadow-xs group-hover:shadow-md transition-shadow">
+      {/* 2:3 Cover */}
+      <div className="relative overflow-hidden rounded">
         <CoverImage
           publicId={coverPid}
           url={book.coverUrl}
@@ -44,43 +44,43 @@ export default function BookCard({ book, rank, className = '' }) {
 
         {/* Rank badge if present */}
         {rank !== undefined && (
-          <span className="absolute top-2 left-2 w-6 h-6 rounded-full bg-stone-900/80 text-white font-bold text-xs flex items-center justify-center backdrop-blur-xs shadow-sm">
+          <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded border border-rule bg-paper text-ink font-bold text-[10px]">
             #{rank}
           </span>
         )}
 
         {/* Mature 18+ badge if applicable */}
         {book.mature && (
-          <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-black/80 text-white rounded shadow-sm">
+          <span className="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] font-bold bg-ink text-paper rounded">
             18+
           </span>
         )}
 
         {/* Genre tag badge */}
         {book.genre && (
-          <span className="absolute bottom-2 left-2 px-2 py-0.5 text-[10px] font-semibold bg-white/95 backdrop-blur-xs text-[#121212] rounded-full shadow-xs">
+          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-bold bg-paper text-ink rounded border border-rule">
             {book.genre}
           </span>
         )}
       </div>
 
       {/* Book details */}
-      <div className="flex flex-col gap-1 px-0.5">
-        <h3 className="font-semibold text-xs sm:text-sm text-[#121212] line-clamp-2 leading-snug group-hover:text-[#FF500A] transition-colors">
+      <div className="flex flex-col gap-1">
+        <h3 className="font-bold text-xs sm:text-sm text-ink line-clamp-2 leading-snug group-hover:text-accent group-hover:underline">
           {book.title}
         </h3>
 
-        <p className="text-[11px] text-[#6B6B6B] truncate">
-          by <span className="font-medium text-slate-700">{authorName}</span>
+        <p className="text-[11px] text-muted truncate">
+          by <span className="font-bold text-ink">{authorName}</span>
         </p>
 
         {/* Stats */}
-        <div className="flex items-center justify-between mt-0.5 text-[11px] text-[#6B6B6B]">
+        <div className="flex items-center justify-between mt-0.5 text-[11px] text-muted">
           <StarRating rating={rating} size="sm" />
 
           {reads > 0 && (
             <span className="inline-flex items-center gap-1 font-medium">
-              <Eye className="w-3 h-3 text-slate-400" />
+              <Eye className="w-3.5 h-3.5 text-muted" />
               {formatReads(reads)}
             </span>
           )}
@@ -91,4 +91,5 @@ export default function BookCard({ book, rank, className = '' }) {
 }
 
 export { BookCard };
+
 

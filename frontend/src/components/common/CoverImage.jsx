@@ -24,7 +24,7 @@ export default function CoverImage({
   url,
   title = 'Untitled Story',
   preset = 'thumb',
-  accent = '#FF500A',
+  accent = '#1C1917',
   className = '',
   aspectRatio = 'aspect-[2/3]',
 }) {
@@ -34,35 +34,30 @@ export default function CoverImage({
   const resolvedUrl = url || (publicId ? coverUrl(publicId, preset) : '');
 
   if (!resolvedUrl || hasError) {
-    // Generated cover placeholder: title on a tinted block (2:3 aspect ratio)
     return (
       <div
-        className={`relative ${aspectRatio} rounded-lg overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between p-3.5 select-none text-white ${className}`}
-        style={{
-          background: `linear-gradient(135deg, ${accent} 0%, #121212 120%)`,
-        }}
+        className={`relative ${aspectRatio} rounded border border-rule bg-paper overflow-hidden flex flex-col justify-between p-3 select-none text-ink ${className}`}
         role="img"
         aria-label={`Cover for ${title}`}
       >
-        <div className="flex justify-between items-start opacity-70">
-          <BookOpen className="w-4 h-4 text-white/80" />
-          <span className="text-[10px] uppercase font-mono tracking-widest text-white/70">SC</span>
+        <div className="flex justify-between items-start text-muted">
+          <BookOpen className="w-4 h-4" />
         </div>
 
         <div className="my-auto text-center px-1">
-          <p className="font-serif font-bold text-sm md:text-base line-clamp-3 leading-tight drop-shadow-sm">
+          <p className="font-bold text-xs md:text-sm line-clamp-3 leading-tight text-ink">
             {title}
           </p>
         </div>
 
-        <div className="h-1 w-8 rounded-full bg-white/30 mx-auto" />
+        <div className="border-t border-rule w-6 mx-auto" />
       </div>
     );
   }
 
   return (
     <div
-      className={`relative ${aspectRatio} rounded-lg overflow-hidden bg-slate-100 shadow-xs hover:shadow-md transition-shadow ${className}`}
+      className={`relative ${aspectRatio} rounded border border-rule overflow-hidden bg-paper ${className}`}
     >
       <img
         src={resolvedUrl}
@@ -76,4 +71,5 @@ export default function CoverImage({
 }
 
 export { CoverImage };
+
 

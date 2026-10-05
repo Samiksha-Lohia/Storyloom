@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, MessageSquare } from 'lucide-react';
+import { Bookmark, MessageSquare } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -52,23 +52,16 @@ export default function StarWishlistButton({
   };
 
   const sizeClasses = {
-    sm: 'p-1.5 text-xs',
-    md: 'p-2 text-sm',
-    lg: 'px-4 py-2.5 text-sm gap-2',
-  };
-
-  const iconSizes = {
-    sm: 'w-3.5 h-3.5',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5',
+    sm: 'p-1 text-xs',
+    md: 'p-1.5 text-xs',
+    lg: 'px-3 py-1.5 text-xs gap-1.5',
   };
 
   return (
-    <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      {/* "In talks" indicator ready for Phase 9 */}
+    <div className={`inline-flex items-center gap-2 ${className}`}>
       {inTalks && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-          <MessageSquare className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-paper text-ink border border-rule">
+          <MessageSquare className="w-4 h-4 text-ink" />
           In talks
         </span>
       )}
@@ -79,19 +72,19 @@ export default function StarWishlistButton({
           onClick={handleToggle}
           disabled={loading}
           title={wishlisted ? 'Remove from publisher wishlist' : 'Add to private publisher wishlist'}
-          className={`flex items-center rounded-xl transition-all duration-200 border cursor-pointer ${sizeClasses[size]} ${
+          className={`flex items-center rounded border border-rule cursor-pointer ${sizeClasses[size]} ${
             wishlisted
-              ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-2xs hover:bg-amber-100'
-              : 'bg-white/90 border-slate-200 text-slate-500 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50/50'
+              ? 'bg-ink text-paper border-ink'
+              : 'bg-paper text-ink hover:border-ink hover:text-accent'
           }`}
         >
-          <Star
-            className={`${iconSizes[size]} transition-transform active:scale-125 ${
-              wishlisted ? 'fill-amber-400 text-amber-500' : ''
+          <Bookmark
+            className={`w-4 h-4 ${
+              wishlisted ? 'fill-paper text-paper' : 'text-current'
             }`}
           />
           {showLabel && (
-            <span className="font-semibold text-xs ml-1.5">
+            <span className="font-bold text-xs ml-1">
               {wishlisted ? 'Wishlisted' : 'Add to Wishlist'}
             </span>
           )}
@@ -100,3 +93,4 @@ export default function StarWishlistButton({
     </div>
   );
 }
+

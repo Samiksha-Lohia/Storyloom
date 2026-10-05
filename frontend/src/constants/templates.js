@@ -9,21 +9,21 @@ export const TEMPLATE_OPTIONS = [
     id: BOOK_TEMPLATES.CLASSIC,
     name: 'Classic',
     badge: 'Editorial Standard',
-    description: 'Familiar Wattpad-style layout. Cover on the left, story details on the right, and tabbed sections below.',
+    description: 'Clean editorial layout. Cover on the left, story details on the right, and tabbed sections below.',
     bestFor: 'General Fiction, Romance, Mystery, Young Adult',
   },
   {
     id: BOOK_TEMPLATES.SHOWCASE,
     name: 'Showcase',
     badge: 'Cinematic Hero',
-    description: 'Full-width atmospheric hero with the cover blurred as backdrop, centered artwork, stat chips, and author card.',
+    description: 'Centered presentation with artwork, stat chips, and author card.',
     bestFor: 'Fantasy, Sci-Fi, Thriller, Action',
   },
   {
     id: BOOK_TEMPLATES.NOTEBOOK,
     name: 'Notebook',
     badge: 'Paper & Ink',
-    description: 'Parchment background with ruled lines, a pinned cover, sticker tags, and handwritten headings.',
+    description: 'Parchment background with ruled lines, a centered cover, and story synopsis.',
     bestFor: 'Literary Fiction, Poetry, Memoir, Personal Essays',
   },
 ];
@@ -31,10 +31,9 @@ export const TEMPLATE_OPTIONS = [
 export const ACCENT_PRESETS = [
   {
     id: 'orange',
-    name: 'Brand Orange',
-    hex: '#C2410C', // Accessible darker variant of #FF500A (5.18:1 contrast on white)
-    legacyHex: '#FF500A',
-    description: 'Warm & Energetic (Accessible 5.2:1)',
+    name: 'Warm Red',
+    hex: '#9B2D20',
+    description: 'Accent Rust',
   },
   {
     id: 'blue',

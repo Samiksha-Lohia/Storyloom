@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Settings,
   Bookmark,
-  Sparkles,
   BookOpen,
   Columns2,
   Square,
@@ -19,7 +17,7 @@ import PageView from './PageView';
 import Scrubber from './Scrubber';
 import ReaderSettingsPopover from './ReaderSettingsPopover';
 import BookmarksDrawer from './BookmarksDrawer';
-import InsightsDrawer from './InsightsDrawer';
+import { InsightsDrawer } from '../../components/common/InsightsDrawer';
 import MatureGateModal from './MatureGateModal';
 import FinishCard from './FinishCard';
 import { Skeleton } from '../../components/common/Skeleton';
@@ -370,20 +368,20 @@ export function ReaderPage() {
       case 'dark':
         return {
           wrapperBg: 'bg-[#18181A] text-[#E6E6E6]',
-          topBarBg: 'bg-[#18181A]/95 border-[#2A2A30] text-[#E6E6E6]',
-          navArrow: 'bg-[#2A2A30]/60 hover:bg-[#383842] text-white',
+          topBarBg: 'bg-[#18181A] border-[#333333] text-[#E6E6E6]',
+          navArrow: 'bg-[#2A2A30] hover:bg-[#383842] text-white',
         };
       case 'sepia':
         return {
           wrapperBg: 'bg-[#F4ECD8] text-[#382C1E]',
-          topBarBg: 'bg-[#F4ECD8]/95 border-[#DECFA7] text-[#382C1E]',
-          navArrow: 'bg-[#EAE0C7]/80 hover:bg-[#DFD4B7] text-[#382C1E]',
+          topBarBg: 'bg-[#F4ECD8] border-[#D9D2C3] text-[#382C1E]',
+          navArrow: 'bg-[#EAE0C7] hover:bg-[#DFD4B7] text-[#382C1E]',
         };
       default:
         return {
-          wrapperBg: 'bg-[#FAF9F5] text-[#1E1E1E]',
-          topBarBg: 'bg-[#FAF9F5]/95 border-stone-200 text-stone-900',
-          navArrow: 'bg-stone-200/60 hover:bg-stone-300 text-stone-800',
+          wrapperBg: 'bg-paper text-ink',
+          topBarBg: 'bg-paper border-rule text-ink',
+          navArrow: 'bg-paper hover:bg-rule/40 border border-rule text-ink',
         };
     }
   };
@@ -392,25 +390,19 @@ export function ReaderPage() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex flex-col justify-between p-8 ${themeStyles.wrapperBg}`}>
-        <Skeleton className="w-48 h-8 rounded-xl" />
-        <div className="max-w-2xl mx-auto w-full space-y-4">
-          <Skeleton className="w-full h-8 rounded-lg" />
-          <Skeleton className="w-full h-8 rounded-lg" />
-          <Skeleton className="w-3/4 h-8 rounded-lg" />
-        </div>
-        <Skeleton className="w-full h-12 rounded-xl" />
+      <div className={`min-h-screen flex items-center justify-center p-8 ${themeStyles.wrapperBg}`}>
+        <p className="text-sm font-bold text-muted">Loading…</p>
       </div>
     );
   }
 
   if (error || !book) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-stone-50">
-        <h2 className="font-heading text-2xl font-bold text-stone-900 mb-2">Unable to Open Reader</h2>
-        <p className="text-stone-600 text-sm max-w-md mb-6">{error || 'Story not found.'}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-paper text-ink">
+        <h2 className="text-xl font-bold mb-2">Unable to Open Reader</h2>
+        <p className="text-muted text-sm max-w-md mb-6">{error || 'Story not found.'}</p>
         <Link to="/browse">
-          <button className="px-5 py-2.5 bg-[#FF500A] text-white rounded-xl text-sm font-bold">
+          <button className="px-4 py-2 bg-ink text-paper rounded text-sm font-bold cursor-pointer">
             Back to Catalogue
           </button>
         </Link>
@@ -424,73 +416,72 @@ export function ReaderPage() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col justify-between transition-colors duration-200 select-text relative ${themeStyles.wrapperBg}`}
+      className={`min-h-screen flex flex-col justify-between select-text relative ${themeStyles.wrapperBg}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={handleContainerClick}
     >
       {/* ─── Reader Top Bar ─────────────────────────────────────────────────── */}
       <header
-        className={`sticky top-0 inset-x-0 z-40 border-b backdrop-blur-md px-4 sm:px-8 py-3 flex items-center justify-between transition-colors shadow-xs ${themeStyles.topBarBg}`}
+        className={`sticky top-0 inset-x-0 z-40 border-b px-4 sm:px-8 py-3 flex items-center justify-between ${themeStyles.topBarBg}`}
       >
         {/* Left: Back Link & Story Title */}
         <div className="flex items-center gap-3">
           <Link
             to={`/book/${bookId}`}
-            className="p-1.5 rounded-xl hover:bg-stone-200/50 transition cursor-pointer"
+            className="p-1.5 rounded hover:bg-rule/40 cursor-pointer"
             title="Return to Story Overview"
             aria-label="Back to story overview"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="hidden sm:block">
-            <h1 className="font-heading font-bold text-sm truncate max-w-xs md:max-w-md">
+            <h1 className="font-bold text-sm truncate max-w-xs md:max-w-md">
               {book.title}
             </h1>
-            <span className="text-[11px] opacity-60 block">
+            <span className="text-[11px] text-muted block">
               {book.genre || 'Story'} • Page {Math.min(currentPage, pageCount)} of {pageCount}
             </span>
           </div>
         </div>
 
         {/* Right: Actions (Insights, Bookmarks, Two-Page Spread, Settings) */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Insights Button (Phase 4 Placeholder) */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Insights Button */}
           <button
             type="button"
             onClick={() => setShowInsights(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-stone-200/50 transition cursor-pointer"
-            title="Story Insights & Narrative Engine"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-bold border border-rule hover:bg-rule/40 cursor-pointer"
+            title="Story Insights"
             aria-label="Story Insights"
           >
-            <Sparkles className="w-4 h-4 text-[#FF500A]" />
-            <span className="hidden md:inline">Insights</span>
+            <span className="text-xs">Insights</span>
           </button>
 
           {/* Bookmark Button */}
           <button
             type="button"
             onClick={handleToggleBookmark}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded border cursor-pointer ${
               isBookmarked
-                ? 'text-[#FF500A] bg-[#FF500A]/10'
-                : 'hover:bg-stone-200/50 opacity-80 hover:opacity-100'
+                ? 'border-accent text-accent font-bold'
+                : 'border-rule hover:bg-rule/40 text-ink'
             }`}
             title={isBookmarked ? 'Remove Bookmark' : 'Mark Page'}
             aria-label={isBookmarked ? 'Remove Bookmark' : 'Mark Page'}
           >
-            {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+            {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           </button>
 
           {/* Bookmarks Drawer Toggle */}
           <button
             type="button"
             onClick={() => setShowBookmarks(true)}
-            className="p-2 rounded-xl hover:bg-stone-200/50 transition opacity-80 hover:opacity-100 cursor-pointer"
+            className="p-2 rounded border border-rule hover:bg-rule/40 text-ink cursor-pointer"
             title="View All Bookmarks"
             aria-label="Saved Bookmarks"
           >
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="w-4 h-4" />
           </button>
 
           {/* Two-Page Spread Toggle (Desktop >= 1024px) */}
@@ -498,15 +489,15 @@ export function ReaderPage() {
             <button
               type="button"
               onClick={() => setTwoPageSpread(!twoPageSpread)}
-              className={`p-2 rounded-xl transition cursor-pointer ${
+              className={`p-2 rounded border cursor-pointer ${
                 twoPageSpread
-                  ? 'text-[#FF500A] bg-[#FF500A]/10'
-                  : 'hover:bg-stone-200/50 opacity-80 hover:opacity-100'
+                  ? 'border-accent text-accent font-bold'
+                  : 'border-rule hover:bg-rule/40 text-ink'
               }`}
               title={twoPageSpread ? 'Switch to Single Page' : 'Switch to Two-Page Spread'}
               aria-label="Toggle two page spread"
             >
-              {twoPageSpread ? <Columns2 className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+              {twoPageSpread ? <Columns2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
             </button>
           )}
 
@@ -514,11 +505,11 @@ export function ReaderPage() {
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="p-2 rounded-xl hover:bg-stone-200/50 transition opacity-80 hover:opacity-100 cursor-pointer"
+            className="p-2 rounded border border-rule hover:bg-rule/40 text-ink cursor-pointer"
             title="Reader Typography & Theme Settings"
             aria-label="Reader Settings"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -530,22 +521,22 @@ export function ReaderPage() {
           type="button"
           onClick={prevPage}
           disabled={currentPage <= 1}
-          className={`fixed left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full backdrop-blur-xs transition shadow-md disabled:opacity-0 disabled:pointer-events-none cursor-pointer ${themeStyles.navArrow}`}
+          className={`fixed left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded border border-rule disabled:opacity-0 disabled:pointer-events-none cursor-pointer ${themeStyles.navArrow}`}
           title="Previous Page (Left Arrow)"
           aria-label="Previous page"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
         <button
           type="button"
           onClick={nextPage}
           disabled={isAtFinishCard}
-          className={`fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full backdrop-blur-xs transition shadow-md disabled:opacity-0 disabled:pointer-events-none cursor-pointer ${themeStyles.navArrow}`}
+          className={`fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded border border-rule disabled:opacity-0 disabled:pointer-events-none cursor-pointer ${themeStyles.navArrow}`}
           title="Next Page (Right Arrow or Space)"
           aria-label="Next page"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-4 h-4" />
         </button>
 
         {/* Page Text or Finish Card */}
@@ -556,19 +547,17 @@ export function ReaderPage() {
             onReplayFromStart={() => goToPage(1)}
           />
         ) : (
-          <AnimatePresence mode="wait" custom={turnDirection}>
-            <PageView
-              key={`pv-${currentPage}-${twoPageSpread ? 'spread' : 'single'}`}
-              pageText={currentText}
-              nextPageText={nextSpreadText}
-              pageNumber={currentPage}
-              pageCount={pageCount}
-              twoPageSpread={twoPageSpread}
-              language={book.language || 'en'}
-              settings={settings}
-              direction={turnDirection}
-            />
-          </AnimatePresence>
+          <PageView
+            key={`pv-${currentPage}-${twoPageSpread ? 'spread' : 'single'}`}
+            pageText={currentText}
+            nextPageText={nextSpreadText}
+            pageNumber={currentPage}
+            pageCount={pageCount}
+            twoPageSpread={twoPageSpread}
+            language={book.language || 'en'}
+            settings={settings}
+            direction={turnDirection}
+          />
         )}
       </main>
 

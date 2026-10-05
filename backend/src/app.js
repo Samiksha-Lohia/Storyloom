@@ -46,7 +46,7 @@ const createApp = () => {
   // ─── CORS ──────────────────────────────────────────────────────────────────
   const allowedOrigins = config.corsAllowedOrigins;
   const isProduction = config.env === 'production';
-  const frontendUrl = process.env.FRONTEND_URL;
+  const frontendUrl = config.frontendUrl;
 
   app.use(
     cors({
@@ -54,34 +54,35 @@ const createApp = () => {
         // Allow requests with no origin (like mobile apps, curl, postman)
         if (!origin) return callback(null, true);
 
-        // In production, strictly lock to FRONTEND_URL or allowedOrigins if defined
-        if (isProduction && frontendUrl && origin === frontendUrl) {
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+
+        // In production, strictly lock to exact matches in frontendUrl or allowedOrigins
+        if (frontendUrl && normalizedOrigin === frontendUrl.replace(/\/+$/, '')) {
           return callback(null, true);
         }
 
-        // If config specifies '*', allow all origins dynamically
-        if (allowedOrigins === '*') {
+        // If config specifies '*', allow all origins in non-production
+        if (allowedOrigins === '*' && !isProduction) {
           return callback(null, true);
         }
 
         // If allowedOrigins is an array, check if origin is in the list
         if (Array.isArray(allowedOrigins)) {
-          if (allowedOrigins.includes(origin)) {
+          const normalizedAllowed = allowedOrigins.map((o) => o.replace(/\/+$/, ''));
+          if (normalizedAllowed.includes(normalizedOrigin)) {
             return callback(null, true);
           }
         }
 
-        // Dynamically allow any vercel.app subdomain or localhost in dev/staging
-        const isVercel = /\.vercel\.app$/.test(origin);
-        const isLocalhost =
-          /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-          /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
-        if (!isProduction && (isVercel || isLocalhost)) {
-          return callback(null, true);
-        }
-
-        if (isProduction && isVercel) {
-          return callback(null, true);
+        // Dynamically allow any vercel.app subdomain or localhost ONLY in dev/staging (non-production)
+        if (!isProduction) {
+          const isVercel = /\.vercel\.app$/.test(origin);
+          const isLocalhost =
+            /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+            /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+          if (isVercel || isLocalhost) {
+            return callback(null, true);
+          }
         }
 
         return callback(new Error('Not allowed by CORS'));
@@ -104,26 +105,14 @@ const createApp = () => {
   app.use(express.urlencoded({ extended: true }));
 
   // ─── Tiered Rate Limiters (C5) ─────────────────────────────────────────────
-  // 1. Strict Auth Limiter (allows at least 10 logins per minute: configured to 30/min)
-  const authStrictLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    limit: config.env === 'test' ? 1000 : 30,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
-    message: { success: false, message: 'Too many authentication attempts. Please try again after 1 minute.' },
-  });
-  app.use(['/api/auth/login', '/api/auth/register'], authStrictLimiter);
-
-  // 2. Lenient Read / Search Limiter (300 per minute)
+  // 1. Lenient Read / Search Limiter (300 per minute)
   const readLenientLimiter = rateLimit({
     windowMs: 60 * 1000,
     limit: config.env === 'test' ? 5000 : 300,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
+      prefix: 'rl:read:',
       sendCommand: (...args) => redis.call(...args),
     }),
     skip: (req) => req.method !== 'GET',
@@ -131,16 +120,21 @@ const createApp = () => {
   });
   app.use(['/api/books', '/api/search'], readLenientLimiter);
 
-  // 3. Standard API Limiter (120 per minute)
+  // 2. Standard API Limiter (120 per minute)
   const apiStandardLimiter = rateLimit({
     windowMs: 60 * 1000,
     limit: config.env === 'test' ? 5000 : 120,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
+      prefix: 'rl:api:',
       sendCommand: (...args) => redis.call(...args),
     }),
     skip: (req) => {
+      // Bypass for auth endpoints so /api/auth/* calls are not counted here
+      if (req.originalUrl && req.originalUrl.startsWith('/api/auth/')) {
+        return true;
+      }
       // Bypass for document jobs status checking GET endpoint
       return req.method === 'GET' && req.originalUrl && /\/api\/documents\/[^/]+\/jobs(\?|$)/.test(req.originalUrl);
     },

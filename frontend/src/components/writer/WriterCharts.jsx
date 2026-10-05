@@ -14,10 +14,10 @@ import {
 import { Star } from 'lucide-react';
 
 // Design tokens
-const COLOR_PRIMARY = '#FF500A';
-const COLOR_SECONDARY = '#64748B';
-const COLOR_BORDER = '#E5E5E5';
-const COLOR_MUTED = '#8C8C8C';
+const COLOR_PRIMARY = '#9B2D20'; // accent
+const COLOR_SECONDARY = '#1C1917'; // ink
+const COLOR_BORDER = '#D9D2C3'; // rule
+const COLOR_MUTED = '#6B6358'; // muted
 
 /**
  * Custom Tooltip for Line Chart
@@ -25,12 +25,12 @@ const COLOR_MUTED = '#8C8C8C';
 function ReadsTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-stone-900 text-white px-3 py-2 rounded-xl text-xs shadow-md border border-stone-800 space-y-1">
-        <p className="font-semibold text-stone-300">{label}</p>
+      <div className="bg-paper text-ink px-3 py-2 rounded text-xs border border-rule space-y-1">
+        <p className="font-bold text-ink">{label}</p>
         {payload.map((entry, index) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-2.5 h-2.5 rounded"
               style={{ backgroundColor: entry.color }}
             />
             <span className="capitalize">{entry.name}:</span>
@@ -50,12 +50,12 @@ function DropOffTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-stone-900 text-white px-3 py-2 rounded-xl text-xs shadow-md border border-stone-800">
-        <p className="font-semibold text-[#FF500A]">{data.bucket} of story</p>
-        <p className="text-stone-300">
-          <span className="font-bold text-white">{data.count}</span> reader{data.count === 1 ? '' : 's'} stopped here
+      <div className="bg-paper text-ink px-3 py-2 rounded text-xs border border-rule">
+        <p className="font-bold text-accent">{data.bucket} of story</p>
+        <p className="text-ink">
+          <span className="font-bold text-ink">{data.count}</span> reader{data.count === 1 ? '' : 's'} stopped here
         </p>
-        <p className="text-[11px] text-stone-400">
+        <p className="text-[11px] text-muted">
           {data.percentage}% of all readers
         </p>
       </div>
@@ -70,13 +70,12 @@ function DropOffTooltip({ active, payload }) {
 export function ReadsOverTimeChart({ data = [] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-xs text-stone-400">
+      <div className="flex items-center justify-center h-64 text-xs text-muted">
         No reading activity recorded for this period.
       </div>
     );
   }
 
-  // Format short date for X-axis (e.g., 'Oct 4' or '10/04')
   const formattedData = data.map((d) => {
     let shortLabel = d.date;
     try {
@@ -116,9 +115,9 @@ export function ReadsOverTimeChart({ data = [] }) {
             dataKey="reads"
             name="Reads"
             stroke={COLOR_PRIMARY}
-            strokeWidth={2.5}
+            strokeWidth={2}
             dot={false}
-            activeDot={{ r: 5, fill: COLOR_PRIMARY }}
+            isAnimationActive={false}
           />
           <Line
             type="monotone"
@@ -128,7 +127,7 @@ export function ReadsOverTimeChart({ data = [] }) {
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}
-            activeDot={{ r: 4, fill: COLOR_SECONDARY }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -144,8 +143,8 @@ export function DropOffBarChart({ data = [] }) {
 
   if (!data || data.length === 0 || totalReaders === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center px-4 text-xs text-stone-400">
-        <p className="font-semibold text-stone-500">No reader progress data yet</p>
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4 text-xs text-muted">
+        <p className="font-bold text-ink">No reader progress data yet</p>
         <p className="mt-1">As readers flip through pages, drop-off milestones will appear here.</p>
       </div>
     );
@@ -170,15 +169,13 @@ export function DropOffBarChart({ data = [] }) {
             axisLine={false}
           />
           <Tooltip content={<DropOffTooltip />} />
-          <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+          <Bar dataKey="count" isAnimationActive={false}>
             {data.map((entry, index) => {
-              // Highlight the 90-100% completion bar in a richer celebratory shade
               const isCompletion = entry.bucket === '90-100%';
               return (
                 <Cell
                   key={`cell-${index}`}
-                  fill={isCompletion ? '#1F9D55' : COLOR_PRIMARY}
-                  opacity={entry.count > 0 ? 0.9 : 0.2}
+                  fill={isCompletion ? '#2F6B3A' : COLOR_PRIMARY}
                 />
               );
             })}
@@ -202,18 +199,18 @@ export function RatingHistogram({ distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 
         const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
         return (
           <div key={stars} className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1 w-12 text-stone-600 font-semibold shrink-0">
+            <div className="flex items-center gap-1 w-12 text-ink font-bold shrink-0">
               <span>{stars}</span>
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <Star className="w-4 h-4 fill-ink text-ink" />
             </div>
-            <div className="flex-1 h-2.5 bg-stone-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-paper border border-rule rounded overflow-hidden">
               <div
-                className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                className="h-full bg-accent"
                 style={{ width: `${percentage}%` }}
               />
             </div>
-            <div className="w-14 text-right text-stone-500 font-mono text-[11px] shrink-0">
-              {count} <span className="text-stone-400">({percentage}%)</span>
+            <div className="w-14 text-right text-muted font-mono text-[11px] shrink-0">
+              {count} <span>({percentage}%)</span>
             </div>
           </div>
         );
@@ -227,3 +224,4 @@ export default {
   DropOffBarChart,
   RatingHistogram,
 };
+

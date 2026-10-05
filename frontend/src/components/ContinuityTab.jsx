@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { ShieldAlert as _ShieldAlert, AlertTriangle as _AlertTriangle, CheckCircle, Check, EyeOff, Archive, BookOpen } from 'lucide-react';
 
 export default function ContinuityTab({ documentId, source, options = {} }) {
-  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
+  const resolvedSource = useMemo(
+    () => source || (documentId ? { kind: 'document', id: documentId } : null),
+    [source, documentId]
+  );
+  const stableOptions = useMemo(() => options, [options]);
   const [issues, setIssues] = useState([]);
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(true);
@@ -12,11 +16,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
   const [statusFilter, setStatusFilter] = useState('open'); // 'open' | 'reviewed' | 'resolved' | 'dismissed' | 'all'
   const [severityFilter, setSeverityFilter] = useState('all');
 
-  useEffect(() => {
-    loadData();
-  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options)]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!resolvedSource?.id) {
       setLoading(false);
       return;
@@ -24,7 +24,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     setLoading(true);
     try {
       // 1. Fetch scenes to resolve names in the log
-      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
       const sceneRaw = sceneRes?.data !== undefined ? sceneRes.data : sceneRes;
       const scenesList = Array.isArray(sceneRaw) ? sceneRaw : sceneRaw?.results || [];
       const scenesMap = {};
@@ -34,7 +34,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
       setScenes(scenesMap);
 
       // 2. Fetch continuity issues
-      const res = await api.analysis.getContinuity(resolvedSource, options).catch(() => []);
+      const res = await api.analysis.getContinuity(resolvedSource, stableOptions).catch(() => []);
       const raw = res?.data !== undefined ? res.data : res;
       setIssues(Array.isArray(raw) ? raw : []);
     } catch (err) {
@@ -42,7 +42,11 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedSource, stableOptions]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleUpdateStatus = async (issueId, newStatus) => {
     if (!resolvedSource?.id) return;
@@ -96,11 +100,8 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-10 bg-slate-100 rounded-lg w-1/4"></div>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-slate-100 rounded-2xl w-full"></div>
-        ))}
+      <div className="p-8 text-center text-xs font-bold text-muted">
+        Loading…
       </div>
     );
   }
@@ -161,29 +162,29 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
             return (
               <div 
                 key={issueId}
-                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-start justify-between gap-6"
+                className="bg-paper border border-rule rounded p-6 flex flex-col md:flex-row md:items-start justify-between gap-6"
               >
                 <div className="space-y-3 max-w-[75%]">
                   {/* Tags row */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`px-2 py-0.5 border rounded-full text-[9px] font-bold uppercase tracking-wider ${getSeverityBadge(issue.severity)}`}>
+                    <span className={`px-2 py-0.5 border border-rule rounded text-[9px] font-bold uppercase tracking-wider ${getSeverityBadge(issue.severity)}`}>
                       {issue.severity} severity
                     </span>
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
+                    <span className="text-xs font-bold text-muted uppercase tracking-wider font-mono">
                       {getTypeLabel(issue.type)}
                     </span>
                   </div>
 
                   {/* Conflict description */}
-                  <p className="text-sm text-slate-700 leading-relaxed font-serif">
+                  <p className="text-sm text-ink leading-relaxed font-body">
                     {issue.description}
                   </p>
 
                   {/* Scenes involved */}
                   {issue.sceneIds && issue.sceneIds.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <span className="block text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                        <BookOpen className="w-3 h-3 text-slate-400" />
+                      <span className="block text-[9px] font-bold uppercase tracking-widest text-muted flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5 text-muted" />
                         Conflicting Scenes
                       </span>
                       <div className="flex flex-wrap gap-2">
@@ -193,7 +194,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                           return (
                             <span 
                               key={sceneId}
-                              className="px-2.5 py-0.5 bg-slate-50 border border-slate-100 rounded-md text-[10px] font-semibold text-slate-600"
+                              className="px-2.5 py-0.5 bg-paper border border-rule rounded text-[10px] font-semibold text-ink"
                             >
                               Scene {scene.sceneNumber}: {scene.title}
                             </span>
@@ -205,23 +206,23 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                 </div>
 
                 {/* Issue Actions panel */}
-                <div className="flex items-center gap-2 self-end md:self-start bg-slate-50/50 p-2 rounded-xl border border-slate-100 flex-shrink-0">
+                <div className="flex items-center gap-2 self-end md:self-start bg-paper p-2 rounded border border-rule flex-shrink-0">
                   {issue.status === 'open' && (
                     <>
                       <button
                         onClick={() => handleUpdateStatus(issueId, 'reviewed')}
-                        className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                        className="px-2.5 py-1.5 bg-paper border border-rule text-ink hover:bg-rule/40 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
                         title="Mark as reviewed"
                       >
-                        <Archive className="w-3.5 h-3.5" />
+                        <Archive className="w-4 h-4" />
                         Review
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(issueId, 'resolved')}
-                        className="px-2.5 py-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                        className="px-2.5 py-1.5 bg-ink text-paper rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
                         title="Mark as resolved"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-4 h-4" />
                         Resolve
                       </button>
                     </>
@@ -229,17 +230,17 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
 
                   {issue.status === 'reviewed' && (
                     <>
-                      <span className="text-xs font-semibold text-slate-400 px-2 italic">Reviewed</span>
+                      <span className="text-xs font-semibold text-muted px-2 italic">Reviewed</span>
                       <button
                         onClick={() => handleUpdateStatus(issueId, 'resolved')}
-                        className="p-1.5 hover:bg-slate-200/50 rounded-lg text-slate-500 hover:text-slate-900 transition-colors"
+                        className="p-1.5 hover:bg-rule/40 rounded text-muted hover:text-ink cursor-pointer"
                         title="Resolve"
                       >
                         <Check className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(issueId, 'dismissed')}
-                        className="p-1.5 hover:bg-slate-200/50 rounded-lg text-slate-500 hover:text-slate-900 transition-colors"
+                        className="p-1.5 hover:bg-rule/40 rounded text-muted hover:text-ink cursor-pointer"
                         title="Dismiss"
                       >
                         <EyeOff className="w-4 h-4" />
@@ -248,8 +249,8 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                   )}
 
                   {issue.status === 'resolved' && (
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2.5 py-1.5 border border-green-100 rounded-lg flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    <span className="text-xs font-semibold text-success bg-paper px-2.5 py-1.5 border border-rule rounded flex items-center gap-1">
+                      <Check className="w-4 h-4" strokeWidth={2.5} />
                       Resolved
                     </span>
                   )}

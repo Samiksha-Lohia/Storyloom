@@ -117,23 +117,23 @@ export function CataloguePage() {
     <div className="space-y-8 pb-16">
       {/* Header */}
       <div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-stone-200">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-rule">
           <div>
-            <nav className="text-xs text-stone-500 mb-2 flex items-center gap-1.5" aria-label="Breadcrumb">
-              <Link to="/" className="hover:text-stone-900">Home</Link>
+            <nav className="text-xs text-muted mb-2 flex items-center gap-1.5" aria-label="Breadcrumb">
+              <Link to="/" className="hover:text-ink">Home</Link>
               <span>/</span>
-              <span className="font-semibold text-stone-800">
+              <span className="font-bold text-ink">
                 {searchTerm ? 'Search Results' : selectedGenre === 'All' ? 'Catalogue' : selectedGenre}
               </span>
             </nav>
-            <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+            <h1 className="font-calligraphy text-3xl sm:text-4xl font-normal text-ink tracking-tight">
               {searchTerm
                 ? `Results for "${searchTerm}"`
                 : selectedGenre === 'All'
                 ? 'Explore All Stories'
                 : `${selectedGenre} Stories`}
             </h1>
-            <p className="text-stone-600 text-sm mt-1">
+            <p className="text-muted text-sm mt-1 font-body">
               {pagination.total > 0
                 ? `Showing ${books.length} of ${pagination.total} published works`
                 : 'Discover serialized fiction across all genres'}
@@ -141,15 +141,15 @@ export function CataloguePage() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-3 shrink-0">
-            <label htmlFor="catalogue-sort" className="text-xs font-bold text-stone-600 uppercase tracking-wider">
+          <div className="flex items-center gap-2 shrink-0">
+            <label htmlFor="catalogue-sort" className="text-xs font-bold text-muted uppercase tracking-wider">
               Sort by:
             </label>
             <select
               id="catalogue-sort"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-white border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#FF500A] focus:border-transparent transition"
+              className="bg-paper border border-rule rounded px-3 py-1.5 text-xs text-ink font-body focus:outline-none focus:border-ink cursor-pointer"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -161,14 +161,14 @@ export function CataloguePage() {
         </div>
 
         {/* Genre Pill Filter row */}
-        <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto py-3">
           <button
             type="button"
             onClick={() => setSelectedGenre('All')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            className={`px-3 py-1 rounded text-xs font-body shrink-0 cursor-pointer border ${
               selectedGenre === 'All'
-                ? 'bg-[#FF500A] text-white shadow-xs'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                ? 'border-accent text-accent font-bold bg-paper'
+                : 'border-rule text-muted hover:border-ink'
             }`}
           >
             All Genres
@@ -180,10 +180,10 @@ export function CataloguePage() {
                 key={g}
                 type="button"
                 onClick={() => setSelectedGenre(g)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                className={`px-3 py-1 rounded text-xs font-body shrink-0 cursor-pointer border ${
                   active
-                    ? 'bg-[#FF500A] text-white shadow-xs'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                    ? 'border-accent text-accent font-bold bg-paper'
+                    : 'border-rule text-muted hover:border-ink'
                 }`}
               >
                 {g}
@@ -233,9 +233,9 @@ export function CataloguePage() {
                 disabled={loadingMore}
                 className="min-w-44"
               >
-                {loadingMore ? 'Loading stories...' : 'Load More Stories'}
+                {loadingMore ? 'Loading…' : 'Load More Stories'}
               </Button>
-              <p className="text-xs text-stone-400 mt-2">
+              <p className="text-xs text-muted mt-2">
                 Showing {books.length} of {pagination.total} stories
               </p>
             </div>
@@ -245,3 +245,5 @@ export function CataloguePage() {
     </div>
   );
 }
+
+export default CataloguePage;

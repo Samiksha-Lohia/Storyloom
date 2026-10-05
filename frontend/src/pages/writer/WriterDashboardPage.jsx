@@ -10,19 +10,14 @@ import {
   Mail,
   TrendingUp,
   BarChart2,
-  Calendar,
   Filter,
   Check,
   ChevronRight,
   ExternalLink,
-  PlusCircle,
-  HelpCircle,
-  Layers,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
-import { Skeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
 import {
   ReadsOverTimeChart,
@@ -63,7 +58,6 @@ export function WriterDashboardPage() {
     try {
       setMarkingReadId(reviewId);
       await api.reviews.markRead(reviewId, bookId);
-      // Optimistically update recent reviews list
       setAnalytics((prev) => {
         if (!prev) return prev;
         return {
@@ -82,20 +76,8 @@ export function WriterDashboardPage() {
 
   if (loading && !analytics) {
     return (
-      <div className="space-y-8 pb-16">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <Skeleton className="h-8 w-64 rounded-xl" />
-          <Skeleton className="h-10 w-48 rounded-xl" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[...Array(7)].map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-80 rounded-3xl" />
-          <Skeleton className="h-80 rounded-3xl" />
-        </div>
+      <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+        Loading…
       </div>
     );
   }
@@ -112,17 +94,17 @@ export function WriterDashboardPage() {
   const hasBooks = perBookComparison.length > 0;
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-8 pb-16 text-left">
       {/* ─── Top Bar: Welcome & Filters ────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-paper p-6 rounded border border-rule">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FFF0E8] text-[#FF500A] border border-[#FFE0D1]">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
             Author Studio
           </span>
-          <h1 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 tracking-tight mt-1.5">
+          <h1 className="text-2xl sm:text-3xl font-normal text-ink mt-1.5">
             Story Performance
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Monitor real reader engagement, retention drop-off, and feedback across your catalogue.
           </p>
         </div>
@@ -130,12 +112,12 @@ export function WriterDashboardPage() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Per-book filter */}
           {hasBooks && (
-            <div className="flex items-center gap-1.5 bg-[#F7F7F7] px-3 py-1.5 rounded-xl border border-stone-200">
-              <Filter className="w-3.5 h-3.5 text-stone-500" />
+            <div className="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded border border-rule">
+              <Filter className="w-3.5 h-3.5 text-muted" />
               <select
                 value={selectedBookId}
                 onChange={(e) => setSelectedBookId(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-stone-800 focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-xs font-bold text-ink focus:outline-hidden cursor-pointer"
                 aria-label="Filter by book"
               >
                 <option value="">All Stories</option>
@@ -149,23 +131,23 @@ export function WriterDashboardPage() {
           )}
 
           {/* Range toggle */}
-          <div className="flex items-center bg-[#F7F7F7] p-1 rounded-xl border border-stone-200">
+          <div className="flex items-center bg-paper p-1 rounded border border-rule">
             <button
               onClick={() => setRange(30)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded text-xs font-bold cursor-pointer ${
                 range === 30
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-ink text-paper border border-ink'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               30 Days
             </button>
             <button
               onClick={() => setRange(90)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded text-xs font-bold cursor-pointer ${
                 range === 90
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-ink text-paper border border-ink'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               90 Days
@@ -188,114 +170,114 @@ export function WriterDashboardPage() {
           {/* ─── KPI Cards Row ──────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
             {/* Total Reads */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Total Reads</span>
-                <span className="p-1.5 rounded-lg bg-[#FFF0E8] text-[#FF500A]">
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Total Reads</span>
+                <span className="p-1 rounded border border-rule bg-paper text-accent">
                   <BookOpen className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
+                <span className="font-bold text-2xl text-ink">
                   {Number(kpis.totalReads || 0).toLocaleString()}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">First-chapter entries</p>
+                <p className="text-[10px] text-muted mt-0.5">First-chapter entries</p>
               </div>
             </div>
 
             {/* Profile Views */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Profile Views</span>
-                <span className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Profile Views</span>
+                <span className="p-1 rounded border border-rule bg-paper text-muted">
                   <Eye className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
+                <span className="font-bold text-2xl text-ink">
                   {Number(kpis.profileViews || 0).toLocaleString()}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">Unique readers</p>
+                <p className="text-[10px] text-muted mt-0.5">Unique readers</p>
               </div>
             </div>
 
             {/* Average Rating */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Avg Rating</span>
-                <span className="p-1.5 rounded-lg bg-amber-50 text-amber-500">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" />
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Avg Rating</span>
+                <span className="p-1 rounded border border-rule bg-paper text-accent">
+                  <Star className="w-3.5 h-3.5 fill-accent" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
+                <span className="font-bold text-2xl text-ink">
                   {kpis.avgRating > 0 ? kpis.avgRating.toFixed(1) : '—'}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">Across all ratings</p>
+                <p className="text-[10px] text-muted mt-0.5">Across all ratings</p>
               </div>
             </div>
 
             {/* New Reviews */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">New Reviews</span>
-                <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">New Reviews</span>
+                <span className="p-1 rounded border border-rule bg-paper text-muted">
                   <MessageSquare className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
+                <span className="font-bold text-2xl text-ink">
                   {Number(kpis.newReviews || 0).toLocaleString()}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">In last {range} days</p>
+                <p className="text-[10px] text-muted mt-0.5">In last {range} days</p>
               </div>
             </div>
 
             {/* Reading List Adds */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Library Adds</span>
-                <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Library Adds</span>
+                <span className="p-1 rounded border border-rule bg-paper text-muted">
                   <Bookmark className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
+                <span className="font-bold text-2xl text-ink">
                   {Number(kpis.readingListAdds || 0).toLocaleString()}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">Saved by readers</p>
+                <p className="text-[10px] text-muted mt-0.5">Saved by readers</p>
               </div>
             </div>
 
-            {/* Publisher Wishlists (Phase 8 placeholder) */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between opacity-80">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Wishlisted</span>
-                <span className="p-1.5 rounded-lg bg-pink-50 text-pink-600">
+            {/* Publisher Wishlists */}
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Wishlisted</span>
+                <span className="p-1 rounded border border-rule bg-paper text-accent">
                   <Sparkles className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
-                  {kpis.publisherWishlists}
+                <span className="font-bold text-2xl text-ink">
+                  {kpis.publisherWishlists || 0}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">By publishers</p>
+                <p className="text-[10px] text-muted mt-0.5">By publishers</p>
               </div>
             </div>
 
-            {/* Open Requests (Phase 8 placeholder) */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col justify-between opacity-80">
-              <div className="flex items-center justify-between text-stone-500">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Requests</span>
-                <span className="p-1.5 rounded-lg bg-cyan-50 text-cyan-600">
+            {/* Open Requests */}
+            <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
+              <div className="flex items-center justify-between text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Requests</span>
+                <span className="p-1 rounded border border-rule bg-paper text-muted">
                   <Mail className="w-3.5 h-3.5" />
                 </span>
               </div>
               <div className="mt-3">
-                <span className="font-heading font-black text-2xl text-stone-900">
-                  {kpis.openRequests}
+                <span className="font-bold text-2xl text-ink">
+                  {kpis.openRequests || 0}
                 </span>
-                <p className="text-[10px] text-stone-400 mt-0.5">Publisher offers</p>
+                <p className="text-[10px] text-muted mt-0.5">Publisher offers</p>
               </div>
             </div>
           </div>
@@ -303,24 +285,24 @@ export function WriterDashboardPage() {
           {/* ─── Charts Row ─────────────────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Reads & Views Over Time Line Chart */}
-            <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+            <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-heading font-bold text-base text-stone-900 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#FF500A]" />
+                  <h2 className="font-bold text-base text-ink flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-accent" />
                     <span>Reads & Views Over Time</span>
                   </h2>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-muted">
                     Daily reader trajectories for the past {range} days
                   </p>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-stone-500">
+                <div className="flex items-center gap-3 text-[11px] text-muted">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF500A]" />
+                    <span className="w-2.5 h-2.5 rounded bg-accent" />
                     Reads
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#64748B]" />
+                    <span className="w-2.5 h-2.5 rounded bg-ink" />
                     Views
                   </span>
                 </div>
@@ -330,18 +312,18 @@ export function WriterDashboardPage() {
             </div>
 
             {/* "Where Readers Stop" Drop-off Bar Chart */}
-            <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+            <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-heading font-bold text-base text-stone-900 flex items-center gap-2">
-                    <BarChart2 className="w-4 h-4 text-[#FF500A]" />
+                  <h2 className="font-bold text-base text-ink flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4 text-accent" />
                     <span>Where Readers Stop</span>
                   </h2>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-muted">
                     Retention drop-off milestones by percentage of manuscript
                   </p>
                 </div>
-                <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <div className="text-[11px] font-bold text-muted bg-paper border border-rule px-2 py-0.5 rounded">
                   90-100% = Completed
                 </div>
               </div>
@@ -353,13 +335,13 @@ export function WriterDashboardPage() {
           {/* ─── Per-Book Comparison & Rating Distribution Row ─────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Per-Book Comparison Table (2 cols) */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+            <div className="lg:col-span-2 bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-heading font-bold text-base text-stone-900">
+                  <h2 className="font-bold text-base text-ink">
                     Story Catalogue Comparison
                   </h2>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-muted">
                     Side-by-side reads, completion ratios, and ratings
                   </p>
                 </div>
@@ -374,7 +356,7 @@ export function WriterDashboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-stone-100 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+                    <tr className="border-b border-rule text-muted font-bold uppercase tracking-wider text-[10px]">
                       <th className="pb-3 font-bold">Story</th>
                       <th className="pb-3 font-bold">Reads</th>
                       <th className="pb-3 font-bold">Completion Rate</th>
@@ -382,39 +364,39 @@ export function WriterDashboardPage() {
                       <th className="pb-3 font-bold text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-rule">
                     {perBookComparison.map((book) => (
-                      <tr key={book.id} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3 font-semibold text-stone-900 max-w-[200px] truncate">
+                      <tr key={book.id} className="hover:bg-paper">
+                        <td className="py-3 font-bold text-ink max-w-[200px] truncate">
                           {book.title}
                         </td>
-                        <td className="py-3 font-mono text-stone-700">
+                        <td className="py-3 text-ink">
                           {book.reads.toLocaleString()}
                         </td>
                         <td className="py-3">
                           <div className="flex items-center gap-2 max-w-[120px]">
-                            <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-paper border border-rule rounded overflow-hidden">
                               <div
-                                className="h-full bg-emerald-500 rounded-full"
+                                className="h-full bg-ink"
                                 style={{ width: `${book.completionRate || 0}%` }}
                               />
                             </div>
-                            <span className="font-mono text-stone-600 text-[11px]">
+                            <span className="text-muted text-[11px]">
                               {book.completionRate || 0}%
                             </span>
                           </div>
                         </td>
                         <td className="py-3">
-                          <div className="flex items-center gap-1 font-semibold text-stone-800">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <div className="flex items-center gap-1 font-bold text-ink">
+                            <Star className="w-3.5 h-3.5 fill-accent text-accent" />
                             <span>{book.ratingAvg ? book.ratingAvg.toFixed(1) : '—'}</span>
-                            <span className="text-stone-400 font-normal">({book.ratingCount})</span>
+                            <span className="text-muted font-normal">({book.ratingCount})</span>
                           </div>
                         </td>
                         <td className="py-3 text-right">
                           <Link
                             to={`/w/books/${book.id}/insights`}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF500A] hover:underline"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-accent hover:underline"
                           >
                             <span>Analysis</span>
                             <ExternalLink className="w-3 h-3" />
@@ -428,13 +410,13 @@ export function WriterDashboardPage() {
             </div>
 
             {/* Rating Distribution Histogram (1 col) */}
-            <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+            <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div>
-                <h2 className="font-heading font-bold text-base text-stone-900 flex items-center gap-1.5">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <h2 className="font-bold text-base text-ink flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-accent fill-accent" />
                   <span>Rating Breakdown</span>
                 </h2>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-muted">
                   Distribution across all reader reviews
                 </p>
               </div>
@@ -444,19 +426,19 @@ export function WriterDashboardPage() {
           </div>
 
           {/* ─── Recent Reviews Section ─────────────────────────────────────── */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+          <div className="bg-paper p-6 sm:p-8 rounded border border-rule space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-heading font-bold text-lg text-stone-900 flex items-center gap-2">
-                  <MessageSquare className="w-4.5 h-4.5 text-[#FF500A]" />
+                <h2 className="font-bold text-base text-ink flex items-center gap-2">
+                  <MessageSquare className="w-4.5 h-4.5 text-accent" />
                   <span>Recent Reader Reviews</span>
                 </h2>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-muted">
                   Latest thoughts and ratings left on your published stories
                 </p>
               </div>
               <Link to="/w/reviews">
-                <Button variant="outline" size="xs" className="gap-1">
+                <Button variant="secondary" size="xs" className="gap-1">
                   <span>View All Reviews</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
@@ -464,11 +446,11 @@ export function WriterDashboardPage() {
             </div>
 
             {latestReviews.length === 0 ? (
-              <p className="text-xs text-stone-400 py-6 text-center">
+              <p className="text-xs text-muted py-6 text-center">
                 No reviews posted on your stories yet.
               </p>
             ) : (
-              <div className="divide-y divide-stone-100">
+              <div className="divide-y divide-rule">
                 {latestReviews.map((rev) => {
                   const revId = rev._id || rev.id;
                   const isUnread = !rev.readByWriter;
@@ -476,11 +458,11 @@ export function WriterDashboardPage() {
                     <div key={revId} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-stone-900">
+                          <span className="font-bold text-xs text-ink">
                             {rev.readerId?.name || rev.readerId?.username || 'Reader'}
                           </span>
-                          <span className="text-[11px] text-stone-400">on</span>
-                          <span className="text-xs font-semibold text-stone-700">
+                          <span className="text-[11px] text-muted">on</span>
+                          <span className="text-xs font-bold text-ink">
                             {rev.bookId?.title || 'Story'}
                           </span>
                           <div className="flex items-center gap-0.5 ml-2">
@@ -489,25 +471,25 @@ export function WriterDashboardPage() {
                                 key={i}
                                 className={`w-3 h-3 ${
                                   i < rev.rating
-                                    ? 'fill-amber-400 text-amber-400'
-                                    : 'text-stone-200'
+                                    ? 'fill-accent text-accent'
+                                    : 'text-rule'
                                 }`}
                               />
                             ))}
                           </div>
                           {isUnread && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF0E8] text-[#FF500A] border border-[#FFE0D1]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-accent text-accent bg-paper">
                               New
                             </span>
                           )}
                         </div>
 
                         {rev.text && (
-                          <p className="text-xs text-stone-600 italic">
+                          <p className="text-xs text-muted italic">
                             "{rev.text}"
                           </p>
                         )}
-                        <p className="text-[10px] text-stone-400">
+                        <p className="text-[10px] text-muted">
                           {new Date(rev.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -518,7 +500,7 @@ export function WriterDashboardPage() {
                           size="xs"
                           onClick={() => handleMarkReviewRead(revId, rev.bookId?._id || rev.bookId)}
                           disabled={markingReadId === revId}
-                          className="gap-1 shrink-0 text-stone-500 hover:text-stone-900"
+                          className="gap-1 shrink-0 text-muted hover:text-ink"
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>Mark Read</span>

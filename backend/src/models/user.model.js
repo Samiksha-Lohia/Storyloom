@@ -112,6 +112,23 @@ const userSchema = new mongoose.Schema(
       fontFamily: { type: String, enum: ['serif', 'sans'], default: 'serif' },
       theme: { type: String, enum: ['light', 'sepia', 'dark'], default: 'light' },
     },
+    passwordResetToken: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+    },
+    termsAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    termsVersion: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: true },

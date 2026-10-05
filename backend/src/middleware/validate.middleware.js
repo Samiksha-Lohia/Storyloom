@@ -9,7 +9,8 @@ import { BadRequestError } from '../utilities/custom-errors.js';
  */
 const validate = (schema) => (req, _res, next) => {
   const parts = ['body', 'params', 'query'];
-  const errors = [];
+  const fieldErrors = [];
+  const errorMessages = [];
 
   for (const part of parts) {
     if (!schema[part]) continue;
@@ -18,14 +19,22 @@ const validate = (schema) => (req, _res, next) => {
       stripUnknown: true,
     });
     if (error) {
-      errors.push(...error.details.map((d) => d.message));
+      error.details.forEach((d) => {
+        fieldErrors.push({
+          field: d.path.join('.'),
+          message: d.message,
+        });
+        errorMessages.push(d.message);
+      });
     } else {
       req[part] = value; // replace with sanitised/defaulted values
     }
   }
 
-  if (errors.length > 0) {
-    return next(new BadRequestError(errors.join('; ')));
+  if (fieldErrors.length > 0) {
+    const err = new BadRequestError(errorMessages.join('; '));
+    err.errors = fieldErrors;
+    return next(err);
   }
 
   next();

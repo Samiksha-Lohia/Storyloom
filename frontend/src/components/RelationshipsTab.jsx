@@ -1,11 +1,15 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { ReactFlow, Background, Controls } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { GitFork, Heart, HeartCrack, X, BookOpen } from 'lucide-react';
 
 export default function RelationshipsTab({ documentId, source, options = {}, summary = false, initialData = null }) {
-  const resolvedSource = source || (documentId ? { kind: 'document', id: documentId } : null);
+  const resolvedSource = useMemo(
+    () => source || (documentId ? { kind: 'document', id: documentId } : null),
+    [source, documentId]
+  );
+  const stableOptions = useMemo(() => options, [options]);
   const [relationships, setRelationships] = useState(initialData?.relationships || []);
   const [characters, setCharacters] = useState(() => {
     if (!initialData?.characters) return {};
@@ -17,7 +21,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   });
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(!initialData && Boolean(resolvedSource?.id));
-  const [analysisStatus, setAnalysisStatus] = useState(null);
   
   // Filter states
   const [selectedType, setSelectedType] = useState('all');
@@ -26,7 +29,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   // Edge detail panel state
   const [selectedEdge, setSelectedEdge] = useState(null);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (initialData) {
       if (initialData.relationships) {
         setRelationships(initialData.relationships);
@@ -41,10 +44,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       setLoading(false);
       return;
     }
-    loadData();
-  }, [resolvedSource?.kind, resolvedSource?.id, JSON.stringify(options), initialData]);
-
-  const loadData = async () => {
     if (!resolvedSource?.id) {
       setLoading(false);
       return;
@@ -52,7 +51,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     setLoading(true);
     try {
       // 1. Load characters
-      const charsRes = await api.analysis.getCharacters(resolvedSource, options).catch(() => []);
+      const charsRes = await api.analysis.getCharacters(resolvedSource, stableOptions).catch(() => []);
       const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
       const charsMap = {};
       charsList.forEach(c => {
@@ -60,8 +59,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       });
       setCharacters(charsMap);
 
-      // 2. Load scenes (to resolve shared scene titles in edge panel)
-      const sceneRes = await api.analysis.getScenes(resolvedSource, options).catch(() => []);
+      // 2. Load scenes
+      const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
       const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
       const scenesMap = {};
       scenesList.forEach(s => {
@@ -70,10 +69,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       setScenes(scenesMap);
 
       // 3. Load relationships
-      const relRes = await api.analysis.getRelationships(resolvedSource, options).catch(() => []);
-      if (relRes?.analysisStatus) {
-        setAnalysisStatus(relRes.analysisStatus);
-      }
+      const relRes = await api.analysis.getRelationships(resolvedSource, stableOptions).catch(() => []);
       const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
       const relList = Array.isArray(rawRel) ? rawRel : rawRel?.results || [];
       setRelationships(relList || []);
@@ -82,7 +78,11 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedSource, stableOptions, initialData]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Filtered relationships
   const filteredRelationships = useMemo(() => {
@@ -109,7 +109,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     });
 
     let activeChars = Object.values(characters).filter(c => activeCharIds.has((c._id || c.id)?.toString()));
-    // If no filtered relationships or active IDs, show all characters
     if (activeChars.length === 0) {
       activeChars = Object.values(characters);
     }
@@ -123,22 +122,15 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     const nodes = activeChars.map((char, index) => {
       const charId = (char._id || char.id)?.toString();
       const angle = (index / total) * 2 * Math.PI;
-      
-      const isProtagonist = char.role?.toLowerCase() === 'protagonist';
-      const isAntagonist = char.role?.toLowerCase() === 'antagonist';
-
-      let bgClass = 'bg-white';
-      if (isProtagonist) bgClass = 'bg-[#fef08a] border-amber-400';
-      else if (isAntagonist) bgClass = 'bg-rose-50 border-rose-400';
 
       return {
         id: charId,
         type: 'default',
         data: { 
           label: (
-            <div className="text-center font-serif py-1 px-2 select-none">
-              <p className="font-bold text-xs text-slate-800">{char.name}</p>
-              <p className="text-[8px] uppercase tracking-widest text-slate-400 font-sans mt-0.5">{char.role || 'cast'}</p>
+            <div className="text-center py-1 px-2 select-none">
+              <p className="font-bold text-xs text-ink">{char.name}</p>
+              <p className="text-[8px] uppercase tracking-widest text-muted font-body mt-0.5">{char.role || 'cast'}</p>
             </div>
           )
         },
@@ -147,28 +139,28 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
           y: centerY + radius * Math.sin(angle) - 18,
         },
         style: {
-          border: '2px solid #1e293b',
-          borderRadius: '10px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          border: '1px solid #D9D2C3',
+          borderRadius: '4px',
+          backgroundColor: '#FBF8F2',
         },
-        className: `${bgClass}`
+        className: 'bg-paper'
       };
     });
 
     const edges = filteredRelationships.map((rel, index) => {
       const relId = rel._id || rel.id || `edge-${index}`;
       
-      let color = '#94a3b8'; // gray
-      if (rel.sentimentScore > 0.2) color = '#10b981'; // green
-      else if (rel.sentimentScore < -0.2) color = '#ef4444'; // red
+      let color = '#6B6358'; // muted
+      if (rel.sentimentScore > 0.2) color = '#1C1917'; // ink
+      else if (rel.sentimentScore < -0.2) color = '#9B2D20'; // accent
 
-      const thickness = Math.max(2, Math.min(6, (rel.sceneIds?.length || 1) * 1.5));
+      const thickness = Math.max(1.5, Math.min(4, (rel.sceneIds?.length || 1) * 1.2));
 
       return {
         id: relId,
         source: rel.characterAId,
         target: rel.characterBId,
-        animated: Math.abs(rel.sentimentScore) > 0.5,
+        animated: false,
         style: { 
           stroke: color, 
           strokeWidth: thickness,
@@ -186,16 +178,15 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   };
 
   const getRelationshipTypeIcon = (type) => {
-    if (type === 'romantic') return <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />;
-    if (type === 'rival') return <HeartCrack className="w-4 h-4 text-red-500" />;
-    return <GitFork className="w-4 h-4 text-slate-400" />;
+    if (type === 'ally') return <Heart className="w-4 h-4 text-ink" />;
+    if (type === 'rival') return <HeartCrack className="w-4 h-4 text-accent" />;
+    return <GitFork className="w-4 h-4 text-muted" />;
   };
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-10 bg-slate-100 rounded-lg w-1/4"></div>
-        <div className="h-[300px] bg-slate-100 rounded-2xl w-full"></div>
+      <div className="p-8 text-center text-xs font-bold text-muted">
+        Loading…
       </div>
     );
   }
@@ -203,12 +194,12 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   // Read-only summary mode for pitch panel
   if (summary) {
     return (
-      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs relative h-72">
+      <div className="border border-rule rounded overflow-hidden bg-paper relative h-72">
         {flowNodes.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50/60">
-            <GitFork className="w-8 h-8 text-slate-300 mb-2" />
-            <p className="font-serif font-semibold text-slate-700 text-sm">No Cast Relationships Mapped</p>
-            <p className="text-xs text-slate-400 mt-0.5">Network will appear when interaction data is available.</p>
+          <div className="h-full flex flex-col items-center justify-center p-4 text-center bg-paper">
+            <GitFork className="w-4 h-4 text-muted mb-2" />
+            <p className="font-bold text-ink text-sm">No Cast Relationships Mapped</p>
+            <p className="text-xs text-muted mt-0.5">Network will appear when interaction data is available.</p>
           </div>
         ) : (
           <ReactFlow
@@ -220,22 +211,22 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
             elementsSelectable={true}
             fitView
           >
-            <Background color="#cbd5e1" gap={16} size={1} />
-            <Controls showInteractive={false} className="!bg-white !border-slate-200 !shadow-xs rounded-md scale-90 origin-bottom-left" />
+            <Background color="#D9D2C3" gap={16} size={1} />
+            <Controls showInteractive={false} className="!bg-paper !border-rule rounded scale-90 origin-bottom-left" />
           </ReactFlow>
         )}
         {selectedEdge && (
-          <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-xs border border-slate-200 rounded-lg p-2.5 shadow-md flex items-center justify-between text-xs z-10">
+          <div className="absolute bottom-2 left-2 right-2 bg-paper border border-rule rounded p-2.5 flex items-center justify-between text-xs z-10">
             <div className="flex items-center gap-2">
               {getRelationshipTypeIcon(selectedEdge.type)}
-              <span className="font-semibold text-slate-800">
+              <span className="font-bold text-ink">
                 {characters[selectedEdge.characterAId]?.name || 'Character A'} ↔ {characters[selectedEdge.characterBId]?.name || 'Character B'}
               </span>
-              <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] capitalize font-medium">{selectedEdge.type}</span>
-              <span className="text-slate-400 text-[10px]">Sentiment: {selectedEdge.sentimentScore > 0 ? '+' : ''}{selectedEdge.sentimentScore}</span>
+              <span className="px-1.5 py-0.5 border border-rule text-muted rounded text-[10px] capitalize font-medium">{selectedEdge.type}</span>
+              <span className="text-muted text-[10px]">Sentiment: {selectedEdge.sentimentScore > 0 ? '+' : ''}{selectedEdge.sentimentScore}</span>
             </div>
-            <button onClick={() => setSelectedEdge(null)} className="text-slate-400 hover:text-slate-600 p-1">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSelectedEdge(null)} className="text-muted hover:text-ink p-1 cursor-pointer">
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -243,74 +234,62 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     );
   }
 
+  // Full interactive mode for Writer & Pitch detailed tabs
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-140px)]">
-      {/* Filters Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-        <div className="text-left">
-          <h2 className="text-2xl font-serif font-bold text-slate-900">Relationship Network</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Explore connections and sentiments between characters.</p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-          {/* Dropdown type filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400">Type:</span>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
+    <div className="flex flex-col h-full space-y-4">
+      {/* Controls Bar */}
+      <div className="bg-paper p-4 rounded border border-rule flex flex-wrap items-center justify-between gap-4">
+        {/* Left: Category selector pills */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <span className="text-xs font-bold text-muted uppercase tracking-wider mr-1">Filter:</span>
+          {['all', 'ally', 'rival', 'family', 'mentor', 'romantic'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setSelectedType(type)}
+              className={`px-3 py-1 rounded text-xs capitalize cursor-pointer border ${
+                selectedType === type
+                  ? 'bg-ink text-paper border-ink font-bold'
+                  : 'bg-paper text-muted border-rule hover:border-ink'
+              }`}
             >
-              <option value="all">All Connections</option>
-              <option value="ally">Allies</option>
-              <option value="rival">Rivals</option>
-              <option value="family">Family</option>
-              <option value="romantic">Romantic</option>
-              <option value="mentor">Mentors</option>
-            </select>
-          </div>
+              {type}
+            </button>
+          ))}
+        </div>
 
-          {/* Sentiment Slider filter */}
+        {/* Right: Sentiment filter slider */}
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-muted font-bold">Min Sentiment:</span>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">Sentiment:</span>
-            <input
-              type="range"
-              min="-1"
-              max="1"
-              step="0.1"
-              value={sentimentRange[0]}
+            <input 
+              type="range" 
+              min="-1" 
+              max="1" 
+              step="0.1" 
+              value={sentimentRange[0]} 
               onChange={(e) => setSentimentRange([parseFloat(e.target.value), sentimentRange[1]])}
-              className="w-20 accent-slate-900"
+              className="w-24 accent-accent cursor-pointer"
             />
-            <span className="text-slate-500 font-mono">to</span>
-            <input
-              type="range"
-              min="-1"
-              max="1"
-              step="0.1"
-              value={sentimentRange[1]}
-              onChange={(e) => setSentimentRange([sentimentRange[0], parseFloat(e.target.value)])}
-              className="w-20 accent-slate-900"
-            />
+            <span className="font-mono text-muted w-8">{sentimentRange[0]}</span>
           </div>
         </div>
       </div>
 
       {/* Main Graph Canvas */}
-      <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs relative flex">
+      <div className="flex-1 border border-rule rounded overflow-hidden bg-paper relative flex">
         <div className="flex-1 h-full min-h-[450px] relative">
           {flowNodes.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-50/60">
-              <GitFork className="w-10 h-10 text-slate-300 mb-3" />
-              <p className="font-serif font-bold text-slate-700 text-base">No Characters or Relationships Detected</p>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-paper">
+              <GitFork className="w-4 h-4 text-muted mb-2" />
+              <p className="font-bold text-ink text-base">No Characters or Relationships Detected</p>
+              <p className="text-xs text-muted max-w-sm mt-1 font-body">
                 Once characters are identified and their interactions analyzed across scenes, their connection network will be mapped here.
               </p>
             </div>
           ) : (
             <>
               {flowEdges.length === 0 && (
-                <div className="absolute top-4 left-4 z-10 bg-amber-50/95 border border-amber-200 text-amber-800 text-[11px] px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
+                <div className="absolute top-4 left-4 z-10 bg-paper border border-rule text-muted text-[11px] px-3 py-1.5 rounded flex items-center gap-1.5">
                   <span>Displaying character nodes (no connections match the current filter).</span>
                 </div>
               )}
@@ -320,8 +299,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                 onEdgeClick={handleEdgeClick}
                 fitView
               >
-                <Background color="#cbd5e1" gap={20} size={1} />
-                <Controls className="!bg-white !border-slate-200 !shadow-xs rounded-lg" />
+                <Background color="#D9D2C3" gap={20} size={1} />
+                <Controls className="!bg-paper !border-rule rounded" />
               </ReactFlow>
             </>
           )}
@@ -329,49 +308,49 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
 
         {/* Floating Side Info Panel for Clicked Connections */}
         {selectedEdge && (
-          <div className="absolute top-4 right-4 bottom-4 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl p-5 overflow-y-auto flex flex-col justify-between z-20 text-left">
+          <div className="absolute top-4 right-4 bottom-4 w-80 bg-paper border border-rule rounded p-5 overflow-y-auto flex flex-col justify-between z-20 text-left">
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-serif font-bold text-slate-900 flex items-center gap-1.5">
+              <div className="flex items-center justify-between border-b border-rule pb-3">
+                <h3 className="font-bold text-ink flex items-center gap-1.5">
                   {getRelationshipTypeIcon(selectedEdge.type)}
                   Connection Details
                 </h3>
                 <button 
                   onClick={() => setSelectedEdge(null)}
-                  className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1 rounded text-muted hover:text-ink cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Characters pair */}
-              <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-sm font-semibold text-slate-800">
+              <div className="flex items-center justify-between bg-paper p-3 rounded border border-rule">
+                <span className="text-sm font-bold text-ink">
                   {characters[selectedEdge.characterAId]?.name}
                 </span>
-                <span className="text-slate-400 font-mono text-xs">↔</span>
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-muted font-mono text-xs">↔</span>
+                <span className="text-sm font-bold text-ink">
                   {characters[selectedEdge.characterBId]?.name}
                 </span>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
-                  <span className="block text-slate-400 uppercase font-semibold text-[9px] tracking-wider">Type</span>
-                  <span className="font-bold text-slate-700 capitalize">{selectedEdge.type}</span>
+                <div className="bg-paper p-2.5 rounded border border-rule">
+                  <span className="block text-muted uppercase font-bold text-[9px] tracking-wider">Type</span>
+                  <span className="font-bold text-ink capitalize">{selectedEdge.type}</span>
                 </div>
-                <div className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
-                  <span className="block text-slate-400 uppercase font-semibold text-[9px] tracking-wider">Sentiment</span>
-                  <span className="font-bold text-slate-700">{selectedEdge.sentimentScore > 0 ? '+' : ''}{selectedEdge.sentimentScore}</span>
+                <div className="bg-paper p-2.5 rounded border border-rule">
+                  <span className="block text-muted uppercase font-bold text-[9px] tracking-wider">Sentiment</span>
+                  <span className="font-bold text-ink">{selectedEdge.sentimentScore > 0 ? '+' : ''}{selectedEdge.sentimentScore}</span>
                 </div>
               </div>
 
               {/* Shared scenes list */}
               {selectedEdge.sceneIds && selectedEdge.sceneIds.length > 0 && (
                 <div className="space-y-2">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                    <BookOpen className="w-3.5 h-3.5" />
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-muted flex items-center gap-1">
+                    <BookOpen className="w-4 h-4" />
                     Interaction Scenes ({selectedEdge.sceneIds.length})
                   </span>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -381,10 +360,10 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                       return (
                         <div 
                           key={sceneId}
-                          className="p-2 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors text-xs"
+                          className="p-2 border border-rule rounded text-xs bg-paper"
                         >
-                          <span className="font-mono font-bold text-slate-400">Scene {scene.sceneNumber}:</span>
-                          <span className="font-serif font-semibold text-slate-800 ml-1">{scene.title}</span>
+                          <span className="font-mono font-bold text-muted">Scene {scene.sceneNumber}:</span>
+                          <span className="font-bold text-ink ml-1">{scene.title}</span>
                         </div>
                       );
                     })}
@@ -393,7 +372,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
               )}
             </div>
             
-            <p className="text-[10px] text-slate-400 text-center mt-4">
+            <p className="text-[10px] text-muted text-center mt-4">
               Click another line in the network to inspect.
             </p>
           </div>

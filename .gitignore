@@ -39,3 +39,7 @@ Thumbs.db
 # Custom debug folders
 scratch/
 
+# Redis dumps
+*.rdb
+dump.rdb
+

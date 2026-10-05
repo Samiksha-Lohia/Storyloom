@@ -1,90 +1,80 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Nunito+Sans:ital,opsz,wght@0,6..12,300..900;1,6..12,300..900&display=swap');
-
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #FF500A; /* TODO(owner): verify orange against wattpad.com */
-  --color-primary-hover: #E04600;
-  --color-primary-tint: #FFF0E8;
-  --color-ink: #121212;
-  --color-muted: #6B6B6B;
-  --color-border: #E5E5E5;
-  --color-surface: #F7F7F7;
-  --color-success: #1F9D55;
-  --color-danger: #D63B2F;
+  --color-paper: #FBF8F2;
+  --color-ink: #1C1917;
+  --color-muted: #6B6358;
+  --color-rule: #D9D2C3;
+  --color-accent: #9B2D20;
+  --color-accent-hover: #7F2418;
+  --color-danger: #B42318;
+  --color-success: #2F6B3A;
 
-  --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Lora", Georgia, serif;
-  --font-handwriting: "Caveat", cursive;
-
-  --color-notebook-grid: #f3f4f6;
-  --color-notebook-line: #e5e7eb;
+  --font-body: "Courier Prime", monospace;
+  --font-calligraphy: "Petit Formal Script", cursive;
 }
 
 :root {
-  --primary: #FF500A; /* TODO(owner): verify orange against wattpad.com */
-  --primary-hover: #E04600;
-  --primary-tint: #FFF0E8;
-  --ink: #121212;
-  --muted: #6B6B6B;
-  --border: #E5E5E5;
-  --surface: #F7F7F7;
-  --success: #1F9D55;
-  --danger: #D63B2F;
+  --paper: #FBF8F2;
+  --ink: #1C1917;
+  --muted: #6B6358;
+  --rule: #D9D2C3;
+  --accent: #9B2D20;
+  --accent-hover: #7F2418;
+  --danger: #B42318;
+  --success: #2F6B3A;
+}
+
+/* Global: instant state changes, no animation, no transitions */
+*, ::before, ::after {
+  transition: none !important;
+  animation: none !important;
 }
 
 body {
-  font-family: var(--font-sans);
-  color: var(--ink);
-  background-color: #FFFFFF;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Accessible focus ring default */
+/* Page titles, hero headlines, and wordmarks */
+h1, .font-calligraphy {
+  font-family: var(--font-calligraphy);
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+/* Section headings and UI labels remain Courier Prime bold */
+h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+/* Accessible focus outline */
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* Notebook grid background utility (for existing Workspace) */
-.notebook-grid {
-  background-color: #faf9f6;
-  background-image: radial-gradient(
-    circle,
-    rgba(100, 100, 100, 0.25) 1px,
-    transparent 1px
-  );
-  background-size: 20px 20px;
-}
-
-/* Scrollbar customization */
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-paper);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E5E5E5;
-  border-radius: 4px;
+  background: var(--color-rule);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #CBD5E1;
+  background: var(--color-muted);
 }

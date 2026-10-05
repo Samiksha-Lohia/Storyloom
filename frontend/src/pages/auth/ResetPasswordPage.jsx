@@ -1,27 +1,43 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import AuthCollage from './AuthCollage';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Lock, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 
-export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+export function ResetPasswordPage() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token') || '';
+
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) return;
+    if (!token) {
+      setError('Password reset token is missing from the URL.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setError('');
     setLoading(true);
     try {
-      await api.auth.forgotPassword(email);
+      await api.auth.resetPassword(token, password);
       setSubmitted(true);
     } catch (err) {
-      setError(err.message || 'Failed to request password reset. Please try again.');
+      setError(err.message || 'Failed to reset password. The link may be expired.');
     } finally {
       setLoading(false);
     }
@@ -32,7 +48,7 @@ export function ForgotPasswordPage() {
       <div className="w-full max-w-4xl bg-paper rounded border border-rule overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
         {/* Left Tinted Collage Panel */}
         <div className="h-full">
-          <AuthCollage heading="Account Recovery" />
+          <AuthCollage heading="Password Reset" />
         </div>
 
         {/* Right Form Panel */}
@@ -46,26 +62,35 @@ export function ForgotPasswordPage() {
               Back to Login
             </Link>
             <h1 className="font-calligraphy text-3xl font-normal text-ink">
-              Reset Password
+              Set New Password
             </h1>
             <p className="text-xs text-muted mt-1 font-body">
-              Enter your email address to receive password reset instructions.
+              Please enter and confirm your new password below.
             </p>
           </div>
+
+          {!token && (
+            <div className="p-3 mb-4 text-xs bg-paper text-danger rounded border border-danger flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                No reset token provided. Please check the link from your email or request a new reset link.
+              </span>
+            </div>
+          )}
 
           {submitted ? (
             <div className="space-y-4 py-4 text-center">
               <CheckCircle className="w-4 h-4 text-success mx-auto" />
               <h2 className="font-bold text-base text-ink">
-                Instructions Sent
+                Password Reset Successfully
               </h2>
               <p className="text-xs text-muted leading-relaxed font-body">
-                If an account exists for <strong>{email}</strong>, a password reset link has been sent. Please check your inbox.
+                Your password has been updated. You can now log in using your new credentials.
               </p>
               <div className="pt-2">
                 <Link to="/login">
                   <Button variant="primary" size="md" className="w-full">
-                    Return to Login
+                    Proceed to Login
                   </Button>
                 </Link>
               </div>
@@ -77,33 +102,45 @@ export function ForgotPasswordPage() {
                   {error}
                 </div>
               )}
+
               <Input
-                id="reset-email"
-                label="Email address"
-                type="email"
+                id="new-password"
+                label="New Password"
+                type="password"
                 required
-                icon={Mail}
-                placeholder="reader@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                icon={Lock}
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              <Input
+                id="confirm-password"
+                label="Confirm New Password"
+                type="password"
+                required
+                icon={Lock}
+                placeholder="Re-enter your new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
 
               <Button
                 type="submit"
                 variant="primary"
                 size="lg"
-                disabled={loading || !email}
+                disabled={loading || !token || !password || !confirmPassword}
                 className="w-full font-bold mt-2"
               >
-                {loading ? 'Sending link...' : 'Send Reset Link'}
+                {loading ? 'Updating Password...' : 'Reset Password'}
               </Button>
 
               <div className="text-center pt-2">
                 <Link
-                  to="/login"
+                  to="/forgot-password"
                   className="text-xs text-accent hover:underline font-bold"
                 >
-                  Remember your password? Log in
+                  Need a new reset link?
                 </Link>
               </div>
             </form>
@@ -114,4 +151,4 @@ export function ForgotPasswordPage() {
   );
 }
 
-export default ForgotPasswordPage;
+export default ResetPasswordPage;

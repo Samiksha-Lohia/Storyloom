@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { APP_NAME } from '../../constants/app';
 import StoryArcTab from '../../components/StoryArcTab';
 import RelationshipsTab from '../../components/RelationshipsTab';
 import MoodSummaryCard from '../../components/common/MoodSummaryCard';
@@ -135,29 +136,23 @@ export function PublisherBookPitchPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 space-y-6 animate-pulse text-left">
-        <div className="h-6 bg-slate-200 rounded-md w-32"></div>
-        <div className="h-44 bg-slate-100 rounded-2xl"></div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-100 rounded-xl"></div>
-          ))}
-        </div>
+      <div className="max-w-6xl mx-auto p-6 text-center text-xs text-muted border border-rule rounded bg-paper">
+        Loading…
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-white border border-rose-200 rounded-2xl text-center space-y-4 shadow-sm">
-        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto">
+      <div className="max-w-md mx-auto my-16 p-8 bg-paper border border-rule rounded text-center space-y-4">
+        <div className="w-12 h-12 border border-rule text-danger rounded flex items-center justify-center mx-auto">
           <Shield className="w-6 h-6" />
         </div>
-        <h3 className="font-serif font-bold text-slate-900 text-lg">Pitch Access Restricted</h3>
-        <p className="text-xs text-slate-600 leading-relaxed">{error}</p>
+        <h3 className="font-bold text-ink text-base">Pitch Access Restricted</h3>
+        <p className="text-xs text-muted leading-relaxed">{error}</p>
         <Link
           to="/p/discover"
-          className="inline-block px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800"
+          className="inline-block px-4 py-2 bg-ink text-paper rounded text-xs font-bold hover:opacity-90"
         >
           Back to Catalogue
         </Link>
@@ -173,19 +168,20 @@ export function PublisherBookPitchPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 text-left">
       {/* Navigation Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-4">
         <div className="flex items-center gap-3">
           <Link
             to="/p/discover"
-            className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600"
+            className="p-2 bg-paper border border-rule rounded hover:border-ink text-ink"
+            aria-label="Back to discover"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               Executive Pitch Panel
             </span>
-            <h1 className="text-2xl md:text-3xl font-serif font-bold text-slate-900">
+            <h1 className="text-2xl md:text-3xl font-normal text-ink">
               {pitch.title}
             </h1>
           </div>
@@ -205,34 +201,34 @@ export function PublisherBookPitchPage() {
           {user?.role === 'publisher' && (
             <>
               {activeRequest?.status === 'pending' ? (
-                <span className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-xl text-xs font-bold shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                <span className="flex items-center gap-1.5 px-3.5 py-2.5 bg-paper text-ink border border-rule rounded text-xs font-bold">
+                  <Clock className="w-3.5 h-3.5 text-accent" />
                   Offer Pending
                 </span>
               ) : activeRequest?.status === 'accepted' ? (
                 <Link
                   to="/p/requests"
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-colors shadow-2xs"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-paper text-success border border-rule hover:border-success rounded text-xs font-bold"
                 >
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <MessageSquare className="w-3.5 h-3.5 text-success" />
                   In Talks (Open Chat)
                 </Link>
               ) : activeRequest?.status === 'declined' &&
                 activeRequest.cooldownUntil &&
                 new Date(activeRequest.cooldownUntil) > new Date() ? (
                 <span
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 border border-slate-200 rounded-xl text-xs font-medium cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-paper text-muted border border-rule rounded text-xs font-medium cursor-not-allowed"
                   title={`Declined. Cooldown until ${new Date(activeRequest.cooldownUntil).toLocaleDateString()}`}
                 >
-                  <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+                  <AlertCircle className="w-3.5 h-3.5 text-muted" />
                   Declined (Cooldown)
                 </span>
               ) : (
                 <button
                   onClick={() => setShowPublishModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:shadow-sm cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-ink hover:opacity-90 text-paper rounded text-xs font-bold cursor-pointer"
                 >
-                  <Briefcase className="w-3.5 h-3.5 text-[#FF500A]" />
+                  <Briefcase className="w-3.5 h-3.5 text-accent" />
                   I want to publish
                 </button>
               )}
@@ -242,7 +238,7 @@ export function PublisherBookPitchPage() {
           {/* Full Reader CTA */}
           <Link
             to={`/read/${pitch.bookId}`}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#FF500A] hover:bg-[#e04505] text-white rounded-xl text-xs font-bold transition-colors shadow-2xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-paper rounded text-xs font-bold"
           >
             <BookOpen className="w-4 h-4" />
             Read Full Manuscript
@@ -263,18 +259,15 @@ export function PublisherBookPitchPage() {
       />
 
       {/* ─── 1. AI Pitch Card ──────────────────────────────────────────────── */}
-      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 md:p-8 shadow-md overflow-hidden">
-        {/* Background glow decoration */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-5">
+      <div className="bg-paper border border-rule rounded p-6 md:p-8 space-y-5 text-ink">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/30 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-paper border border-rule text-muted flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
                 AI Story Pitch
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-muted">
                 Generated {pitchCard?.generatedAt ? new Date(pitchCard.generatedAt).toLocaleDateString() : 'Recently'}
               </span>
             </div>
@@ -284,58 +277,58 @@ export function PublisherBookPitchPage() {
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/15 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold bg-paper hover:border-ink text-ink border border-rule cursor-pointer"
                 title="Regenerate pitch card (max 3 times/day)"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+                <RefreshCw className="w-3.5 h-3.5" />
                 {regenerating ? 'Regenerating...' : 'Regenerate Pitch'}
               </button>
             )}
           </div>
 
           {/* Hook / Logline */}
-          <blockquote className="text-lg md:text-2xl font-serif italic text-slate-100 leading-relaxed max-w-4xl border-l-3 border-[#FF500A] pl-4">
+          <blockquote className="text-base md:text-lg italic text-ink leading-relaxed max-w-4xl border-l-2 border-accent pl-4 font-body">
             "{pitchCard?.logline || 'A captivating journey of suspense, identity, and dramatic tension.'}"
           </blockquote>
 
           {/* Metadata Chips */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-white/10 text-xs">
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-rule text-xs">
+            <div className="bg-paper rounded p-3 border border-rule">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
                 Primary Genre
               </span>
-              <span className="font-semibold text-white text-sm">
+              <span className="font-bold text-ink text-xs">
                 {pitchCard?.genre || pitch.genre || 'General Fiction'}
               </span>
             </div>
 
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
+            <div className="bg-paper rounded p-3 border border-rule">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
                 Narrative Tone
               </span>
-              <span className="font-semibold text-amber-300 text-sm">
+              <span className="font-bold text-ink text-xs">
                 {pitchCard?.tone || 'Engaging & Expressive'}
               </span>
             </div>
 
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
+            <div className="bg-paper rounded p-3 border border-rule">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
                 Target Audience
               </span>
-              <span className="font-semibold text-purple-300 text-sm">
+              <span className="font-bold text-ink text-xs">
                 {pitchCard?.targetAudience || 'Enthusiasts of character-driven drama'}
               </span>
             </div>
 
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1">
+            <div className="bg-paper rounded p-3 border border-rule">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
                 Comparative Titles
               </span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {(pitchCard?.forFansOf || ['Modern Drama', 'Literary Fiction']).map((comp, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 text-[11px]"
+                    className="px-2 py-0.5 rounded bg-paper border border-rule text-ink text-[11px]"
                   >
                     {comp}
                   </span>
@@ -348,70 +341,70 @@ export function PublisherBookPitchPage() {
 
       {/* ─── 2. Traction Cards (Audience Metrics) ───────────────────────────── */}
       <div className="space-y-3">
-        <h2 className="text-lg font-serif font-bold text-slate-900 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#FF500A]" />
+        <h2 className="text-base font-bold text-ink flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-accent" />
           Audience Traction & Market Signals
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5 text-slate-400" /> Reads
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5 text-muted" /> Reads
             </span>
-            <span className="text-xl font-bold font-mono text-slate-900">
+            <span className="text-lg font-bold text-ink">
               {traction?.reads || 0}
             </span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Rating
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-accent fill-accent" /> Rating
             </span>
-            <span className="text-xl font-bold font-mono text-amber-600">
+            <span className="text-lg font-bold text-ink">
               ★ {Number(traction?.ratingAvg || 0).toFixed(1)}
-              <span className="text-xs text-slate-400 font-normal ml-1">
+              <span className="text-xs text-muted font-normal ml-1">
                 ({traction?.ratingCount || 0})
               </span>
             </span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Completion
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success" /> Completion
             </span>
-            <span className="text-xl font-bold font-mono text-emerald-600">
+            <span className="text-lg font-bold text-ink">
               {traction?.completionRate || 0}%
             </span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
-              <Bookmark className="w-3.5 h-3.5 text-indigo-500" /> List Adds
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <Bookmark className="w-3.5 h-3.5 text-muted" /> List Adds
             </span>
-            <span className="text-xl font-bold font-mono text-indigo-600">
+            <span className="text-lg font-bold text-ink">
               {traction?.readingListAdds || 0}
             </span>
           </div>
 
           {/* Wishlists - strictly count only, preserving privacy */}
-          <div className="bg-white border border-amber-200 bg-amber-50/30 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-1 flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-amber-600" /> Wishlisted
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-accent" /> Wishlisted
             </span>
-            <span className="text-xl font-bold font-mono text-amber-700">
+            <span className="text-lg font-bold text-ink">
               {traction?.wishlistCount || 0}
-              <span className="text-[10px] text-amber-600 font-sans block mt-0.5">
+              <span className="text-[10px] text-muted block mt-0.5 font-normal">
                 publishers
               </span>
             </span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5 text-slate-400" /> Length
+          <div className="bg-paper border border-rule rounded p-4">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-muted" /> Length
             </span>
-            <span className="text-xl font-bold font-mono text-slate-900">
+            <span className="text-lg font-bold text-ink">
               {pitch.pageCount || 1}
-              <span className="text-xs text-slate-400 font-sans ml-1">pages</span>
+              <span className="text-xs text-muted font-normal ml-1">pages</span>
             </span>
           </div>
         </div>
@@ -420,18 +413,18 @@ export function PublisherBookPitchPage() {
       {/* ─── 3. Narrative Arc & Mood Summary Grid ───────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Story Arc Chart (Reused component with summary mode) */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
+        <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-serif font-bold text-slate-900 text-base">
+              <h3 className="font-bold text-ink text-sm">
                 Dramatic Tension & Pacing Arc
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 {arcData?.pacingSummary || 'Narrative pacing mapped across dramatic beats.'}
               </p>
             </div>
             {arcData?.climaxSceneId && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+              <span className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-paper text-accent border border-rule">
                 Peak Climax Identified
               </span>
             )}
@@ -453,13 +446,13 @@ export function PublisherBookPitchPage() {
       {/* ─── 4. Main Cast & Read-only Relationship Graph ───────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Cast Roster */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-serif font-bold text-slate-900 text-base flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-600" />
+        <div className="lg:col-span-1 bg-paper border border-rule rounded p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-rule pb-3">
+            <h3 className="font-bold text-ink text-sm flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted" />
               Core Ensemble Cast
             </h3>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-muted">
               {mainCast?.length || 0} characters
             </span>
           </div>
@@ -469,39 +462,39 @@ export function PublisherBookPitchPage() {
               mainCast.map((char) => (
                 <div
                   key={char.id}
-                  className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors space-y-1"
+                  className="p-3 rounded border border-rule bg-paper space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800 text-sm">{char.name}</span>
-                    <span className="px-2 py-0.5 bg-slate-200/70 text-slate-700 text-[10px] font-semibold uppercase tracking-wider rounded-md capitalize">
+                    <span className="font-bold text-ink text-xs">{char.name}</span>
+                    <span className="px-2 py-0.5 bg-paper text-muted border border-rule text-[10px] font-bold uppercase tracking-wider rounded capitalize">
                       {char.role}
                     </span>
                   </div>
                   {char.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-muted line-clamp-2 leading-relaxed">
                       {char.description}
                     </p>
                   )}
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic">No character entries available.</p>
+              <p className="text-xs text-muted italic">No character entries available.</p>
             )}
           </div>
         </div>
 
         {/* Read-Only Relationships Network (Reused component with summary mode) */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
+        <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-serif font-bold text-slate-900 text-base">
+              <h3 className="font-bold text-ink text-sm">
                 Character Relationship Graph
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Connection web and emotional polarity between prominent story figures.
               </p>
             </div>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-muted">
               {relationships?.length || 0} ties
             </span>
           </div>
@@ -518,16 +511,16 @@ export function PublisherBookPitchPage() {
 
       {/* ─── 5. Writer Snapshot & Public Profile Link ──────────────────────── */}
       {writerSnapshot && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-paper border border-rule rounded p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             {writerSnapshot.avatarUrl ? (
               <img
                 src={writerSnapshot.avatarUrl}
                 alt={writerSnapshot.name}
-                className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
+                className="w-14 h-14 rounded object-cover border border-rule"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-600 font-serif font-bold text-xl flex items-center justify-center border-2 border-slate-200">
+              <div className="w-14 h-14 rounded bg-paper text-ink font-bold text-lg flex items-center justify-center border border-rule">
                 {writerSnapshot.name?.[0] || 'W'}
               </div>
             )}
@@ -535,19 +528,19 @@ export function PublisherBookPitchPage() {
               <div className="flex items-center gap-2">
                 <Link
                   to={`/writer/${writerSnapshot.username}`}
-                  className="text-lg font-serif font-bold text-slate-900 hover:text-[#FF500A] transition-colors"
+                  className="text-base font-bold text-ink hover:text-accent"
                 >
                   {writerSnapshot.name}
                 </Link>
-                <span className="text-xs text-slate-400 font-mono">@{writerSnapshot.username}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="text-xs text-muted">@{writerSnapshot.username}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-rule text-muted">
                   {writerSnapshot.publishingCadence}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 max-w-xl line-clamp-2">
-                {writerSnapshot.bio || 'Author on SceneCraft with verified story analytics.'}
+              <p className="text-xs text-muted max-w-xl line-clamp-2">
+                {writerSnapshot.bio || `Author on ${APP_NAME} with verified story analytics.`}
               </p>
-              <div className="flex items-center gap-4 text-xs text-slate-400 font-medium pt-1">
+              <div className="flex items-center gap-4 text-xs text-muted font-normal pt-1">
                 <span>{writerSnapshot.otherPublishedBooksCount} other published titles</span>
                 <span>•</span>
                 <span>{writerSnapshot.followersCount} followers</span>
@@ -559,15 +552,15 @@ export function PublisherBookPitchPage() {
             <button
               onClick={handleFollowToggle}
               disabled={followLoading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded text-xs font-bold border cursor-pointer ${
                 isFollowing
-                  ? 'bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200'
-                  : 'bg-slate-900 hover:bg-[#FF500A] text-white shadow-2xs'
+                  ? 'bg-paper hover:border-danger text-ink hover:text-danger border-rule'
+                  : 'bg-accent hover:bg-accent-hover text-paper border-accent'
               }`}
             >
               {isFollowing ? (
                 <>
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <UserCheck className="w-3.5 h-3.5 text-success" />
                   Following
                 </>
               ) : (
@@ -579,7 +572,7 @@ export function PublisherBookPitchPage() {
             </button>
             <Link
               to={`/writer/${writerSnapshot.username}`}
-              className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors"
+              className="px-4 py-2 bg-paper hover:border-ink text-ink rounded text-xs font-bold border border-rule"
             >
               View Full Profile
             </Link>

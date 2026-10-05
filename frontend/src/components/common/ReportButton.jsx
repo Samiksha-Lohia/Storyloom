@@ -22,7 +22,6 @@ export default function ReportButton({
 
   const handleOpen = () => {
     if (!currentUser) {
-      // Prompt user to login to submit in-app report
       alert('Please log in to submit a report. For public copyright takedown notices, please visit the Copyright page.');
       return;
     }
@@ -73,7 +72,7 @@ export default function ReportButton({
           type="button"
           onClick={handleOpen}
           title={`Report this ${targetType}`}
-          className={`p-1 text-stone-400 hover:text-red-600 transition rounded-lg hover:bg-stone-100 ${className}`}
+          className={`p-1 text-muted hover:text-danger rounded cursor-pointer ${className}`}
         >
           <Flag className="w-4 h-4" />
         </button>
@@ -83,9 +82,9 @@ export default function ReportButton({
         <button
           type="button"
           onClick={handleOpen}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-stone-500 hover:text-red-600 hover:bg-red-50 border border-stone-200 transition ${className}`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium text-muted hover:text-danger border border-rule cursor-pointer ${className}`}
         >
-          <Flag className="w-3.5 h-3.5" />
+          <Flag className="w-4 h-4" />
           <span>Report</span>
         </button>
       )}
@@ -94,64 +93,64 @@ export default function ReportButton({
         <button
           type="button"
           onClick={handleOpen}
-          className={`text-xs text-stone-400 hover:text-red-600 transition inline-flex items-center gap-1 ${className}`}
+          className={`text-xs text-muted hover:text-danger inline-flex items-center gap-1 cursor-pointer ${className}`}
         >
-          <Flag className="w-3 h-3" />
+          <Flag className="w-4 h-4" />
           <span>Report {targetType}</span>
         </button>
       )}
 
       {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-100 relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60">
+          <div className="bg-paper rounded max-w-lg w-full p-6 border border-rule relative max-h-[90vh] overflow-y-auto text-ink">
             <button
               onClick={handleClose}
-              className="absolute top-5 right-5 text-stone-400 hover:text-stone-600 p-1 rounded-full hover:bg-stone-100 transition"
+              className="absolute top-5 right-5 text-muted hover:text-ink p-1 rounded cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
-                <AlertTriangle className="w-5 h-5" />
+              <div className="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-heading text-lg font-bold text-stone-900">
+                <h3 className="text-base font-bold text-ink">
                   Report {targetType}
                 </h3>
                 {targetTitle && (
-                  <p className="text-xs text-stone-500 truncate max-w-xs">{targetTitle}</p>
+                  <p className="text-xs text-muted truncate max-w-xs">{targetTitle}</p>
                 )}
               </div>
             </div>
 
             {success ? (
               <div className="py-8 text-center space-y-3">
-                <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-                <h4 className="font-heading font-bold text-stone-900 text-base">
+                <CheckCircle className="w-6 h-6 text-success mx-auto" />
+                <h4 className="font-bold text-ink text-base">
                   Report Submitted
                 </h4>
-                <p className="text-xs text-stone-600 max-w-sm mx-auto">
+                <p className="text-xs text-muted max-w-sm mx-auto font-body">
                   Thank you for helping keep our community safe. Our moderation team will review this item.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                  <div className="p-3 bg-paper border border-danger text-danger text-xs rounded">
                     {error}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     Reason for report
                   </label>
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-800 font-medium focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                    className="w-full bg-paper border border-rule rounded px-3 py-2 text-xs text-ink font-body focus:outline-none focus:border-ink cursor-pointer"
                   >
                     <option value="abuse">Harassment, hate speech, or abuse</option>
                     <option value="plagiarism">Plagiarism or stolen content</option>
@@ -162,12 +161,12 @@ export default function ReportButton({
                 </div>
 
                 {reason === 'copyright' && (
-                  <div className="space-y-3 p-3.5 bg-amber-500/10 border border-amber-300 rounded-2xl">
-                    <p className="text-[11px] text-amber-900 font-medium">
+                  <div className="space-y-3 p-3 bg-paper border border-rule rounded">
+                    <p className="text-[11px] text-muted">
                       Copyright claims require claimant verification under our Terms of Service.
                     </p>
                     <div>
-                      <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                      <label className="block text-[11px] font-bold text-ink mb-1">
                         Claimant Name / Entity *
                       </label>
                       <input
@@ -176,11 +175,11 @@ export default function ReportButton({
                         value={claimantName}
                         onChange={(e) => setClaimantName(e.target.value)}
                         placeholder="Legal name of rights owner"
-                        className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                        className="w-full bg-paper border border-rule rounded px-3 py-1.5 text-xs text-ink focus:outline-none focus:border-ink font-body"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                      <label className="block text-[11px] font-bold text-ink mb-1">
                         Contact Email / Phone *
                       </label>
                       <input
@@ -189,14 +188,14 @@ export default function ReportButton({
                         value={claimantContact}
                         onChange={(e) => setClaimantContact(e.target.value)}
                         placeholder="author@example.com or phone"
-                        className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                        className="w-full bg-paper border border-rule rounded px-3 py-1.5 text-xs text-ink focus:outline-none focus:border-ink font-body"
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     Details / Explanation
                   </label>
                   <textarea
@@ -204,10 +203,10 @@ export default function ReportButton({
                     value={details}
                     onChange={(e) => setDetails(e.target.value)}
                     maxLength={3000}
-                    placeholder="Provide specific details, quotes, or timestamps to assist our moderation team..."
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs text-stone-800 placeholder-stone-400 focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                    placeholder="Provide specific details to assist our moderation team..."
+                    className="w-full bg-paper border border-rule rounded p-2.5 text-xs text-ink placeholder-muted focus:outline-none focus:border-ink font-body"
                   />
-                  <div className="text-right text-[10px] text-stone-400 mt-1">
+                  <div className="text-right text-[10px] text-muted mt-1">
                     {details.length} / 3000
                   </div>
                 </div>
@@ -216,14 +215,14 @@ export default function ReportButton({
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-800 rounded-full hover:bg-stone-100 transition"
+                    className="px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink rounded cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-full transition disabled:opacity-50 shadow-xs"
+                    className="px-4 py-1.5 text-xs font-bold text-paper bg-danger rounded cursor-pointer disabled:opacity-50"
                   >
                     {loading ? 'Submitting...' : 'Submit Report'}
                   </button>

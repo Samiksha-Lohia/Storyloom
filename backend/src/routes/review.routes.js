@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { redis } from '../config/redis.js';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticate, authenticateOptional } from '../middleware/auth.middleware.js';
 import { requireActive } from '../middleware/rbac.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import {
@@ -16,14 +16,6 @@ import { ApiError } from '../utilities/custom-errors.js';
 
 const router = Router({ mergeParams: true });
 
-// Optional authentication helper: attaches req.user if valid token present
-const optionalAuthenticate = (req, res, next) => {
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    return authenticate(req, res, next);
-  }
-  next();
-};
-
 // Rate limiter for review posting: 30 reviews per hour per user/IP
 const reviewPostLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -31,6 +23,7 @@ const reviewPostLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:review:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${req.user?.id || 'anon'}`,
@@ -45,7 +38,7 @@ const reviewPostLimiter = rateLimit({
  */
 router.get(
   '/',
-  optionalAuthenticate,
+  authenticateOptional,
   validate(queryReviewSchema),
   reviewController.getBookReviews
 );

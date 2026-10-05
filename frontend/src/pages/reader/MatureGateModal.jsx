@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import { api } from '../../services/api';
 import { Button } from '../../components/common/Button';
 
@@ -25,30 +25,30 @@ export default function MatureGateModal({ isOpen, onAcknowledge }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-stone-200 text-stone-900">
-        <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
-          <ShieldAlert className="w-8 h-8" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/70">
+      <div className="bg-paper rounded max-w-md w-full p-6 space-y-6 border border-rule text-ink">
+        <div className="flex items-center gap-2 text-danger">
+          <ShieldAlert className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">
+            Age Verification &amp; Content Warning
+          </span>
         </div>
 
         <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
-            Age Verification & Content Warning
-          </span>
-          <h2 className="font-heading text-2xl font-black">Mature Content (18+)</h2>
-          <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+          <h2 className="text-xl font-bold">Mature Content (18+)</h2>
+          <p className="text-xs sm:text-sm text-muted leading-relaxed font-body">
             This story has been marked by the author as containing mature themes, explicit language, violence, or sensitive situations intended for adult audiences.
           </p>
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
+          <div className="p-3 bg-paper border border-danger rounded text-xs text-danger">
             {error}
           </div>
         )}
 
-        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-600 space-y-1">
-          <p className="font-bold text-stone-800">Please confirm:</p>
+        <div className="p-3 bg-paper rounded border border-rule text-xs text-muted space-y-1">
+          <p className="font-bold text-ink">Please confirm:</p>
           <p>You are at least 18 years of age and consent to viewing mature literary content.</p>
         </div>
 
@@ -68,7 +68,6 @@ export default function MatureGateModal({ isOpen, onAcknowledge }) {
             size="md"
             onClick={handleConfirm}
             disabled={loading}
-            className="shadow-sm"
           >
             {loading ? 'Confirming...' : 'I am 18+ — Continue'}
           </Button>

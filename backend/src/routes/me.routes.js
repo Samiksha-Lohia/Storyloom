@@ -28,6 +28,7 @@ const progressLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
+    prefix: 'rl:progress:',
     sendCommand: (...args) => redis.call(...args),
   }),
   keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${req.user?.id || 'anon'}`,

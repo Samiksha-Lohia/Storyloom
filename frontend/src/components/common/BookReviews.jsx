@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Star, MessageSquare, Trash2, Edit3, ChevronDown } from 'lucide-react';
+import { Star, MessageSquare, Trash2, Edit3 } from 'lucide-react';
 import { api } from '../../services/api.js';
 import ReportButton from './ReportButton.jsx';
 import Button from './Button.jsx';
@@ -76,14 +76,12 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
     try {
       if (userReview) {
-        // Update existing review
         await api.reviews.updateReview(bookId, userReview._id, {
           rating: ratingInput,
           text: textInput,
         });
         setFormSuccess('Review updated successfully.');
       } else {
-        // Create new review
         await api.reviews.createReview(bookId, {
           rating: ratingInput,
           text: textInput,
@@ -117,51 +115,51 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
   const totalVotes = stats.ratingCount || 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Rating & Review Header Summary */}
-      <div className="bg-stone-50 border border-stone-200/80 rounded-3xl p-6 sm:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      <div className="bg-paper border border-rule rounded p-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           {/* Average Rating Big Display */}
-          <div className="md:col-span-4 text-center md:border-r md:border-stone-200 md:pr-8">
-            <div className="font-heading text-5xl sm:text-6xl font-black text-stone-900 tracking-tight">
+          <div className="md:col-span-4 text-center md:border-r md:border-rule md:pr-6">
+            <div className="text-4xl font-bold text-ink">
               {stats.ratingAvg ? stats.ratingAvg.toFixed(1) : '0.0'}
             </div>
-            <div className="flex items-center justify-center gap-1 my-2 text-amber-500">
+            <div className="flex items-center justify-center gap-1 my-2 text-ink">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`w-5 h-5 ${
+                  className={`w-4 h-4 ${
                     star <= Math.round(stats.ratingAvg || 0)
-                      ? 'fill-amber-400 text-amber-500'
-                      : 'text-stone-300'
+                      ? 'fill-current text-ink'
+                      : 'text-muted'
                   }`}
                 />
               ))}
             </div>
-            <p className="text-xs text-stone-500 font-medium">
+            <p className="text-xs text-muted">
               Based on {totalVotes.toLocaleString()} {totalVotes === 1 ? 'review' : 'reviews'}
             </p>
           </div>
 
           {/* Histogram Bars */}
-          <div className="md:col-span-8 space-y-2">
+          <div className="md:col-span-8 space-y-1.5">
             {[5, 4, 3, 2, 1].map((stars) => {
               const count = stats.histogram?.[stars] || 0;
               const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
 
               return (
-                <div key={stars} className="flex items-center gap-3 text-xs">
-                  <div className="flex items-center gap-1 w-12 shrink-0 justify-end font-semibold text-stone-700">
+                <div key={stars} className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-1 w-10 shrink-0 justify-end font-semibold text-ink">
                     <span>{stars}</span>
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <Star className="w-3.5 h-3.5 fill-current text-ink" />
                   </div>
-                  <div className="flex-1 h-3 bg-stone-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-rule rounded overflow-hidden">
                     <div
-                      className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                      className="h-full bg-ink rounded"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className="w-12 text-right shrink-0 text-stone-500 font-mono">
+                  <div className="w-10 text-right shrink-0 text-muted font-mono">
                     {count}
                   </div>
                 </div>
@@ -172,32 +170,32 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
       </div>
 
       {/* User Review Action Area */}
-      <div className="border border-stone-200 rounded-3xl p-6 sm:p-8 bg-white shadow-xs">
+      <div className="border border-rule rounded p-6 bg-paper">
         {currentUser ? (
           isBookAuthor ? (
-            <div className="text-center py-4 text-xs text-stone-500">
+            <div className="text-center py-2 text-xs text-muted">
               As the author of this book, you cannot write reviews for it.
             </div>
           ) : isWriterOrPub ? (
-            <div className="text-center py-4 text-xs text-stone-500">
+            <div className="text-center py-2 text-xs text-muted">
               Only reader accounts can post community reviews and ratings.
             </div>
           ) : isEditing ? (
             /* Write / Edit Form */
             <form onSubmit={handleSubmitReview} className="space-y-4">
-              <h3 className="font-heading text-lg font-bold text-stone-900">
+              <h3 className="text-base font-bold text-ink">
                 {userReview ? 'Edit Your Review' : 'Write a Review'}
               </h3>
 
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                <div className="p-3 bg-paper border border-danger text-danger text-xs rounded">
                   {formError}
                 </div>
               )}
 
               {/* Star Rating Selector */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                   Rating
                 </label>
                 <div className="flex items-center gap-1">
@@ -210,19 +208,19 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                         onClick={() => setRatingInput(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 text-stone-300 hover:text-amber-500 transition cursor-pointer"
+                        className="p-1 text-muted hover:text-ink cursor-pointer"
                       >
                         <Star
-                          className={`w-7 h-7 ${
+                          className={`w-4 h-4 ${
                             star <= activeStar
-                              ? 'fill-amber-400 text-amber-500'
-                              : 'text-stone-300'
+                              ? 'fill-current text-ink'
+                              : 'text-muted'
                           }`}
                         />
                       </button>
                     );
                   })}
-                  <span className="text-xs font-bold text-stone-700 ml-2">
+                  <span className="text-xs font-bold text-ink ml-2">
                     {ratingInput} out of 5 stars
                   </span>
                 </div>
@@ -230,7 +228,7 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
               {/* Review Text */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                   Your Review
                 </label>
                 <textarea
@@ -238,10 +236,10 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
                   maxLength={5000}
-                  placeholder="What did you love or dislike about this book? Share your thoughts with other readers..."
-                  className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-sm text-stone-800 placeholder-stone-400 focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                  placeholder="Share your thoughts on this story..."
+                  className="w-full bg-paper border border-rule rounded p-3 text-xs text-ink placeholder-muted focus:outline-none focus:border-ink font-body"
                 />
-                <div className="text-right text-[11px] text-stone-400 mt-1">
+                <div className="text-right text-[11px] text-muted mt-1">
                   {textInput.length} / 5000
                 </div>
               </div>
@@ -270,28 +268,28 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-[#FF500A] px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold uppercase tracking-wider border border-rule text-ink px-2 py-0.5 rounded">
                     Your Review
                   </span>
-                  <div className="flex items-center gap-0.5 text-amber-500">
+                  <div className="flex items-center gap-0.5 text-ink">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
                         className={`w-4 h-4 ${
                           s <= userReview.rating
-                            ? 'fill-amber-400 text-amber-500'
-                            : 'text-stone-300'
+                            ? 'fill-current text-ink'
+                            : 'text-muted'
                         }`}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={handleStartEdit}
-                    className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition"
+                    className="p-1 text-muted hover:text-ink rounded cursor-pointer"
                     title="Edit review"
                   >
                     <Edit3 className="w-4 h-4" />
@@ -299,7 +297,7 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                   <button
                     type="button"
                     onClick={handleDeleteReview}
-                    className="p-1.5 text-stone-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition"
+                    className="p-1 text-muted hover:text-danger rounded cursor-pointer"
                     title="Delete review"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -308,22 +306,22 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
               </div>
 
               {userReview.text ? (
-                <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-line">
+                <p className="text-xs sm:text-sm text-ink leading-relaxed whitespace-pre-line font-body">
                   {userReview.text}
                 </p>
               ) : (
-                <p className="text-xs text-stone-400 italic">No written review provided.</p>
+                <p className="text-xs text-muted italic">No written review provided.</p>
               )}
             </div>
           ) : (
             /* Write button for active reader */
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <h4 className="font-heading font-bold text-stone-900 text-base">
+                <h4 className="font-bold text-ink text-sm">
                   Have you read {bookTitle}?
                 </h4>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Leave a rating and review to share your impressions with the community.
+                <p className="text-xs text-muted mt-0.5">
+                  Leave a rating and review to share your thoughts.
                 </p>
               </div>
               <Button
@@ -340,15 +338,15 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
           /* Guest prompt */
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
             <div>
-              <h4 className="font-heading font-bold text-stone-900 text-base">
+              <h4 className="font-bold text-ink text-sm">
                 Enjoyed this book?
               </h4>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Sign in with a free reader account to rate and review stories.
+              <p className="text-xs text-muted mt-0.5">
+                Sign in to rate and review stories.
               </p>
             </div>
             <a href="/login">
-              <Button variant="outline" size="sm">
+              <Button variant="secondary" size="sm">
                 Sign In to Review
               </Button>
             </a>
@@ -357,28 +355,28 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
       </div>
 
       {formSuccess && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-2xl">
+        <div className="p-3 bg-paper border border-success text-success text-xs rounded">
           {formSuccess}
         </div>
       )}
 
       {/* Community Reviews List & Filter Bar */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-stone-200">
-          <h3 className="font-heading font-bold text-lg text-stone-900 flex items-center gap-2">
+        <div className="flex items-center justify-between pb-2 border-b border-rule">
+          <h3 className="font-bold text-base text-ink flex items-center gap-2">
             <span>Community Reviews</span>
-            <span className="text-xs font-mono font-medium text-stone-400">
+            <span className="text-xs font-mono text-muted">
               ({totalVotes})
             </span>
           </h3>
 
           {/* Sort Selector */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-stone-500 font-medium">Sort by:</span>
+            <span className="text-muted">Sort by:</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="bg-white border border-stone-200 rounded-xl px-2.5 py-1 text-xs text-stone-700 font-medium focus:outline-hidden focus:ring-1 focus:ring-[#FF500A]"
+              className="bg-paper border border-rule rounded px-2.5 py-1 text-xs text-ink font-body focus:outline-none focus:border-ink cursor-pointer"
             >
               <option value="newest">Newest First</option>
               <option value="highest">Highest Rating</option>
@@ -389,27 +387,27 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
         {/* Reviews List */}
         {loading ? (
-          <div className="py-12 text-center text-xs text-stone-400">
-            Loading reviews...
+          <div className="py-8 text-center text-xs text-muted font-bold">
+            Loading…
           </div>
         ) : reviews.length === 0 ? (
-          <div className="py-12 text-center space-y-2">
-            <MessageSquare className="w-8 h-8 text-stone-300 mx-auto" />
-            <p className="text-sm font-semibold text-stone-700">No reviews yet</p>
-            <p className="text-xs text-stone-400">Be the first to share your thoughts on this story!</p>
+          <div className="py-8 text-center space-y-2">
+            <MessageSquare className="w-4 h-4 text-muted mx-auto" />
+            <p className="text-xs font-bold text-ink">No reviews yet</p>
+            <p className="text-xs text-muted">Be the first to share your thoughts on this story.</p>
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-rule">
             {reviews.map((rev) => {
               const reader = rev.readerId || {};
               const isCurrentUser = currentUser && (currentUser.id === reader._id || currentUser._id === reader._id);
 
               return (
-                <div key={rev._id} className="py-6 space-y-3">
+                <div key={rev._id} className="py-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
+                      <div className="w-8 h-8 rounded border border-rule bg-paper text-ink flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
                         {reader.avatarUrl ? (
                           <img
                             src={reader.avatarUrl}
@@ -423,16 +421,16 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-stone-900">
+                          <span className="text-xs font-bold text-ink">
                             {reader.name || 'Reader'}
                           </span>
                           {reader.username && (
-                            <span className="text-[11px] text-stone-400">
+                            <span className="text-[11px] text-muted">
                               @{reader.username}
                             </span>
                           )}
                           {isCurrentUser && (
-                            <span className="text-[10px] font-bold uppercase bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded-sm">
+                            <span className="text-[10px] font-bold uppercase border border-rule text-muted px-1 rounded">
                               You
                             </span>
                           )}
@@ -440,19 +438,19 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
                         {/* Star Rating & Date */}
                         <div className="flex items-center gap-2 mt-0.5">
-                          <div className="flex items-center gap-0.5 text-amber-500">
+                          <div className="flex items-center gap-0.5 text-ink">
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
                                 key={s}
                                 className={`w-3.5 h-3.5 ${
                                   s <= rev.rating
-                                    ? 'fill-amber-400 text-amber-500'
-                                    : 'text-stone-300'
+                                    ? 'fill-current text-ink'
+                                    : 'text-muted'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-[11px] text-stone-400">
+                          <span className="text-[11px] text-muted">
                             {new Date(rev.createdAt).toLocaleDateString(undefined, {
                               year: 'numeric',
                               month: 'short',
@@ -474,7 +472,7 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                   </div>
 
                   {rev.text && (
-                    <p className="text-xs sm:text-sm text-stone-700 leading-relaxed whitespace-pre-line pl-12">
+                    <p className="text-xs sm:text-sm text-ink leading-relaxed whitespace-pre-line pl-11 font-body">
                       {rev.text}
                     </p>
                   )}
@@ -488,18 +486,18 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
         {pagination.totalPages > 1 && (
           <div className="pt-4 flex items-center justify-center gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={pagination.page <= 1}
               onClick={() => loadReviews(pagination.page - 1, sort)}
             >
               Previous
             </Button>
-            <span className="text-xs text-stone-500 px-3">
+            <span className="text-xs text-muted px-2">
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => loadReviews(pagination.page + 1, sort)}

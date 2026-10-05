@@ -84,7 +84,6 @@ export function BookPageData({
     }
   };
 
-  // Helper formatting
   const formatNumber = (num = 0) => {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M';
     if (num >= 1_000) return (num / 1_000).toFixed(1) + 'k';
@@ -111,19 +110,16 @@ export function BookPageData({
   const displayDesc =
     isLongDesc && !descExpanded ? `${fullDesc.slice(0, 320)}...` : fullDesc;
 
-  // Cover URL resolution (handles preview blob/url, Cloudinary id, or direct url)
   const coverUrl =
     book?.coverPreviewUrl ||
     book?.coverUrl ||
     (book?.coverPublicId ? `https://res.cloudinary.com/demo/image/upload/${book.coverPublicId}` : null);
 
-  // Author details
-  const authorName = book?.writerId?.name || book?.authorId?.name || 'SceneCraft Author';
+  const authorName = book?.writerId?.name || book?.authorId?.name || 'Storyloom Author';
   const authorUsername = book?.writerId?.username || book?.authorId?.username || null;
   const authorAvatar = book?.writerId?.avatarUrl || null;
-  const authorBio = book?.writerId?.bio || 'Storyteller sharing worlds on SceneCraft.';
+  const authorBio = book?.writerId?.bio || 'Storyteller sharing worlds on Storyloom.';
 
-  // Render Subcomponents to pass to wrappers
   const renderActionButtons = (className = '') => (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       {isPreview ? (
@@ -131,7 +127,7 @@ export function BookPageData({
           type="button"
           disabled
           style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-          className="px-6 py-3 rounded-full font-bold text-sm shadow-md opacity-90 cursor-default"
+          className="px-5 py-2 rounded font-bold text-xs cursor-default"
         >
           Start Reading (Preview)
         </button>
@@ -140,7 +136,7 @@ export function BookPageData({
           <button
             type="button"
             style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-            className="px-6 py-3 rounded-full font-bold text-sm shadow-md hover:shadow-lg transition-transform active:scale-95 cursor-pointer flex items-center gap-2"
+            className="px-5 py-2 rounded font-bold text-xs cursor-pointer flex items-center gap-2 hover:opacity-90"
           >
             <BookOpen className="w-4 h-4" />
             {libraryEntry?.currentPage && libraryEntry.currentPage > 1
@@ -157,17 +153,24 @@ export function BookPageData({
           onClick={handleToggleWantToRead}
           disabled={libraryLoading || isPreview}
           aria-label={libraryEntry ? 'In Library' : 'Add to Library'}
-          className={`w-11 h-11 rounded-full border transition flex items-center justify-center cursor-pointer shadow-xs ${
+          className={`h-9 px-3 rounded border border-rule cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold ${
             libraryEntry
-              ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
-              : 'border-[#E5E5E5] bg-white text-slate-700 hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              ? 'bg-ink text-paper border-ink'
+              : 'bg-paper text-ink hover:border-ink'
           }`}
         >
-          {libraryEntry ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Plus className="w-4 h-4" />}
+          {libraryEntry ? (
+            <>
+              <Check className="w-4 h-4" />
+              <span>In Library</span>
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4" />
+              <span>Add to Library</span>
+            </>
+          )}
         </button>
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-[#121212] text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap shadow-md pointer-events-none z-30">
-          {libraryEntry ? `In Library (${libraryEntry.status || 'reading'})` : 'Add to Reading List'}
-        </div>
       </div>
 
       {!isPreview && bookId && (
@@ -182,8 +185,8 @@ export function BookPageData({
   );
 
   const renderTabsSection = () => (
-    <section className="bg-white rounded-3xl border border-[#E5E5E5] p-6 sm:p-8 shadow-xs">
-      <div className="flex border-b border-[#E5E5E5] gap-8 overflow-x-auto" role="tablist">
+    <section className="bg-paper rounded border border-rule p-6 sm:p-8 font-body text-ink">
+      <div className="flex border-b border-rule gap-6 overflow-x-auto" role="tablist">
         {[
           { id: 'summary', label: 'Summary & Chapters' },
           { id: 'insights', label: 'Narrative Insights' },
@@ -196,13 +199,8 @@ export function BookPageData({
               role="tab"
               aria-selected={active}
               onClick={() => setActiveTab(tab.id)}
-              style={
-                active
-                  ? { borderColor: 'var(--accent)', color: 'var(--accent)' }
-                  : undefined
-              }
-              className={`pb-3 font-serif font-bold text-sm sm:text-base border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                active ? '' : 'border-transparent text-[#64748B] hover:text-[#121212]'
+              className={`pb-2.5 font-bold text-xs uppercase tracking-wider border-b-2 cursor-pointer whitespace-nowrap ${
+                active ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-ink'
               }`}
             >
               {tab.label}
@@ -214,24 +212,24 @@ export function BookPageData({
       <div className="pt-6">
         {activeTab === 'summary' && (
           <div className="space-y-4">
-            <h2 className="font-serif font-bold text-lg text-[#121212]">Table of Contents</h2>
-            <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <h2 className="font-bold text-base text-ink">Table of Contents</h2>
+            <div className="divide-y divide-rule border border-rule rounded overflow-hidden bg-paper">
               {book?.pageOffsets && book.pageOffsets.length > 0 ? (
                 book.pageOffsets.map((_, idx) => (
                   <div
                     key={idx}
-                    className="p-4 flex items-center justify-between hover:bg-[#F7F7F7] transition"
+                    className="p-3 flex items-center justify-between hover:bg-rule/20"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-mono font-bold text-slate-400 w-6">
+                      <span className="text-xs font-mono font-bold text-muted w-6">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
-                      <span className="font-medium text-[#121212] text-sm">
+                      <span className="font-bold text-ink text-xs">
                         Chapter {idx + 1}
                       </span>
                     </div>
                     {isPreview ? (
-                      <span className="text-xs font-semibold text-slate-400">Page {idx + 1}</span>
+                      <span className="text-xs font-bold text-muted">Page {idx + 1}</span>
                     ) : (
                       <Link to={`/read/${bookId}?page=${idx + 1}`}>
                         <Button variant="ghost" size="sm" className="text-xs">
@@ -242,10 +240,10 @@ export function BookPageData({
                   </div>
                 ))
               ) : (
-                <div className="p-4 flex items-center justify-between">
-                  <span className="font-medium text-[#121212] text-sm">Chapter 1</span>
+                <div className="p-3 flex items-center justify-between">
+                  <span className="font-bold text-ink text-xs">Chapter 1</span>
                   {isPreview ? (
-                    <span className="text-xs text-slate-400">Page 1</span>
+                    <span className="text-xs text-muted">Page 1</span>
                   ) : (
                     <Link to={`/read/${bookId}`}>
                       <Button variant="ghost" size="sm" className="text-xs">
@@ -262,9 +260,9 @@ export function BookPageData({
         {activeTab === 'insights' && (
           <div className="pt-2">
             {isPreview ? (
-              <div className="p-8 text-center bg-[#F7F7F7] rounded-2xl border border-dashed border-[#E5E5E5]">
-                <p className="font-serif font-bold text-slate-700">Narrative Insights Preview</p>
-                <p className="text-xs text-slate-500 mt-1">
+              <div className="p-6 text-center bg-paper rounded border border-rule">
+                <p className="font-bold text-ink text-sm">Narrative Insights Preview</p>
+                <p className="text-xs text-muted mt-1">
                   Full character network, emotional arc, and scene intelligence will render here once published.
                 </p>
               </div>
@@ -282,9 +280,9 @@ export function BookPageData({
         {activeTab === 'reviews' && (
           <div>
             {isPreview ? (
-              <div className="p-8 text-center bg-[#F7F7F7] rounded-2xl border border-dashed border-[#E5E5E5]">
-                <p className="font-serif font-bold text-slate-700">Reader Reviews</p>
-                <p className="text-xs text-slate-500 mt-1">
+              <div className="p-6 text-center bg-paper rounded border border-rule">
+                <p className="font-bold text-ink text-sm">Reader Reviews</p>
+                <p className="text-xs text-muted mt-1">
                   Reader ratings, sentiment breakdown, and comments will appear here.
                 </p>
               </div>
@@ -304,18 +302,17 @@ export function BookPageData({
   const renderRelatedBooks = () => {
     if (isPreview || !relatedBooks || relatedBooks.length === 0) return null;
     return (
-      <section className="space-y-4">
+      <section className="space-y-4 font-body">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#121212]">
+            <h2 className="font-bold text-lg text-ink">
               You May Also Like
             </h2>
-            <p className="text-xs text-[#64748B]">More stories in {book?.genre || 'Fiction'}</p>
+            <p className="text-xs text-muted">More stories in {book?.genre || 'Fiction'}</p>
           </div>
           <Link
             to={`/browse/${book?.genre}`}
-            style={{ color: 'var(--accent)' }}
-            className="text-xs font-bold hover:underline"
+            className="text-xs font-bold text-accent hover:underline"
           >
             See more
           </Link>
@@ -337,16 +334,16 @@ export function BookPageData({
     return (
       <div
         role="alert"
-        className="bg-amber-500/10 border-l-4 border-amber-600 p-4 rounded-r-xl flex items-start gap-3"
+        className="bg-paper border border-rule p-3 rounded flex items-start gap-3 font-body text-ink"
       >
-        <div className="w-6 h-6 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+        <span className="px-1.5 py-0.5 rounded bg-ink text-paper text-xs font-bold shrink-0">
           18+
-        </div>
+        </span>
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-ink">
             Mature Content Warning
           </h2>
-          <p className="text-xs text-amber-800 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             This story contains mature themes, violence, or sensitive content intended strictly for adult readers.
           </p>
         </div>
@@ -377,7 +374,6 @@ export function BookPageData({
     user,
   };
 
-  // Render selected layout wrapper
   if (templateName === 'showcase') {
     return <ShowcaseTemplate {...dataProps} />;
   }
@@ -388,3 +384,4 @@ export function BookPageData({
 }
 
 export default BookPageData;
+

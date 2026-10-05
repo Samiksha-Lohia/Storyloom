@@ -8,13 +8,11 @@ import {
   AlertCircle,
   Eye,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { Skeleton } from '../../components/common/Skeleton';
 import CoverCropper from '../../components/common/CoverCropper';
 import TemplatePicker from '../../components/writer/TemplatePicker';
 import { GENRES } from '../../constants/app';
@@ -155,12 +153,9 @@ export function EditBookPage() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto py-8 space-y-6">
-        <Skeleton className="h-8 w-48 rounded-xl" />
-        <div className="bg-white rounded-3xl p-8 border border-stone-200 space-y-4">
-          <Skeleton className="h-10 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-2xl" />
+      <div className="max-w-5xl mx-auto py-8">
+        <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
+          Loading…
         </div>
       </div>
     );
@@ -169,13 +164,13 @@ export function EditBookPage() {
   if (error && !book) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
-        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center text-red-600 mx-auto">
-          <AlertCircle className="w-7 h-7" />
+        <div className="w-12 h-12 border border-rule rounded text-danger flex items-center justify-center mx-auto">
+          <AlertCircle className="w-6 h-6" />
         </div>
-        <h2 className="font-serif text-2xl font-bold text-stone-900">Story Not Found</h2>
-        <p className="text-sm text-stone-600">{error}</p>
+        <h2 className="text-xl font-bold text-ink">Story Not Found</h2>
+        <p className="text-xs text-muted">{error}</p>
         <Link to="/w/books">
-          <Button variant="outline" size="sm">
+          <Button variant="secondary" size="sm">
             ← Return to My Books
           </Button>
         </Link>
@@ -184,23 +179,23 @@ export function EditBookPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8 pb-20">
+    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8 pb-20 text-left">
       {/* ─── Top Navigation Bar ────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/w/books')}
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-2 rounded text-ink hover:border-ink border border-rule cursor-pointer"
             aria-label="Back to My Books"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#FF500A]">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
               Story Settings
             </span>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#121212]">
+            <h1 className="text-2xl sm:text-3xl font-normal text-ink mt-1">
               Edit Story & Presentation
             </h1>
           </div>
@@ -208,7 +203,7 @@ export function EditBookPage() {
 
         <div className="flex items-center gap-3">
           <Link to={`/book/${id}`} target="_blank" rel="noreferrer">
-            <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-xs">
+            <Button variant="secondary" size="sm" className="flex items-center gap-1.5 text-xs">
               <Eye className="w-3.5 h-3.5" />
               Public Page
             </Button>
@@ -218,10 +213,10 @@ export function EditBookPage() {
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 text-xs shadow-md"
+            className="flex items-center gap-1.5 text-xs"
           >
             {saving ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <RefreshCw className="w-3.5 h-3.5" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
@@ -232,31 +227,31 @@ export function EditBookPage() {
 
       {/* ─── Alerts ────────────────────────────────────────────────────── */}
       {successMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <p className="text-sm font-medium flex-1">{successMsg}</p>
+        <div className="bg-paper border border-success text-success rounded p-4 flex items-center gap-3 text-xs">
+          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <p className="font-bold flex-1">{successMsg}</p>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-2xl p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-          <p className="text-sm flex-1">{error}</p>
+        <div className="bg-paper border border-danger text-danger rounded p-4 flex items-center gap-3 text-xs">
+          <AlertCircle className="w-4 h-4 text-danger shrink-0" />
+          <p className="font-bold flex-1">{error}</p>
         </div>
       )}
 
       {/* ─── Main Form Section ─────────────────────────────────────────── */}
       <form onSubmit={handleSave} className="space-y-10">
         {/* Cover Artwork & Metadata Card */}
-        <div className="bg-white rounded-3xl border border-[#E5E5E5] p-6 sm:p-8 shadow-xs space-y-6">
-          <h2 className="font-serif text-lg font-bold text-[#121212] border-b border-[#E5E5E5] pb-3">
+        <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
+          <h2 className="text-base font-bold text-ink border-b border-rule pb-3">
             Cover Artwork & Story Details
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             {/* Cover Column */}
             <div className="md:col-span-4 flex flex-col items-center space-y-4">
-              <div className="w-44 aspect-[2/3] rounded-2xl overflow-hidden shadow-md border border-[#E5E5E5] bg-[#F7F7F7]">
+              <div className="w-44 aspect-[2/3] rounded overflow-hidden border border-rule bg-paper">
                 {coverPreviewUrl ? (
                   <img
                     src={coverPreviewUrl}
@@ -264,7 +259,7 @@ export function EditBookPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-4 text-center">
+                  <div className="w-full h-full flex flex-col items-center justify-center text-muted p-4 text-center">
                     <ImageIcon className="w-8 h-8 mb-2" />
                     <span className="text-xs">No cover image</span>
                   </div>
@@ -273,7 +268,7 @@ export function EditBookPage() {
 
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => setShowCoverCropper(!showCoverCropper)}
                 className="text-xs"
@@ -282,7 +277,7 @@ export function EditBookPage() {
               </Button>
 
               {newCoverFile && (
-                <span className="text-[11px] font-bold text-emerald-600">
+                <span className="text-[11px] font-bold text-success">
                   ✓ New cover ready to save
                 </span>
               )}
@@ -291,7 +286,7 @@ export function EditBookPage() {
             {/* Metadata Fields Column */}
             <div className="md:col-span-8 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Story Title *
                 </label>
                 <Input
@@ -303,7 +298,7 @@ export function EditBookPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Synopsis / Blurb
                 </label>
                 <textarea
@@ -311,19 +306,19 @@ export function EditBookPage() {
                   onChange={(e) => setBlurb(e.target.value)}
                   placeholder="Provide a compelling synopsis..."
                   rows={4}
-                  className="w-full px-4 py-3 rounded-2xl border border-[#E5E5E5] text-sm text-[#121212] focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A] resize-none"
+                  className="w-full px-3 py-2 rounded border border-rule text-xs text-ink bg-paper focus:outline-hidden focus:ring-1 focus:ring-ink resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                     Genre
                   </label>
                   <select
                     value={genre}
                     onChange={(e) => setGenre(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E5] text-sm text-[#121212] bg-[#F7F7F7]"
+                    className="w-full px-3 py-2 rounded border border-rule text-xs font-bold text-ink bg-paper focus:outline-hidden focus:ring-1 focus:ring-ink cursor-pointer"
                   >
                     {GENRES.map((g) => (
                       <option key={g} value={g}>
@@ -334,13 +329,13 @@ export function EditBookPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                     Language
                   </label>
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E5] text-sm text-[#121212] bg-[#F7F7F7]"
+                    className="w-full px-3 py-2 rounded border border-rule text-xs font-bold text-ink bg-paper focus:outline-hidden focus:ring-1 focus:ring-ink cursor-pointer"
                   >
                     <option value="en">English</option>
                     <option value="es">Spanish</option>
@@ -352,13 +347,13 @@ export function EditBookPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                     Publication Status
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E5] text-sm text-[#121212] bg-[#F7F7F7]"
+                    className="w-full px-3 py-2 rounded border border-rule text-xs font-bold text-ink bg-paper focus:outline-hidden focus:ring-1 focus:ring-ink cursor-pointer"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
@@ -369,20 +364,20 @@ export function EditBookPage() {
 
               {/* Tags */}
               <div>
-                <label className="block text-xs font-bold text-[#121212] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Tags (up to 10)
                 </label>
-                <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl border border-[#E5E5E5] bg-white">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded border border-rule bg-paper focus-within:ring-1 focus-within:ring-ink">
                   {tags.map((t) => (
                     <span
                       key={t}
-                      className="px-2.5 py-1 bg-[#F7F7F7] text-slate-800 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-[#E5E5E5]"
+                      className="px-2 py-0.5 bg-paper text-ink rounded text-xs font-bold flex items-center gap-1.5 border border-rule"
                     >
                       #{t}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(t)}
-                        className="text-slate-400 hover:text-red-500 font-bold cursor-pointer"
+                        className="text-muted hover:text-danger font-bold cursor-pointer"
                       >
                         ×
                       </button>
@@ -395,7 +390,7 @@ export function EditBookPage() {
                     onKeyDown={handleAddTag}
                     placeholder={tags.length < 10 ? 'Type tag and press Enter...' : 'Tag limit reached'}
                     disabled={tags.length >= 10}
-                    className="flex-1 min-w-[140px] px-2 py-1 text-xs sm:text-sm focus:outline-hidden bg-transparent"
+                    className="flex-1 min-w-[140px] px-2 py-1 text-xs focus:outline-hidden bg-transparent text-ink placeholder-muted"
                   />
                 </div>
               </div>
@@ -403,8 +398,8 @@ export function EditBookPage() {
               {/* Mature toggle */}
               <div className="pt-2 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-[#121212] block">Mature Content (18+)</span>
-                  <span className="text-[11px] text-slate-500 block">
+                  <span className="text-xs font-bold text-ink block">Mature Content (18+)</span>
+                  <span className="text-xs text-muted block">
                     Story includes violence, explicit language, or adult themes.
                   </span>
                 </div>
@@ -412,7 +407,7 @@ export function EditBookPage() {
                   type="checkbox"
                   checked={mature}
                   onChange={(e) => setMature(e.target.checked)}
-                  className="w-4 h-4 accent-[#FF500A] cursor-pointer"
+                  className="w-4 h-4 accent-ink cursor-pointer"
                 />
               </div>
             </div>
@@ -420,8 +415,8 @@ export function EditBookPage() {
 
           {/* Inline Cover Cropper if requested */}
           {showCoverCropper && (
-            <div className="pt-6 border-t border-[#E5E5E5] space-y-3">
-              <h3 className="font-serif font-bold text-sm text-[#121212]">
+            <div className="pt-6 border-t border-rule space-y-3">
+              <h3 className="font-bold text-xs text-ink">
                 Frame New Cover Artwork (2:3 Standard Ratio)
               </h3>
               <CoverCropper
@@ -435,7 +430,7 @@ export function EditBookPage() {
         </div>
 
         {/* Template Picker & Live Preview Card */}
-        <div className="bg-white rounded-3xl border border-[#E5E5E5] p-6 sm:p-8 shadow-xs">
+        <div className="bg-paper rounded border border-rule p-6 sm:p-8">
           <TemplatePicker
             selectedTemplate={template}
             onSelectTemplate={setTemplate}
@@ -462,7 +457,7 @@ export function EditBookPage() {
         <div className="flex justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => navigate('/w/books')}
           >
             Cancel
@@ -471,10 +466,10 @@ export function EditBookPage() {
             type="submit"
             variant="primary"
             disabled={saving}
-            className="flex items-center gap-2 px-6 shadow-md"
+            className="flex items-center gap-2 px-6"
           >
             {saving ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-4 h-4" />
             ) : (
               <Save className="w-4 h-4" />
             )}

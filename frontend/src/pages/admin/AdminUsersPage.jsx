@@ -1,36 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../../services/api';
 import {
   Users,
   Search,
-  Shield,
-  Ban,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  RotateCcw,
-  BookOpen,
-  Filter,
-  AlertCircle,
   X,
 } from 'lucide-react';
+import { api } from '../../services/api';
 
 const ROLES = ['all', 'reader', 'writer', 'publisher', 'admin'];
-const STATUSES = ['all', 'active', 'pending', 'suspended', 'banned'];
+const STATUSES = ['all', 'active', 'suspended', 'banned'];
 
-export default function AdminUsersPage() {
+export function AdminUsersPage() {
   const [users, setUsers] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filters & Search
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
-  // Modal State for Action
+  // Moderation Dialog State
   const [activeModal, setActiveModal] = useState(null); // { type: 'role'|'suspend'|'ban'|'restore', user }
   const [newRole, setNewRole] = useState('reader');
   const [suspensionDays, setSuspensionDays] = useState(7);
@@ -38,58 +26,52 @@ export default function AdminUsersPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
       const res = await api.admin.getUsers({
         page,
-        limit: 20,
+        limit: 15,
         search: search.trim() || undefined,
         role: roleFilter !== 'all' ? roleFilter : undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       });
-      setUsers(res.data || []);
-      if (res.pagination) {
-        setPagination(res.pagination);
-      }
+      setUsers(res?.data?.users || res?.users || []);
+      setPagination(
+        res?.data?.pagination ||
+          res?.pagination || { total: 0, totalPages: 1 }
+      );
     } catch (err) {
-      console.error('Failed to load users:', err);
-      setError(err.message || 'Failed to load user directory.');
+      console.error('Failed to load admin users:', err);
     } finally {
       setLoading(false);
     }
   }, [page, search, roleFilter, statusFilter]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers();
-    }, 200);
-    return () => clearTimeout(timer);
+    fetchUsers();
   }, [fetchUsers]);
 
   const handleExecuteAction = async (e) => {
     e.preventDefault();
-    if (!activeModal?.user) return;
+    if (!activeModal || !actionNote.trim()) return;
+
     setSubmitting(true);
     try {
-      const payload = { note: actionNote };
+      const userId = activeModal.user.id || activeModal.user._id;
       if (activeModal.type === 'role') {
-        payload.role = newRole;
+        await api.admin.updateUserRole(userId, newRole, actionNote.trim());
       } else if (activeModal.type === 'suspend') {
-        payload.status = 'suspended';
-        payload.suspensionDays = Number(suspensionDays);
+        await api.admin.suspendUser(userId, suspensionDays, actionNote.trim());
       } else if (activeModal.type === 'ban') {
-        payload.status = 'banned';
+        await api.admin.banUser(userId, actionNote.trim());
       } else if (activeModal.type === 'restore') {
-        payload.status = 'active';
+        await api.admin.restoreUser(userId, actionNote.trim());
       }
-
-      await api.admin.updateUser(activeModal.user.id || activeModal.user._id, payload);
       setActiveModal(null);
       setActionNote('');
-      await fetchUsers();
+      fetchUsers();
     } catch (err) {
-      alert(err.message || 'Action failed');
+      alert(`Action failed: ${err.message || 'Please try again'}`);
     } finally {
       setSubmitting(false);
     }
@@ -98,27 +80,27 @@ export default function AdminUsersPage() {
   const getStatusBadge = (status) => {
     if (status === 'active') {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+        <span className="px-1.5 py-0.5 rounded border border-success text-success text-[10px] font-bold uppercase tracking-wider">
           Active
         </span>
       );
     }
     if (status === 'suspended') {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-800 border border-amber-200">
+        <span className="px-1.5 py-0.5 rounded border border-danger text-danger text-[10px] font-bold uppercase tracking-wider">
           Suspended
         </span>
       );
     }
     if (status === 'banned') {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-800 border border-rose-200">
+        <span className="px-1.5 py-0.5 rounded border border-danger text-danger text-[10px] font-bold uppercase tracking-wider">
           Banned
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200">
+      <span className="px-1.5 py-0.5 rounded border border-rule text-muted text-[10px] font-bold uppercase tracking-wider">
         {status}
       </span>
     );
@@ -126,15 +108,15 @@ export default function AdminUsersPage() {
 
   const getRoleBadge = (role) => {
     const map = {
-      admin: 'bg-purple-100 text-purple-800',
-      writer: 'bg-orange-100 text-[#FF500A]',
-      publisher: 'bg-blue-100 text-blue-800',
-      reader: 'bg-slate-100 text-slate-700',
+      admin: 'border-ink text-ink',
+      writer: 'border-accent text-accent',
+      publisher: 'border-muted text-muted',
+      reader: 'border-rule text-muted',
     };
     return (
       <span
-        className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-          map[role] || map.reader
+        className={`px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${
+          map[role] || 'border-rule text-muted'
         }`}
       >
         {role}
@@ -145,23 +127,23 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
       {/* Header */}
-      <div className="border-b border-slate-200 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded border border-rule text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5" />
               User Oversight
             </span>
           </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 mt-2">
-            Community & User Accounts
+          <h1 className="font-calligraphy text-3xl font-normal text-ink mt-2">
+            Community &amp; User Accounts
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Search, inspect roles, ban or suspend accounts, and view user publication records.
           </p>
         </div>
 
-        <span className="text-xs text-slate-500 font-mono">
+        <span className="text-xs text-muted font-mono">
           Total accounts: <strong>{pagination.total}</strong>
         </span>
       </div>
@@ -169,7 +151,7 @@ export default function AdminUsersPage() {
       {/* Search & Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
             value={search}
@@ -179,7 +161,7 @@ export default function AdminUsersPage() {
             }}
             aria-label="Search users"
             placeholder="Search by name, email, or username..."
-            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+            className="w-full bg-paper border border-rule rounded pl-9 pr-3 py-1.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-ink"
           />
         </div>
 
@@ -192,7 +174,7 @@ export default function AdminUsersPage() {
               setPage(1);
             }}
             aria-label="Filter users by role"
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 cursor-pointer"
+            className="bg-paper border border-rule rounded px-3 py-1.5 text-xs font-semibold text-ink cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-ink"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -209,7 +191,7 @@ export default function AdminUsersPage() {
               setPage(1);
             }}
             aria-label="Filter users by status"
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 cursor-pointer"
+            className="bg-paper border border-rule rounded px-3 py-1.5 text-xs font-semibold text-ink cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-ink"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -221,32 +203,30 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+      <div className="bg-paper border border-rule rounded overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="p-4">User</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Books</th>
-                <th className="p-4">Reports</th>
-                <th className="p-4">Joined</th>
-                <th className="p-4 text-right">Actions</th>
+              <tr className="bg-paper border-b border-rule text-[11px] font-bold text-muted uppercase tracking-wider">
+                <th className="p-3">User</th>
+                <th className="p-3">Role</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Books</th>
+                <th className="p-3">Reports</th>
+                <th className="p-3">Joined</th>
+                <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="divide-y divide-rule text-xs">
               {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td colSpan={7} className="p-4">
-                      <div className="h-6 bg-slate-100 rounded-lg" />
-                    </td>
-                  </tr>
-                ))
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-xs text-muted">
+                    Loading…
+                  </td>
+                </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-muted">
                     No users match your search and filter criteria.
                   </td>
                 </tr>
@@ -256,24 +236,24 @@ export default function AdminUsersPage() {
                   const isBanned = u.status === 'banned';
 
                   return (
-                    <tr key={u.id || u._id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={u.id || u._id} className="hover:bg-rule/10">
                       {/* Name & Email */}
-                      <td className="p-4">
-                        <div className="font-semibold text-slate-900">{u.name}</div>
-                        <div className="text-[11px] text-slate-500 font-mono">
-                          {u.email} • @{u.username}
+                      <td className="p-3">
+                        <div className="font-semibold text-ink">{u.name}</div>
+                        <div className="text-[11px] text-muted font-mono">
+                          {u.email} &bull; @{u.username}
                         </div>
                       </td>
 
                       {/* Role */}
-                      <td className="p-4">{getRoleBadge(u.role)}</td>
+                      <td className="p-3">{getRoleBadge(u.role)}</td>
 
                       {/* Status */}
-                      <td className="p-4">
+                      <td className="p-3">
                         <div className="space-y-0.5">
                           {getStatusBadge(u.status)}
                           {isSuspended && u.suspensionEndsAt && (
-                            <div className="text-[10px] text-amber-700 font-mono">
+                            <div className="text-[10px] text-danger font-mono">
                               Until {new Date(u.suspensionEndsAt).toLocaleDateString()}
                             </div>
                           )}
@@ -281,28 +261,28 @@ export default function AdminUsersPage() {
                       </td>
 
                       {/* Books count */}
-                      <td className="p-4 font-mono font-semibold text-slate-700">
+                      <td className="p-3 font-mono font-semibold text-ink">
                         {u.booksCount || 0}
                       </td>
 
                       {/* Reports count */}
-                      <td className="p-4">
+                      <td className="p-3">
                         {u.reportsCount > 0 ? (
-                          <span className="px-2 py-0.5 bg-rose-50 text-rose-700 font-bold rounded-md text-[10px]">
+                          <span className="px-1.5 py-0.5 border border-danger text-danger font-bold rounded text-[10px]">
                             {u.reportsCount} report(s)
                           </span>
                         ) : (
-                          <span className="text-slate-400 font-mono">0</span>
+                          <span className="text-muted font-mono">0</span>
                         )}
                       </td>
 
                       {/* Joined date */}
-                      <td className="p-4 text-slate-500 font-mono text-[11px]">
+                      <td className="p-3 text-muted font-mono text-[11px]">
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
 
                       {/* Action buttons */}
-                      <td className="p-4 text-right">
+                      <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Change Role */}
                           <button
@@ -311,7 +291,7 @@ export default function AdminUsersPage() {
                               setNewRole(u.role);
                               setActionNote('');
                             }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                            className="px-2 py-0.5 bg-paper border border-rule hover:bg-rule/10 text-ink rounded text-[11px] font-semibold cursor-pointer"
                           >
                             Role
                           </button>
@@ -325,7 +305,7 @@ export default function AdminUsersPage() {
                                   setSuspensionDays(7);
                                   setActionNote('');
                                 }}
-                                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                                className="px-2 py-0.5 bg-paper hover:bg-rule/10 text-muted border border-rule rounded text-[11px] font-semibold cursor-pointer"
                               >
                                 Suspend
                               </button>
@@ -334,7 +314,7 @@ export default function AdminUsersPage() {
                                   setActiveModal({ type: 'ban', user: u });
                                   setActionNote('');
                                 }}
-                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                                className="px-2 py-0.5 bg-paper hover:bg-rule/10 text-danger border border-danger rounded text-[11px] font-semibold cursor-pointer"
                               >
                                 Ban
                               </button>
@@ -348,7 +328,7 @@ export default function AdminUsersPage() {
                                 setActiveModal({ type: 'restore', user: u });
                                 setActionNote('');
                               }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
+                              className="px-2 py-0.5 bg-ink text-paper hover:bg-accent rounded text-[11px] font-bold cursor-pointer"
                             >
                               Restore
                             </button>
@@ -365,22 +345,22 @@ export default function AdminUsersPage() {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 flex justify-between items-center text-xs">
-            <span className="text-slate-500">
+          <div className="p-3 border-t border-rule flex justify-between items-center text-xs">
+            <span className="text-muted">
               Page {page} of {pagination.totalPages}
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 bg-white border border-slate-200 rounded-lg font-semibold disabled:opacity-40 cursor-pointer"
+                className="px-3 py-1 bg-paper border border-rule text-ink rounded font-semibold disabled:opacity-40 cursor-pointer"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page === pagination.totalPages}
-                className="px-3 py-1 bg-white border border-slate-200 rounded-lg font-semibold disabled:opacity-40 cursor-pointer"
+                className="px-3 py-1 bg-paper border border-rule text-ink rounded font-semibold disabled:opacity-40 cursor-pointer"
               >
                 Next
               </button>
@@ -391,15 +371,15 @@ export default function AdminUsersPage() {
 
       {/* Action Dialog Modal */}
       {activeModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="user-action-modal-title"
-            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200"
+            className="bg-paper rounded max-w-md w-full p-6 space-y-4 border border-rule"
           >
             <div className="flex items-center justify-between">
-              <h3 id="user-action-modal-title" className="font-serif font-bold text-lg text-slate-900 capitalize">
+              <h3 id="user-action-modal-title" className="font-bold text-base text-ink capitalize">
                 {activeModal.type === 'role' && 'Change Account Role'}
                 {activeModal.type === 'suspend' && 'Suspend User Account'}
                 {activeModal.type === 'ban' && 'Permanent Ban User'}
@@ -408,27 +388,27 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setActiveModal(null)}
                 aria-label="Close dialog"
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                className="p-1 text-muted hover:text-ink rounded cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600">
-              User: <strong className="text-slate-900">{activeModal.user?.name}</strong> (
+            <p className="text-xs text-muted">
+              User: <strong className="text-ink">{activeModal.user?.name}</strong> (
               {activeModal.user?.email})
             </p>
 
             <form onSubmit={handleExecuteAction} className="space-y-4">
               {activeModal.type === 'role' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-muted mb-1">
                     Select New Role:
                   </label>
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                    className="w-full bg-paper border border-rule rounded p-2 text-xs font-semibold text-ink focus:outline-hidden focus:ring-1 focus:ring-ink"
                   >
                     <option value="reader">Reader</option>
                     <option value="writer">Writer</option>
@@ -441,13 +421,13 @@ export default function AdminUsersPage() {
               {activeModal.type === 'suspend' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-muted mb-1">
                       Suspension Duration:
                     </label>
                     <select
                       value={suspensionDays}
                       onChange={(e) => setSuspensionDays(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800"
+                      className="w-full bg-paper border border-rule rounded p-2 text-xs font-semibold text-ink focus:outline-hidden focus:ring-1 focus:ring-ink"
                     >
                       <option value={3}>3 Days</option>
                       <option value={7}>7 Days (1 Week)</option>
@@ -456,20 +436,20 @@ export default function AdminUsersPage() {
                       <option value={90}>90 Days (3 Months)</option>
                     </select>
                   </div>
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800">
+                  <div className="p-3 bg-paper border border-danger rounded text-[11px] text-danger">
                     Warning: Suspending this user will immediately hide all their published manuscripts from the public catalogue.
                   </div>
                 </div>
               )}
 
               {activeModal.type === 'ban' && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-800">
+                <div className="p-3 bg-paper border border-danger rounded text-[11px] text-danger">
                   Critical: Banning will permanently deactivate login and unpublish all books created by this author.
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-muted mb-1">
                   Audit Reason / Note:
                 </label>
                 <textarea
@@ -478,7 +458,7 @@ export default function AdminUsersPage() {
                   value={actionNote}
                   onChange={(e) => setActionNote(e.target.value)}
                   placeholder="Reason for moderation action (recorded in audit logs)..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#FF500A]/30 focus:border-[#FF500A]"
+                  className="w-full bg-paper border border-rule rounded p-2.5 text-xs text-ink placeholder:text-muted focus:outline-hidden focus:ring-1 focus:ring-ink"
                 />
               </div>
 
@@ -487,14 +467,14 @@ export default function AdminUsersPage() {
                   type="button"
                   onClick={() => setActiveModal(null)}
                   disabled={submitting}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                  className="px-3.5 py-1.5 border border-rule text-muted hover:text-ink rounded text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-slate-900 hover:bg-[#FF500A] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  className="px-3.5 py-1.5 bg-ink hover:bg-accent text-paper rounded text-xs font-bold cursor-pointer"
                 >
                   {submitting ? 'Applying...' : 'Confirm Action'}
                 </button>
@@ -506,3 +486,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+export default AdminUsersPage;
