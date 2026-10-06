@@ -50,9 +50,8 @@ export const recomputeBookRatingStats = async (bookId) => {
 };
 
 export const createReview = async ({ readerId, bookId, rating, text = '', userRole }) => {
-  // Role checks: readers only; writers and publishers cannot review
-  if (userRole === USER_ROLES.WRITER || userRole === USER_ROLES.PUBLISHER) {
-    throw new ForbiddenError('Writers and publishers cannot post reviews.');
+  if (userRole === USER_ROLES.PUBLISHER) {
+    throw new ForbiddenError('Publishers cannot post reviews.');
   }
 
   const book = await Book.findById(bookId);

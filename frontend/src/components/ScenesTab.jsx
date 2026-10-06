@@ -1,17 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookOpen, Users, MapPin, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function ScenesTab({ 
-  scenes = [], 
-  dialogues = {}, 
-  moods = {}, 
-  characters = {},
-  loading,
-  page = 1,
-  totalPages = 1,
+  documentId,
+  source,
+  options = {},
+  scenes: propScenes, 
+  dialogues: propDialogues = {}, 
+  moods: propMoods = {}, 
+  characters: propCharacters = {},
+  loading: propLoading,
+  page: propPage = 1,
+  totalPages: propTotalPages = 1,
   setPage
 }) {
+  const resolvedSource = useMemo(
+    () => source || (documentId ? { kind: 'document', id: documentId } : null),
+    [source, documentId]
+  );
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
+
+  const [fetchedScenes, setFetchedScenes] = useState([]);
+  const [loading, setLoading] = useState(
+    propLoading !== undefined ? propLoading : Boolean(resolvedSource?.id && !propScenes)
+  );
   const [expandedSceneId, setExpandedSceneId] = useState(null);
+
+  useEffect(() => {
+    if (propScenes && propScenes.length > 0) return;
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const res = await api.analysis.getScenes(resolvedSource, stableOptions);
+        if (isCancelled) return;
+        const raw = res?.data !== undefined ? res.data : res;
+        const list = Array.isArray(raw) ? raw : (raw?.results || []);
+        setFetchedScenes(list);
+      } catch (err) {
+        console.error('Failed to load scenes:', err);
+        if (!isCancelled) setFetchedScenes([]);
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(propScenes?.length)]);
+
+  const scenes = propScenes || fetchedScenes;
+  const dialogues = propDialogues;
+  const moods = propMoods;
+  const characters = propCharacters;
+  const page = propPage;
+  const totalPages = propTotalPages;
 
   const getMoodColor = (mood) => {
     const m = mood?.toLowerCase();

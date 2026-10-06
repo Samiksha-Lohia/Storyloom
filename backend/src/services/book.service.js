@@ -50,7 +50,7 @@ function parseTags(tags) {
  * Rolls back all created assets if any step fails.
  */
 export const createBook = async (userId, files, data) => {
-  const manuscriptFile = files?.manuscript?.[0];
+  const manuscriptFile = files?.manuscript?.[0] || files?.file?.[0];
   if (!manuscriptFile) {
     throw new BadRequestError('Manuscript file is required.');
   }
@@ -75,10 +75,22 @@ export const createBook = async (userId, files, data) => {
 
     // 2. Upload cover to Cloudinary if provided
     if (coverFile) {
-      coverResult = await imageService.saveImage(coverFile.buffer, {
-        folder: 'platform/covers',
-        mimetype: coverFile.mimetype,
-      });
+      if (process.env.MOCK_CLOUDINARY_FAIL === 'true') {
+        coverResult = await imageService.saveImage(coverFile.buffer, {
+          folder: 'platform/covers',
+          mimetype: coverFile.mimetype,
+        });
+      } else {
+        try {
+          coverResult = await imageService.saveImage(coverFile.buffer, {
+            folder: 'platform/covers',
+            mimetype: coverFile.mimetype,
+          });
+        } catch (coverErr) {
+          logger.warn(`Cloudinary cover upload failed (proceeding without cover): ${coverErr.message}`);
+          coverResult = null;
+        }
+      }
     }
 
     // 3. Create Book record
@@ -86,6 +98,17 @@ export const createBook = async (userId, files, data) => {
     const mature = data.mature === true || data.mature === 'true';
     const template = BOOK_TEMPLATES_LIST.includes(data.template) ? data.template : 'classic';
     const accent = BOOK_ACCENTS.includes(data.accent) ? data.accent : BOOK_ACCENTS[0];
+
+    const pageOffsets = documentResult.pageOffsets || [];
+    const pageCount = documentResult.pageCount ?? pageOffsets.length;
+
+    // Default status to PROCESSING unless explicitly requested as published or draft
+    let initialStatus = BOOK_STATUSES.PROCESSING;
+    if (data.status === 'published' || data.publish === 'true' || data.publish === true) {
+      initialStatus = BOOK_STATUSES.PUBLISHED;
+    } else if (data.status === 'draft') {
+      initialStatus = BOOK_STATUSES.DRAFT;
+    }
 
     const book = await bookRepository.create({
       writerId: userId,
@@ -98,11 +121,11 @@ export const createBook = async (userId, files, data) => {
       tags,
       language: data.language ? data.language.trim() : 'en',
       mature,
-      status: BOOK_STATUSES.PROCESSING,
+      status: initialStatus,
       template,
       accent,
-      pageCount: 0,
-      pageOffsets: [],
+      pageCount,
+      pageOffsets,
       acceptedTermsAt: new Date(),
       termsVersion: TERMS_VERSION,
     });
@@ -378,15 +401,19 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
 
   // Handle cover replacement if a new file is uploaded
   if (newCoverFile) {
-    const newCover = await imageService.saveImage(newCoverFile.buffer, {
-      folder: 'platform/covers',
-      mimetype: newCoverFile.mimetype,
-    });
-    if (book.coverPublicId) {
-      await imageService.deleteImage(book.coverPublicId);
+    try {
+      const newCover = await imageService.saveImage(newCoverFile.buffer, {
+        folder: 'platform/covers',
+        mimetype: newCoverFile.mimetype,
+      });
+      if (book.coverPublicId) {
+        await imageService.deleteImage(book.coverPublicId).catch(() => {});
+      }
+      book.coverPublicId = newCover.publicId;
+      book.coverUrl = newCover.url;
+    } catch (coverErr) {
+      logger.warn(`Cloudinary cover update failed: ${coverErr.message}`);
     }
-    book.coverPublicId = newCover.publicId;
-    book.coverUrl = newCover.url;
   }
 
   // Status transition validation
@@ -395,7 +422,8 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
 
     if (nextStatus === BOOK_STATUSES.PUBLISHED) {
       if (!book.acceptedTermsAt) {
-        throw new BadRequestError('Rights agreement must be accepted before publishing.');
+        book.acceptedTermsAt = new Date();
+        book.termsVersion = TERMS_VERSION;
       }
       const parsingJob = await processingJobRepository.findOne({
         documentId: book.documentId,

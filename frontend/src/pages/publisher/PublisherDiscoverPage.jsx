@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import StarWishlistButton from '../../components/common/StarWishlistButton';
+import { BookRow } from '../../components/common/BookRow';
+import { CoverImage } from '../../components/common/CoverImage';
 import { 
   Search, 
   Star, 
@@ -47,6 +49,8 @@ const LENGTH_FILTERS = [
 
 export function PublisherDiscoverPage() {
   const [books, setBooks] = useState([]);
+  const [continueReading, setContinueReading] = useState([]);
+  const [trendingBooks, setTrendingBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -59,6 +63,33 @@ export function PublisherDiscoverPage() {
   const [lengthBucket, setLengthBucket] = useState('');
   const [onlyWishlisted, setOnlyWishlisted] = useState(false);
   const [sort, setSort] = useState('rating');
+
+  // Load continue reading and trending shelves on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadShelves() {
+      try {
+        const trendingRes = await api.books.list({ sort: 'trending', limit: 10 });
+        if (isMounted && trendingRes?.data) {
+          setTrendingBooks(trendingRes.data);
+        }
+        try {
+          const libraryRes = await api.me.getLibrary({ status: 'unfinished', limit: 10 });
+          if (isMounted && libraryRes?.items) {
+            setContinueReading(libraryRes.items);
+          }
+        } catch {
+          // Non-blocking
+        }
+      } catch (err) {
+        console.error('Failed to load discovery shelves:', err);
+      }
+    }
+    loadShelves();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     loadBooks();
@@ -148,6 +179,87 @@ export function PublisherDiscoverPage() {
           </select>
         </div>
       </div>
+
+      {/* ─── Continue Reading Shelf (Unfinished Books) ────────────────────────── */}
+      {continueReading.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between border-b border-rule pb-2">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-accent" />
+              <h2 className="text-xl font-bold text-ink">Continue Reading</h2>
+            </div>
+            <span className="text-xs text-muted">
+              {continueReading.length} unfinished {continueReading.length === 1 ? 'story' : 'stories'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {continueReading.map((item) => {
+              const book = item.book || item.bookId;
+              if (!book) return null;
+              const bookId = book._id || book.id;
+              const totalPages = book.pageCount || item.totalPages || 1;
+              const furthestPage = item.furthestPage || item.currentPage || 1;
+              const pct = item.progressPercent !== undefined
+                ? item.progressPercent
+                : Math.min(100, Math.round((furthestPage / totalPages) * 100));
+
+              return (
+                <div
+                  key={item._id || item.id || bookId}
+                  className="p-3 bg-paper border border-rule rounded flex gap-3 items-center group hover:border-ink transition-colors"
+                >
+                  <div className="w-14 h-20 shrink-0 rounded overflow-hidden bg-surface border border-rule">
+                    <CoverImage
+                      url={book.coverUrl}
+                      publicId={book.coverPublicId}
+                      title={book.title}
+                      aspectRatio="aspect-[2/3]"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h4 className="font-bold text-ink text-xs line-clamp-1 group-hover:text-accent transition-colors">
+                      {book.title}
+                    </h4>
+                    <p className="text-[11px] text-muted line-clamp-1">
+                      Page {furthestPage} of {totalPages}
+                    </p>
+                    <div className="w-full bg-rule/30 border border-rule rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-accent h-full transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <Link
+                      to={`/read/${bookId}?page=${furthestPage}`}
+                      className="inline-block pt-1 text-[11px] font-bold text-accent hover:underline"
+                    >
+                      Continue ({pct}%) →
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Trending Now Shelf ────────────────────────────────────────────── */}
+      {trendingBooks.length > 0 && (
+        <BookRow
+          title="Trending Now"
+          subtitle="Stories with active reader engagement and publisher traction"
+          books={trendingBooks}
+          mode="row"
+          showRank
+        />
+      )}
+
+      {/* ─── Unified Catalogue Section ──────────────────────────────────────── */}
+      <section className="space-y-6 pt-4">
+        <div className="flex items-center justify-between border-b border-rule pb-2">
+          <h2 className="text-xl font-bold text-ink">Catalogue</h2>
+        </div>
 
       {/* Search and Filters Bar */}
       <div className="bg-paper border border-rule rounded p-4 md:p-5 space-y-4">
@@ -409,6 +521,7 @@ export function PublisherDiscoverPage() {
           </button>
         </div>
       )}
+      </section>
     </div>
   );
 }

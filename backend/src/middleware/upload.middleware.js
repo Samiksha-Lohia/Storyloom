@@ -79,7 +79,7 @@ const bookMulter = multer({
     fileSize: Math.max(config.file.maxSizeBytes, 15 * 1024 * 1024),
   },
   fileFilter: (_req, file, cb) => {
-    if (file.fieldname === 'manuscript') {
+    if (file.fieldname === 'manuscript' || file.fieldname === 'file') {
       if (ALLOWED_MANUSCRIPT_TYPES.includes(file.mimetype)) {
         return cb(null, true);
       }
@@ -107,6 +107,7 @@ const bookMulter = multer({
 
 const uploadBookFields = bookMulter.fields([
   { name: 'manuscript', maxCount: 1 },
+  { name: 'file', maxCount: 1 },
   { name: 'cover', maxCount: 1 },
 ]);
 
@@ -121,7 +122,7 @@ export const uploadBook = (req, res, next) => {
     }
 
     // Validate manuscript file size against config
-    const manuscriptFile = req.files?.manuscript?.[0];
+    const manuscriptFile = req.files?.manuscript?.[0] || req.files?.file?.[0];
     if (manuscriptFile && manuscriptFile.size > config.file.maxSizeBytes) {
       const maxMb = config.file.maxSizeBytes / (1024 * 1024);
       return next(new BadRequestError(`Manuscript file exceeds the maximum allowed size of ${maxMb}MB.`));

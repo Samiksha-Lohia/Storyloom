@@ -112,6 +112,28 @@ export const getAdminStats = async () => {
     };
   });
 
+  // Calculate manuscript lifecycle status distribution
+  const statusDistributionAgg = await Book.aggregate([
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+  const statusDistribution = {
+    draft: 0,
+    processing: 0,
+    published: 0,
+    unpublished: 0,
+    removed: 0,
+  };
+  statusDistributionAgg.forEach((s) => {
+    if (s._id in statusDistribution) {
+      statusDistribution[s._id] = s.count;
+    }
+  });
+
   return {
     usersByRole,
     signups: {
@@ -120,13 +142,14 @@ export const getAdminStats = async () => {
       allTime: signupsTotal,
     },
     activeUsers: {
-      dau: dauEvents?.length || 1,
-      wau: wauEvents?.length || 1,
+      dau: dauEvents?.length || 0,
+      wau: wauEvents?.length || 0,
     },
     books: {
       publishedCount: publishedBooksCount,
       totalReads: readsAggregation[0]?.totalReads || 0,
       totalReviews: totalReviewsCount,
+      statusDistribution,
     },
     pendingPublishersCount,
     openReportsCount,

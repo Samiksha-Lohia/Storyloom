@@ -10,7 +10,7 @@ import { usePipelineProgress, PIPELINE_STAGES } from '../../hooks/usePipelinePro
 import { Button } from '../common/Button';
 import { api } from '../../services/api';
 
-export default function PipelineProgressView({ book, documentId, onPublished }) {
+export default function PipelineProgressView({ book, documentId, onPublished, autoPublish = false }) {
   const [publishing, setPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState('');
@@ -44,6 +44,13 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
     }
   };
 
+  // Auto-publish once pagination is complete if autoPublish was initiated from publish flow
+  React.useEffect(() => {
+    if (autoPublish && isPaginated && !publishing && !publishSuccess && book?.status !== 'published') {
+      handlePublish();
+    }
+  }, [autoPublish, isPaginated, publishing, publishSuccess, book?.status]);
+
   const getStageStatus = (stageId) => {
     const job = jobs.find((j) => j.stage === stageId);
     if (!job) return 'pending';
@@ -71,25 +78,47 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
           </div>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3">
-            {isPaginated && !publishSuccess && book?.status !== 'published' && (
-              <Button
-                variant="primary"
-                size="default"
-                onClick={handlePublish}
-                disabled={publishing}
-              >
-                {publishing ? 'Publishing…' : 'Publish Story'}
-              </Button>
+            {!publishSuccess && book?.status !== 'published' && (
+              <div className="flex items-center gap-2">
+                <Link to="/w/books">
+                  <Button variant="secondary" size="default">
+                    Save as Draft
+                  </Button>
+                </Link>
+
+                <div className="relative group">
+                  <Button
+                    variant="primary"
+                    size="default"
+                    onClick={handlePublish}
+                    disabled={!isPaginated || publishing}
+                    className={!isPaginated ? 'opacity-60 cursor-not-allowed' : ''}
+                  >
+                    {publishing ? 'Publishing…' : 'Publish Story'}
+                  </Button>
+                  {!isPaginated && (
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-paper border border-rule text-ink text-[11px] font-bold py-1.5 px-3 rounded whitespace-nowrap z-20 shadow-md">
+                      Manuscript parsing and pagination must complete before publishing.
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {publishSuccess || book?.status === 'published' ? (
-              <Link to={`/book/${bookId}`}>
-                <Button variant="secondary" size="default" className="flex items-center gap-2">
-                  View Story Page
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link to={`/book/${bookId}`}>
+                  <Button variant="primary" size="default" className="flex items-center gap-2">
+                    View Story Page
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link to="/w/books">
+                  <Button variant="secondary" size="default">
+                    Go to My Books
+                  </Button>
+                </Link>
+              </div>
             ) : null}
 
             {bookId && (
@@ -101,7 +130,6 @@ export default function PipelineProgressView({ book, documentId, onPublished }) 
               </Link>
             )}
           </div>
-        </div>
 
         {/* Overall Progress Bar */}
         <div className="pt-6 space-y-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { BookPageData } from '../../components/templates/BookPageData';
@@ -9,11 +9,13 @@ import { Button } from '../../components/common/Button';
 export function BookPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
 
   const [book, setBook] = useState(null);
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successBanner, setSuccessBanner] = useState(location.state?.message || null);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,11 +103,27 @@ export function BookPage() {
   }
 
   return (
-    <BookPageData
-      book={book}
-      relatedBooks={relatedBooks}
-      user={user}
-    />
+    <div className="space-y-4">
+      {successBanner && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="p-3 bg-accent/10 border border-accent/40 rounded flex items-center justify-between text-xs text-ink">
+            <span className="font-bold">{successBanner}</span>
+            <button
+              type="button"
+              onClick={() => setSuccessBanner(null)}
+              className="text-muted hover:text-ink text-xs ml-4 cursor-pointer font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      <BookPageData
+        book={book}
+        relatedBooks={relatedBooks}
+        user={user}
+      />
+    </div>
   );
 }
 

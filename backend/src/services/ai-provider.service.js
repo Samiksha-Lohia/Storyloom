@@ -138,7 +138,16 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
     throw new Error(`OpenRouter API Key ${keyIndex} is not configured. Please check your environment variables.`);
   }
 
-  logger.info(`Invoking OpenRouter for stage: "${stage || 'generic'}" (using Key ${keyIndex}, Model: "${model}")`);
+  // Support groq model mapping or fallback
+  let activeModel = model || 'meta-llama/llama-3.3-70b-instruct';
+  if (activeModel.trim().toLowerCase() === 'groq' || activeModel.toLowerCase().includes('groq')) {
+    activeModel = 'meta-llama/llama-3.3-70b-instruct';
+  }
+
+  logger.info(`Invoking OpenRouter for stage: "${stage || 'generic'}" (using Key ${keyIndex}, Model: "${activeModel}")`);
+
+  const configuredTokens = parseInt(config.ai.openrouter.maxTokens, 10);
+  let effectiveMaxTokens = !isNaN(configuredTokens) && configuredTokens > 0 ? Math.min(configuredTokens, 1500) : 1500;
 
   const result = await retryWithBackoff(async () => {
     let formattedPrompt = prompt;
@@ -147,9 +156,9 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
     }
 
     const payload = {
-      model,
+      model: activeModel,
       messages: [{ role: 'user', content: formattedPrompt }],
-      max_tokens: config.ai.openrouter.maxTokens || 4096,
+      max_tokens: effectiveMaxTokens,
     };
 
     // If model supports JSON format, tell it to output a JSON object
@@ -171,8 +180,19 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
       let statusError;
       try {
         const parsedErr = JSON.parse(errText);
-        statusError = new Error(parsedErr.error?.message || `HTTP ${response.status} Error`);
+        const errMsg = parsedErr.error?.message || `HTTP ${response.status} Error`;
+        statusError = new Error(errMsg);
         statusError.status = response.status;
+
+        // If credits or max_tokens is exceeded, automatically switch to free model or lower tokens for retry
+        if (errMsg.includes('requires more credits') || errMsg.includes('max_tokens')) {
+          if (activeModel !== 'openrouter/free') {
+            logger.warn(`OpenRouter model "${activeModel}" credit exceeded, switching to "openrouter/free"`);
+            activeModel = 'openrouter/free';
+          } else {
+            effectiveMaxTokens = Math.max(512, Math.floor(effectiveMaxTokens / 2));
+          }
+        }
       } catch (e) {
         statusError = new Error(`OpenRouter request failed with status ${response.status}: ${errText}`);
         statusError.status = response.status;

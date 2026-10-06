@@ -302,21 +302,13 @@ export function AdminOverviewPage() {
 
         {/* Top Manuscripts */}
         <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-ink text-sm">
-                Top Performing Manuscripts
-              </h3>
-              <p className="text-xs text-muted">
-                Highest traction titles by readers and engagement.
-              </p>
-            </div>
-            <Link
-              to="/a/books"
-              className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
-            >
-              All Books <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+          <div>
+            <h3 className="font-bold text-ink text-sm">
+              Top Performing Manuscripts
+            </h3>
+            <p className="text-xs text-muted">
+              Highest traction titles by readers and engagement.
+            </p>
           </div>
 
           <div className="space-y-2 pt-2">
@@ -372,6 +364,37 @@ export function AdminOverviewPage() {
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Manuscript Lifecycle Status Distribution */}
+      <div className="bg-paper border border-rule rounded p-5 space-y-4">
+        <div>
+          <h3 className="font-bold text-ink text-sm">
+            Manuscript Lifecycle Distribution
+          </h3>
+          <p className="text-xs text-muted">
+            Aggregated database status counts across all submitted stories.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {[
+            { label: 'Draft', count: stats?.books?.statusDistribution?.draft || 0, color: 'text-muted' },
+            { label: 'Processing', count: stats?.books?.statusDistribution?.processing || 0, color: 'text-accent' },
+            { label: 'Published', count: stats?.books?.statusDistribution?.published || 0, color: 'text-success' },
+            { label: 'Unpublished', count: stats?.books?.statusDistribution?.unpublished || 0, color: 'text-muted' },
+            { label: 'Removed', count: stats?.books?.statusDistribution?.removed || 0, color: 'text-danger' },
+          ].map((item) => (
+            <div key={item.label} className="p-3 bg-paper border border-rule rounded text-center">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
+                {item.label}
+              </span>
+              <span className={`text-xl font-bold ${item.color}`}>
+                {loading ? '...' : item.count}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

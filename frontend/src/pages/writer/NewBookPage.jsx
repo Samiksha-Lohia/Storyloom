@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Upload,
   FileText,
@@ -30,6 +31,7 @@ const STEPS = [
 
 export function NewBookPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Wizard Step State
   const [currentStep, setCurrentStep] = useState(0);
@@ -48,9 +50,11 @@ export function NewBookPage() {
   const [template, setTemplate] = useState(user?.defaultTemplate || 'classic');
   const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [acceptedRights, setAcceptedRights] = useState(false);
+  const [acceptedAi, setAcceptedAi] = useState(false);
 
   // Submission & Progress State
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [targetAction, setTargetAction] = useState('publish');
   const [submitError, setSubmitError] = useState('');
   const [createdBook, setCreatedBook] = useState(null);
 
@@ -115,22 +119,24 @@ export function NewBookPage() {
     if (currentStep === 1) return true; // Cover is optional, fallback tint generated
     if (currentStep === 2) return title.trim().length > 0 && blurb.trim().length > 0;
     if (currentStep === 3) return true;
-    if (currentStep === 4) return acceptedRights;
+    if (currentStep === 4) return acceptedRights && acceptedAi;
     return true;
   };
 
   // Submission handler
-  const handleSubmit = async () => {
-    if (!manuscriptFile || !title.trim() || !acceptedRights) {
-      setSubmitError('Please complete all required fields.');
+  const handleSubmit = async (targetStatus = 'draft') => {
+    if (!manuscriptFile || !title.trim() || !acceptedRights || !acceptedAi) {
+      setSubmitError('Please complete all required fields and accept both agreements.');
       return;
     }
 
     try {
       setIsSubmitting(true);
+      setTargetAction(targetStatus);
       setSubmitError('');
 
       const formData = new FormData();
+      formData.append('manuscript', manuscriptFile);
       formData.append('file', manuscriptFile);
       if (coverFile) {
         formData.append('cover', coverFile);
@@ -144,12 +150,26 @@ export function NewBookPage() {
       formData.append('accent', accent);
       formData.append('acceptedRights', 'true');
 
+      formData.append('status', targetStatus === 'publish' ? 'published' : 'draft');
+
       tags.forEach((tag) => {
-        formData.append('tags[]', tag);
+        formData.append('tags', tag);
       });
 
       const result = await api.books.create(formData);
-      setCreatedBook(result);
+      const bookId = result?.id || result?._id;
+
+      if (targetStatus === 'draft') {
+        navigate('/w/books', {
+          state: { message: `"${title.trim()}" saved as draft!` },
+        });
+        return;
+      }
+
+      // Directly published — navigate immediately to story page without hallucinating/waiting for insights
+      navigate(bookId ? `/book/${bookId}` : '/w/books', {
+        state: { message: `"${title.trim()}" published successfully!` },
+      });
     } catch (err) {
       setSubmitError(err.message || 'Failed to create story.');
     } finally {
@@ -157,13 +177,14 @@ export function NewBookPage() {
     }
   };
 
-  // If book is submitted, switch to live pipeline progress view
+  // If book is submitted and createdBook is explicitly set (fallback)
   if (createdBook) {
     return (
       <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <PipelineProgressView
           book={createdBook}
           documentId={createdBook.documentId}
+          autoPublish={targetAction === 'publish'}
           onPublished={() => {
             // Callback when published
           }}
@@ -524,16 +545,25 @@ export function NewBookPage() {
                 </div>
               </label>
 
-              {/* AI Disclosure Line per Spec §13 */}
-              <div className="p-4 rounded border border-rule bg-paper flex items-start gap-3.5 text-xs text-ink leading-relaxed">
-                <Cpu className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+              {/* AI Disclosure Checkbox */}
+              <label className="p-4 rounded border border-rule bg-paper hover:border-ink flex items-start gap-3.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptedAi}
+                  onChange={(e) => setAcceptedAi(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-ink rounded cursor-pointer"
+                  required
+                />
                 <div>
-                  <span className="font-bold block text-ink">AI Narrative Intelligence Disclosure</span>
-                  <span className="text-muted">
-                    Manuscripts are sent to a private LLM provider for analysis (extracting scenes, character networks, timelines, and dialogue metrics). Your text is never used to train public foundational models.
+                  <span className="font-bold text-xs text-ink block flex items-center gap-1.5">
+                    <Cpu className="w-4 h-4 text-accent" />
+                    I acknowledge AI Narrative Intelligence processing
+                  </span>
+                  <span className="text-xs text-muted mt-0.5 block leading-relaxed">
+                    Manuscripts are processed by private AI models for scene breakdown, character intelligence, and reader pagination. Your text is never used to train public foundational models.
                   </span>
                 </div>
-              </div>
+              </label>
             </div>
           </div>
         )}
@@ -565,17 +595,30 @@ export function NewBookPage() {
               <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              onClick={handleSubmit}
-              disabled={!canProceed() || isSubmitting}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              {isSubmitting ? 'Uploading & Starting Pipeline...' : 'Submit Manuscript'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => handleSubmit('draft')}
+                disabled={!canProceed() || isSubmitting}
+                className="flex items-center gap-2"
+              >
+                {isSubmitting && targetAction === 'draft' ? 'Saving...' : 'Save as Draft'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                onClick={() => handleSubmit('publish')}
+                disabled={!canProceed() || isSubmitting}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {isSubmitting && targetAction === 'publish' ? 'Uploading & Processing...' : 'Upload & Publish'}
+              </Button>
+            </div>
           )}
         </div>
       </div>

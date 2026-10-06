@@ -156,13 +156,14 @@ export function ConversationsPage() {
   // ─── 3. Socket Live Events Listener ───────────────────────────────────────
   useEffect(() => {
     const handleNewMessage = (payload) => {
-      const { conversationId, message } = payload;
-      if (!message) return;
+      const message = payload?.message || payload;
+      const conversationId = (payload?.conversationId || message?.conversationId)?.toString();
+      if (!message || !message.text) return;
 
       // Update conversations list with latest snippet and timestamp
       setConversations((prev) =>
         prev.map((c) => {
-          if (c._id === conversationId) {
+          if (c._id?.toString() === conversationId) {
             return {
               ...c,
               lastMessage: {
@@ -172,7 +173,7 @@ export function ConversationsPage() {
               },
               lastMessageAt: message.createdAt,
               unreadCount:
-                activeConvoIdRef.current === conversationId
+                activeConvoIdRef.current?.toString() === conversationId
                   ? 0
                   : (c.unreadCount || 0) + 1,
             };
@@ -182,7 +183,7 @@ export function ConversationsPage() {
       );
 
       // If for currently open conversation
-      if (activeConvoIdRef.current === conversationId) {
+      if (activeConvoIdRef.current?.toString() === conversationId) {
         setMessages((prev) => {
           // Check if replacing an optimistic pending message
           const idx = prev.findIndex(
@@ -244,14 +245,27 @@ export function ConversationsPage() {
       }
     };
 
+    const handleConnect = () => {
+      if (activeConvoIdRef.current) {
+        socketClient.joinRoom(`conversation:${activeConvoIdRef.current}`);
+        socketClient.emit('conversation:join', { conversationId: activeConvoIdRef.current });
+      }
+    };
+
+    socketClient.on('connect', handleConnect);
     socketClient.on('message:new', handleNewMessage);
+    socketClient.on('message:read', handleReadReceipt);
     socketClient.on('message:read:ack', handleReadReceipt);
+    socketClient.on('conversation:typing', handleTypingUpdate);
     socketClient.on('conversation:typing:update', handleTypingUpdate);
     socketClient.on('message:error', handleMessageError);
 
     return () => {
+      socketClient.off('connect', handleConnect);
       socketClient.off('message:new', handleNewMessage);
+      socketClient.off('message:read', handleReadReceipt);
       socketClient.off('message:read:ack', handleReadReceipt);
+      socketClient.off('conversation:typing', handleTypingUpdate);
       socketClient.off('conversation:typing:update', handleTypingUpdate);
       socketClient.off('message:error', handleMessageError);
     };

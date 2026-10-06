@@ -15,7 +15,9 @@ export const PUBLIC_ROUTES = [
   'GET /continuity',
   'GET /pitch',
   'GET /search',
+  'GET /pipeline-status',
   'POST /ask',
+  'POST /process',
 ];
 
 const router = Router({ mergeParams: true });
@@ -26,6 +28,8 @@ router.use(resolveBook);
 router.use(requireMatureAck);
 
 // Feature analysis endpoints
+router.post('/process', AnalysisController.triggerProcessing);
+router.get('/pipeline-status', AnalysisController.getPipelineStatus);
 router.get('/scenes', AnalysisController.getScenes);
 router.get('/characters', AnalysisController.getCharacters);
 router.get('/characters/:characterId', AnalysisController.getCharacterById);

@@ -18,7 +18,9 @@ import {
   Flag,
   BookOpen,
   LogOut,
+  ChevronDown,
 } from 'lucide-react';
+import HoverDropdown from '../components/common/HoverDropdown';
 
 export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
   const { user, role, logout } = useAuth();
@@ -51,9 +53,7 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
       return [
         { label: 'Overview', to: '/a/overview', icon: LayoutDashboard },
         { label: 'Admin Users', to: '/a/users', icon: Users },
-        { label: 'Publishers', to: '/a/publishers', icon: Briefcase },
         { label: 'Reports', to: '/a/reports', icon: Flag },
-        { label: 'Admin Books', to: '/a/books', icon: Library },
         { label: 'Catalogue', to: '/browse', icon: BookOpen },
       ];
     }
@@ -128,8 +128,69 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <NotificationBell />
+            {user && (
+              <HoverDropdown
+                trigger={
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-rule hover:border-ink bg-paper cursor-pointer text-xs font-bold text-ink"
+                  >
+                    <span className="truncate max-w-[120px]">{user.name}</span>
+                    <span className="text-muted uppercase text-[10px]">({role})</span>
+                    <ChevronDown className="w-3 h-3 text-muted" />
+                  </button>
+                }
+                align="right"
+                dropdownClassName="w-48 py-1 z-50"
+              >
+                {({ close }) => (
+                  <div>
+                    <div className="px-3 py-1.5 border-b border-rule">
+                      <p className="text-xs font-bold text-ink truncate">{user.name}</p>
+                      <p className="text-[11px] text-muted capitalize">{role}</p>
+                    </div>
+
+                    <Link
+                      to="/"
+                      onClick={close}
+                      className="block px-3 py-1.5 text-xs text-ink hover:bg-rule/40 hover:text-accent"
+                    >
+                      Home
+                    </Link>
+
+                    <Link
+                      to="/browse"
+                      onClick={close}
+                      className="block px-3 py-1.5 text-xs text-ink hover:bg-rule/40 hover:text-accent"
+                    >
+                      Catalogue
+                    </Link>
+
+                    <Link
+                      to="/settings"
+                      onClick={close}
+                      className="block px-3 py-1.5 text-xs text-ink hover:bg-rule/40 hover:text-accent"
+                    >
+                      Settings
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        close();
+                        handleSignOut();
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs text-danger hover:bg-rule/40 flex items-center gap-1.5 cursor-pointer border-t border-rule mt-1"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </HoverDropdown>
+            )}
           </div>
         </header>
 

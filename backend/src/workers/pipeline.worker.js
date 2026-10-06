@@ -110,7 +110,9 @@ const processStage = async (job) => {
     const result = await runStage(job);
 
     await markCompleted(documentId, stage);
-    await enqueueReadyStages(documentId);
+    if (stage !== STAGES.PARSING) {
+      await enqueueReadyStages(documentId);
+    }
 
     return result;
   } catch (err) {
@@ -228,7 +230,7 @@ const enqueueReadyStages = async (documentId) => {
         stage: jobRecord.stage,
       },
       {
-        jobId: `${documentId}-${jobRecord.stage}`,
+        jobId: `${documentId}-${jobRecord.stage}-${Date.now()}`,
       },
     );
   }
@@ -2517,4 +2519,5 @@ export {
   runContinuity,
   runEmbeddings,
   processDocumentDirectly,
+  enqueueReadyStages,
 };

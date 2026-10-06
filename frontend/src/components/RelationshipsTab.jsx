@@ -9,7 +9,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     () => source || (documentId ? { kind: 'document', id: documentId } : null),
     [source, documentId]
   );
-  const stableOptions = useMemo(() => options, [options]);
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
   const [relationships, setRelationships] = useState(initialData?.relationships || []);
   const [characters, setCharacters] = useState(() => {
     if (!initialData?.characters) return {};
@@ -29,60 +30,74 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   // Edge detail panel state
   const [selectedEdge, setSelectedEdge] = useState(null);
 
-  const loadData = useCallback(async () => {
-    if (initialData) {
-      if (initialData.relationships) {
-        setRelationships(initialData.relationships);
-      }
-      if (initialData.characters) {
-        const map = {};
-        initialData.characters.forEach(c => {
-          map[(c._id || c.id)?.toString()] = c;
-        });
-        setCharacters(map);
-      }
-      setLoading(false);
-      return;
+  // Sync initialData if supplied
+  useEffect(() => {
+    if (!initialData) return;
+    if (initialData.relationships) {
+      setRelationships(initialData.relationships);
     }
+    if (initialData.characters) {
+      const map = {};
+      initialData.characters.forEach(c => {
+        map[(c._id || c.id)?.toString()] = c;
+      });
+      setCharacters(map);
+    }
+    setLoading(false);
+  }, [initialData]);
+
+  // Network fetch if no initialData
+  useEffect(() => {
+    if (initialData) return;
     if (!resolvedSource?.id) {
       setLoading(false);
       return;
     }
+
+    let isCancelled = false;
     setLoading(true);
-    try {
-      // 1. Load characters
-      const charsRes = await api.analysis.getCharacters(resolvedSource, stableOptions).catch(() => []);
-      const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
-      const charsMap = {};
-      charsList.forEach(c => {
-        charsMap[(c._id || c.id)?.toString()] = c;
-      });
-      setCharacters(charsMap);
 
-      // 2. Load scenes
-      const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
-      const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
-      const scenesMap = {};
-      scenesList.forEach(s => {
-        scenesMap[(s._id || s.id)?.toString()] = s;
-      });
-      setScenes(scenesMap);
+    (async () => {
+      try {
+        // 1. Load characters
+        const charsRes = await api.analysis.getCharacters(resolvedSource, stableOptions).catch(() => []);
+        if (isCancelled) return;
+        const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
+        const charsMap = {};
+        charsList.forEach(c => {
+          charsMap[(c._id || c.id)?.toString()] = c;
+        });
+        setCharacters(charsMap);
 
-      // 3. Load relationships
-      const relRes = await api.analysis.getRelationships(resolvedSource, stableOptions).catch(() => []);
-      const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
-      const relList = Array.isArray(rawRel) ? rawRel : rawRel?.results || [];
-      setRelationships(relList || []);
-    } catch (err) {
-      console.error('Failed to load relationship data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [resolvedSource, stableOptions, initialData]);
+        // 2. Load scenes
+        const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
+        if (isCancelled) return;
+        const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
+        const scenesMap = {};
+        scenesList.forEach(s => {
+          scenesMap[(s._id || s.id)?.toString()] = s;
+        });
+        setScenes(scenesMap);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+        // 3. Load relationships
+        const relRes = await api.analysis.getRelationships(resolvedSource, stableOptions).catch(() => []);
+        if (isCancelled) return;
+        const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
+        const relList = Array.isArray(rawRel) ? rawRel : rawRel?.results || [];
+        setRelationships(relList || []);
+      } catch (err) {
+        console.error('Failed to load relationship data:', err);
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialData)]);
 
   // Filtered relationships
   const filteredRelationships = useMemo(() => {
@@ -115,9 +130,9 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     
     // Auto circular layout
     const total = activeChars.length;
-    const radius = Math.max(120, Math.min(220, total * 25));
-    const centerX = 240;
-    const centerY = 160;
+    const radius = Math.max(140, Math.min(240, total * 30));
+    const centerX = 280;
+    const centerY = 220;
 
     const nodes = activeChars.map((char, index) => {
       const charId = (char._id || char.id)?.toString();
@@ -194,7 +209,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   // Read-only summary mode for pitch panel
   if (summary) {
     return (
-      <div className="border border-rule rounded overflow-hidden bg-paper relative h-72">
+      <div className="border border-rule rounded overflow-hidden bg-paper relative w-full h-[320px] min-h-[300px]">
         {flowNodes.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center p-4 text-center bg-paper">
             <GitFork className="w-4 h-4 text-muted mb-2" />
@@ -210,6 +225,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
             nodesConnectable={false}
             elementsSelectable={true}
             fitView
+            fitViewOptions={{ padding: 0.25 }}
+            style={{ width: '100%', height: '100%' }}
           >
             <Background color="#D9D2C3" gap={16} size={1} />
             <Controls showInteractive={false} className="!bg-paper !border-rule rounded scale-90 origin-bottom-left" />
@@ -236,7 +253,7 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
 
   // Full interactive mode for Writer & Pitch detailed tabs
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col w-full space-y-4">
       {/* Controls Bar */}
       <div className="bg-paper p-4 rounded border border-rule flex flex-wrap items-center justify-between gap-4">
         {/* Left: Category selector pills */}
@@ -276,8 +293,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       </div>
 
       {/* Main Graph Canvas */}
-      <div className="flex-1 border border-rule rounded overflow-hidden bg-paper relative flex">
-        <div className="flex-1 h-full min-h-[450px] relative">
+      <div className="w-full h-[540px] min-h-[480px] border border-rule rounded overflow-hidden bg-paper relative flex">
+        <div className="w-full h-full relative" style={{ width: '100%', height: '100%' }}>
           {flowNodes.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-paper">
               <GitFork className="w-4 h-4 text-muted mb-2" />
@@ -298,6 +315,8 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                 edges={flowEdges}
                 onEdgeClick={handleEdgeClick}
                 fitView
+                fitViewOptions={{ padding: 0.25 }}
+                style={{ width: '100%', height: '100%' }}
               >
                 <Background color="#D9D2C3" gap={20} size={1} />
                 <Controls className="!bg-paper !border-rule rounded" />

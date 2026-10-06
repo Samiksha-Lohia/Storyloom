@@ -272,6 +272,10 @@ export const api = {
       return data.data; // { items, pagination }
     },
 
+    async getReadingList(params = {}) {
+      return this.getLibrary(params);
+    },
+
     async getLibraryBook(bookId) {
       const res = await fetch(`${API_BASE}/me/library/${bookId}`, {
         headers: getHeaders(),
@@ -326,6 +330,19 @@ export const api = {
       });
       const dataRes = await handleResponse(res);
       return dataRes.data;
+    },
+  },
+
+  // ─── Reader Library & Shelf Management ─────────────────────────────────────
+  library: {
+    async getShelf(status, params = {}) {
+      return api.me.getLibrary({ status, ...params });
+    },
+    async updateStatus(bookId, status) {
+      return api.me.updateLibraryBook(bookId, { status });
+    },
+    async remove(bookId) {
+      return api.me.removeLibraryBook(bookId);
     },
   },
 
@@ -424,197 +441,7 @@ export const api = {
     },
   },
 
-  // Reviews & Ratings
-  reviews: {
-    async getReviews(bookId, params = {}) {
-      const query = new URLSearchParams();
-      if (params.page) query.append('page', params.page);
-      if (params.limit) query.append('limit', params.limit);
-      if (params.sort) query.append('sort', params.sort);
-      const qs = query.toString();
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews${qs ? `?${qs}` : ''}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
 
-    async createReview(bookId, payload) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async updateReview(bookId, reviewId, payload) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async deleteReview(bookId, reviewId) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data;
-    },
-  },
-
-  // Reports & Takedowns
-  reports: {
-    async submitAppReport(payload) {
-      const res = await fetch(`${API_BASE}/reports`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async submitPublicNotice(payload) {
-      const res = await fetch(`${API_BASE}/reports/public-notice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-  },
-
-  // Admin Reports Queue
-  admin: {
-    async getReports(params = {}) {
-      const query = new URLSearchParams();
-      if (params.page) query.append('page', params.page);
-      if (params.limit) query.append('limit', params.limit);
-      if (params.status) query.append('status', params.status);
-      if (params.targetType) query.append('targetType', params.targetType);
-      if (params.reason) query.append('reason', params.reason);
-      const qs = query.toString();
-      const res = await fetch(`${API_BASE}/admin/reports${qs ? `?${qs}` : ''}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async handleReport(reportId, payload) {
-      const res = await fetch(`${API_BASE}/admin/reports/${reportId}`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-  },
-
-  // Notifications
-  notifications: {
-    async getNotifications(params = {}) {
-      const query = new URLSearchParams();
-      if (params.page) query.append('page', params.page);
-      if (params.limit) query.append('limit', params.limit);
-      if (params.unreadOnly) query.append('unreadOnly', params.unreadOnly);
-      const qs = query.toString();
-      const res = await fetch(`${API_BASE}/notifications${qs ? `?${qs}` : ''}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async getUnreadCount() {
-      const res = await fetch(`${API_BASE}/notifications/unread-count`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data?.unreadCount || 0;
-    },
-
-    async markRead(id) {
-      const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async markAllRead() {
-      const res = await fetch(`${API_BASE}/notifications/read-all`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-  },
-
-
-  // Reader Library & Settings
-  me: {
-    async matureAck() {
-      const res = await fetch(`${API_BASE}/me/mature-ack`, {
-        method: 'PUT',
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async updateSettings(settings) {
-      const res = await fetch(`${API_BASE}/me/settings`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify(settings),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async getLibrary(params = {}) {
-      const query = new URLSearchParams();
-      if (params.status) query.append('status', params.status);
-      if (params.page) query.append('page', params.page);
-      if (params.limit) query.append('limit', params.limit);
-      const qs = query.toString();
-      const res = await fetch(`${API_BASE}/me/library${qs ? `?${qs}` : ''}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data;
-    },
-
-    async getLibraryBook(bookId) {
-      const res = await fetch(`${API_BASE}/me/library/${bookId}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async updateLibraryBook(bookId, data) {
-      const res = await fetch(`${API_BASE}/me/library/${bookId}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-      });
-      const dataRes = await handleResponse(res);
-      return dataRes.data;
-    },
-  },
 
   // Uploads
   uploads: {
@@ -832,6 +659,19 @@ export const api = {
       return str ? `?${str}` : '';
     },
 
+    async triggerProcessing(source) {
+      const src = this.normalizeSource(source);
+      if (src.kind === 'book') {
+        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/process`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await handleResponse(res);
+        return data;
+      }
+      return null;
+    },
+
     async getScenes(source, params = {}) {
       const src = this.normalizeSource(source);
       if (src.kind === 'book') {
@@ -975,6 +815,10 @@ export const api = {
       return api.story.search(src.id, query, filters);
     },
 
+    async semanticSearch(source, query, filters = {}, params = {}) {
+      return this.search(source, query, filters, params);
+    },
+
     async ask(source, question, params = {}) {
       const src = this.normalizeSource(source);
       if (src.kind === 'book') {
@@ -988,27 +832,74 @@ export const api = {
       }
       return api.story.ask(src.id, question);
     },
+
+    async getPipelineStatus(bookId, params = {}) {
+      try {
+        const res = await fetch(`${API_BASE}/books/${bookId}/analysis/pipeline-status${this.buildQuery(params)}`, {
+          headers: getHeaders(),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data;
+        }
+        // Fallback: use document jobs if book-level not found
+        const book = await api.books.getById(bookId).catch(() => null);
+        const documentId = book?.documentId?._id || book?.documentId;
+        if (documentId) {
+          const jobsRes = await api.jobs.getStatus(documentId);
+          const jobs = Array.isArray(jobsRes) ? jobsRes : (jobsRes?.jobs || []);
+          return { data: { jobs } };
+        }
+        return { data: { jobs: [] } };
+      } catch {
+        return { data: { jobs: [] } };
+      }
+    },
+
+    async retryPipelineStage(bookId, stage) {
+      try {
+        const book = await api.books.getById(bookId).catch(() => null);
+        const documentId = book?.documentId?._id || book?.documentId;
+        if (documentId) {
+          return api.jobs.retryStage(documentId, stage);
+        }
+      } catch (err) {
+        console.error('retryPipelineStage failed:', err);
+      }
+    },
   },
 
   // ─── Reviews ────────────────────────────────────────────────────────────────
   reviews: {
     async list(bookId, params = {}) {
+      const bId = (bookId?._id || bookId?.id || bookId)?.toString();
+      if (!bId || bId === 'undefined') return { reviews: [], stats: { ratingAvg: 0, ratingCount: 0, histogram: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } }, pagination: { page: 1, limit: 10, total: 0, totalPages: 1 }, userReview: null };
       const qs = new URLSearchParams();
       if (params.page) qs.append('page', params.page);
       if (params.limit) qs.append('limit', params.limit);
       if (params.sort) qs.append('sort', params.sort);
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews?${qs}`, {
+      const res = await fetch(`${API_BASE}/books/${bId}/reviews?${qs}`, {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data; // { success, data: { reviews, histogram, pagination, userReview } }
+      const inner = data?.data || {};
+      return {
+        ...inner,
+        ...data,
+        reviews: inner.reviews || data.reviews || [],
+        stats: inner.stats || data.stats || { ratingAvg: 0, ratingCount: 0, histogram: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+        pagination: inner.pagination || data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 },
+        userReview: inner.userReview !== undefined ? inner.userReview : data.userReview,
+      };
     },
 
     // Alias used by BookReviews component
     async getReviews(bookId, params) { return this.list(bookId, params); },
 
     async create(bookId, payload) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews`, {
+      const bId = (bookId?._id || bookId?.id || bookId)?.toString();
+      if (!bId || bId === 'undefined') throw new Error('Book ID is missing.');
+      const res = await fetch(`${API_BASE}/books/${bId}/reviews`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -1019,7 +910,9 @@ export const api = {
     async createReview(bookId, payload) { return this.create(bookId, payload); },
 
     async update(bookId, reviewId, payload) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
+      const bId = (bookId?._id || bookId?.id || bookId)?.toString();
+      if (!bId || bId === 'undefined') throw new Error('Book ID is missing.');
+      const res = await fetch(`${API_BASE}/books/${bId}/reviews/${reviewId}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(payload),
@@ -1030,7 +923,9 @@ export const api = {
     async updateReview(bookId, reviewId, payload) { return this.update(bookId, reviewId, payload); },
 
     async remove(bookId, reviewId) {
-      const res = await fetch(`${API_BASE}/books/${bookId}/reviews/${reviewId}`, {
+      const bId = (bookId?._id || bookId?.id || bookId)?.toString();
+      if (!bId || bId === 'undefined') throw new Error('Book ID is missing.');
+      const res = await fetch(`${API_BASE}/books/${bId}/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: getHeaders(),
       });
@@ -1063,26 +958,11 @@ export const api = {
     },
     // Alias used by ReportButton component
     async submitAppReport(payload) { return this.create(payload); },
-  },
 
-  // ─── Admin ──────────────────────────────────────────────────────────────────
-  admin: {
-    async getReports(params = {}) {
-      const qs = new URLSearchParams();
-      Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== '') qs.append(k, v);
-      });
-      const res = await fetch(`${API_BASE}/admin/reports?${qs}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data; // { reports, pagination }
-    },
-
-    async handleReport(reportId, payload) {
-      const res = await fetch(`${API_BASE}/admin/reports/${reportId}`, {
-        method: 'PATCH',
-        headers: getHeaders(),
+    async submitPublicNotice(payload) {
+      const res = await fetch(`${API_BASE}/reports/public-notice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await handleResponse(res);
@@ -1105,6 +985,14 @@ export const api = {
     },
     // Alias used by NotificationBell component
     async getNotifications(params) { return this.list(params); },
+
+    async getUnreadCount() {
+      const res = await fetch(`${API_BASE}/notifications/unread-count`, {
+        headers: getHeaders(),
+      });
+      const data = await handleResponse(res);
+      return data.data?.unreadCount || 0;
+    },
 
     async markRead(notificationId) {
       const res = await fetch(`${API_BASE}/notifications/${notificationId}/read`, {
@@ -1220,6 +1108,15 @@ export const api = {
       const data = await handleResponse(res);
       return data.data;
     },
+
+    async clear(bookId) {
+      const res = await fetch(`${API_BASE}/books/${bookId}/pitch`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      const data = await handleResponse(res);
+      return data.data;
+    },
   },
 
   // ─── Public Writers & Social ──────────────────────────────────────────────
@@ -1277,6 +1174,10 @@ export const api = {
       return data.data;
     },
 
+    async handleReport(reportId, payload) {
+      return this.handleReportAction(reportId, payload);
+    },
+
     async getPublishers(params = {}) {
       const qs = new URLSearchParams();
       if (params.status) qs.append('status', params.status);
@@ -1286,7 +1187,10 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data; // { success, message, data: results, pagination }
+      return {
+        ...data,
+        publishers: Array.isArray(data.data) ? data.data : [],
+      };
     },
 
     async reviewPublisher(id, { action, reason }) {
@@ -1317,6 +1221,25 @@ export const api = {
       return data.data;
     },
 
+    async getPlatformStats() {
+      return this.getStats();
+    },
+
+    async reviewReport(reportId, payload) {
+      return this.handleReportAction(reportId, {
+        action: payload.action,
+        notes: payload.notes || payload.adminNotes || '',
+      });
+    },
+
+    async approvePublisher(id) {
+      return this.reviewPublisher(id, { action: 'approve' });
+    },
+
+    async rejectPublisher(id, reason) {
+      return this.reviewPublisher(id, { action: 'reject', reason });
+    },
+
     async getUsers(params = {}) {
       const qs = new URLSearchParams();
       if (params.search) qs.append('search', params.search);
@@ -1330,7 +1253,10 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data;
+      return {
+        ...data,
+        users: Array.isArray(data.data) ? data.data : [],
+      };
     },
 
     async updateUser(id, payload) {
@@ -1341,6 +1267,22 @@ export const api = {
       });
       const data = await handleResponse(res);
       return data.data;
+    },
+
+    async updateUserRole(id, role, note) {
+      return this.updateUser(id, { role, note });
+    },
+
+    async suspendUser(id, suspensionDays, note) {
+      return this.updateUser(id, { status: 'suspended', suspensionDays, note });
+    },
+
+    async banUser(id, note) {
+      return this.updateUser(id, { status: 'banned', note });
+    },
+
+    async restoreUser(id, note) {
+      return this.updateUser(id, { status: 'active', note });
     },
 
     async getBooks(params = {}) {
@@ -1356,7 +1298,10 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data;
+      return {
+        ...data,
+        books: Array.isArray(data.data) ? data.data : [],
+      };
     },
 
     async updateBook(id, payload) {
@@ -1367,6 +1312,18 @@ export const api = {
       });
       const data = await handleResponse(res);
       return data.data;
+    },
+
+    async suspendBook(id, reason) {
+      return this.updateBook(id, { action: 'suspend', reason });
+    },
+
+    async restoreBook(id, reason) {
+      return this.updateBook(id, { action: 'restore', reason });
+    },
+
+    async unpublishBook(id, reason) {
+      return this.updateBook(id, { action: 'unpublish', reason });
     },
   },
 

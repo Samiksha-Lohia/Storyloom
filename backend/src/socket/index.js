@@ -73,7 +73,10 @@ const initSocket = (io) => {
     });
 
     // ─── Conversation / Chat Handlers ──────────────────────────────────────────
-    socket.on('conversation:join', async (conversationId, callback) => {
+    socket.on('conversation:join', async (rawPayload, callback) => {
+      const conversationId = typeof rawPayload === 'object' && rawPayload !== null
+        ? (rawPayload.conversationId || rawPayload.id || rawPayload._id)
+        : rawPayload;
       if (!conversationId) return;
       try {
         const conversation = await Conversation.findById(conversationId);
@@ -100,7 +103,10 @@ const initSocket = (io) => {
       }
     });
 
-    socket.on('conversation:leave', (conversationId) => {
+    socket.on('conversation:leave', (rawPayload) => {
+      const conversationId = typeof rawPayload === 'object' && rawPayload !== null
+        ? (rawPayload.conversationId || rawPayload.id || rawPayload._id)
+        : rawPayload;
       if (conversationId) {
         socket.leave(`conversation:${conversationId}`);
         logger.info(`Socket ${socket.id} left conversation:${conversationId}`);
@@ -115,11 +121,13 @@ const initSocket = (io) => {
         if (!conversation || !conversation.participants.some((p) => p.toString() === userId)) {
           return;
         }
-        socket.to(`conversation:${conversationId}`).emit('conversation:typing', {
+        const typingPayload = {
           conversationId,
           userId,
           isTyping: Boolean(isTyping),
-        });
+        };
+        socket.to(`conversation:${conversationId}`).emit('conversation:typing', typingPayload);
+        socket.to(`conversation:${conversationId}`).emit('conversation:typing:update', typingPayload);
       } catch (err) {
         logger.warn(`Error handling conversation:typing: ${err.message}`);
       }
@@ -144,11 +152,13 @@ const initSocket = (io) => {
           { readAt: now }
         );
 
-        io.to(`conversation:${conversationId}`).emit('message:read', {
+        const readPayload = {
           conversationId,
           readerId: userId,
           readAt: now,
-        });
+        };
+        io.to(`conversation:${conversationId}`).emit('message:read', readPayload);
+        io.to(`conversation:${conversationId}`).emit('message:read:ack', readPayload);
       } catch (err) {
         logger.warn(`Error handling message:read: ${err.message}`);
       }
@@ -238,8 +248,24 @@ const initSocket = (io) => {
           createdAt: message.createdAt,
         };
 
+        const eventEnvelope = {
+          ...messagePayload,
+          conversationId: message.conversationId,
+          message: messagePayload,
+        };
+
         // 5. Emit message:new to room
-        io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
+        io.to(`conversation:${conversationId}`).emit('message:new', eventEnvelope);
+
+        // Also emit directly to participants' user rooms
+        conversation.participants.forEach((p) => {
+          io.to(`user:${p.toString()}`).emit('message:new', eventEnvelope);
+          io.to(`user:${p.toString()}`).emit('conversation:updated', {
+            conversationId: message.conversationId,
+            lastMessage: messagePayload,
+            lastMessageAt: message.createdAt,
+          });
+        });
 
         // 6. Notify offline/unfocused recipient
         const recipientId = conversation.participants.find((p) => p.toString() !== userId);

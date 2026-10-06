@@ -35,9 +35,13 @@ export function AdminPublishersPage() {
           page,
           limit: pagination.limit,
         });
-        setPublishers(res?.data?.publishers || res?.publishers || []);
-        if (res?.data?.pagination || res?.pagination) {
-          setPagination(res?.data?.pagination || res?.pagination);
+        const publisherList = Array.isArray(res?.data)
+          ? res.data
+          : (res?.publishers || res?.data?.publishers || []);
+        setPublishers(publisherList);
+        const pag = res?.pagination || res?.data?.pagination;
+        if (pag) {
+          setPagination(pag);
         }
       } catch (err) {
         console.error('Failed to fetch publishers:', err);

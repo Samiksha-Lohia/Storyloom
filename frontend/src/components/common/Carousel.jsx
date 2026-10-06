@@ -4,8 +4,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export default function Carousel({
   children,
   title,
+  subtitle,
   ariaLabel,
   viewAllLink,
+  actions,
   className = '',
 }) {
   const scrollRef = useRef(null);
@@ -31,7 +33,7 @@ export default function Carousel({
     const scrollAmount = el.clientWidth * 0.75;
     el.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'auto',
+      behavior: 'smooth',
     });
   };
 
@@ -43,28 +45,35 @@ export default function Carousel({
     }
   };
 
+  const hasHeader = Boolean(title || subtitle || actions || viewAllLink);
+
   return (
     <section className={`relative w-full ${className}`}>
       {/* Header with Title and Desktop Nav Buttons */}
-      {(title || viewAllLink) && (
-        <div className="flex items-center justify-between mb-4">
-          {title && (
-            <h2 className="text-xl md:text-2xl font-bold font-body text-ink">
-              {title}
-            </h2>
-          )}
+      {hasHeader && (
+        <div className="flex items-center justify-between mb-4 border-b border-rule pb-2">
+          <div>
+            {title && (
+              <h2 className="text-xl font-bold font-body text-ink">
+                {title}
+              </h2>
+            )}
+            {subtitle && (
+              <p className="text-xs text-muted mt-0.5">{subtitle}</p>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
-            {viewAllLink}
+            {actions || viewAllLink}
 
             {/* Desktop Carousel Controls */}
-            <div className="hidden sm:flex items-center gap-1 ml-2">
+            <div className="hidden sm:flex items-center gap-1.5 ml-2">
               <button
                 type="button"
                 aria-label="Previous items"
                 disabled={!canScrollLeft}
                 onClick={() => scroll('left')}
-                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -73,7 +82,7 @@ export default function Carousel({
                 aria-label="Next items"
                 disabled={!canScrollRight}
                 onClick={() => scroll('right')}
-                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="w-7 h-7 rounded border border-rule flex items-center justify-center text-ink bg-paper hover:border-ink hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -82,8 +91,8 @@ export default function Carousel({
         </div>
       )}
 
-      {/* Floating side arrows if no header title */}
-      {!title && !viewAllLink && (
+      {/* Floating side arrows if no header */}
+      {!hasHeader && (
         <>
           <button
             type="button"

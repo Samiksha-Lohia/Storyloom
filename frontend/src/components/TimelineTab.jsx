@@ -1,22 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, BookOpen, Calendar, MapPin } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function TimelineTab({ 
-  timelineEvents = [], 
-  scenes = {}, 
-  loading 
+  documentId,
+  source,
+  options = {},
+  timelineEvents: initialEvents = null, 
+  scenes: initialScenes = null, 
+  loading: initialLoading,
 }) {
+  const resolvedSource = useMemo(
+    () => source || (documentId ? { kind: 'document', id: documentId } : null),
+    [source, documentId]
+  );
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
+
+  const [timelineEvents, setTimelineEvents] = useState(initialEvents || []);
+  const [scenes, setScenes] = useState(initialScenes || {});
+  const [loading, setLoading] = useState(
+    initialLoading !== undefined
+      ? initialLoading
+      : (!initialEvents?.length && Boolean(resolvedSource?.id))
+  );
   const [orderMode, setOrderMode] = useState('narrative'); // 'narrative' | 'chronological'
+
+  useEffect(() => {
+    if (initialEvents && initialEvents.length > 0) {
+      setTimelineEvents(initialEvents);
+      if (initialScenes) setScenes(initialScenes);
+      setLoading(false);
+      return;
+    }
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const [timelineRes, sceneRes] = await Promise.all([
+          api.analysis.getTimeline(resolvedSource, stableOptions).catch(() => []),
+          api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []),
+        ]);
+
+        if (isCancelled) return;
+
+        const rawEvents = timelineRes?.data !== undefined ? timelineRes.data : timelineRes;
+        const eventsList = Array.isArray(rawEvents) ? rawEvents : (rawEvents?.results || rawEvents?.events || []);
+        setTimelineEvents(eventsList);
+
+        const rawScenes = sceneRes?.data !== undefined ? sceneRes.data : sceneRes;
+        const scenesList = Array.isArray(rawScenes) ? rawScenes : (rawScenes?.results || []);
+        const scenesMap = {};
+        scenesList.forEach((s) => {
+          scenesMap[(s._id || s.id)?.toString()] = s;
+        });
+        setScenes(scenesMap);
+      } catch (err) {
+        console.error('Failed to load timeline:', err);
+        if (!isCancelled) setTimelineEvents([]);
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialEvents?.length)]);
 
   // Sort events based on selected mode
   const sortedEvents = [...timelineEvents].sort((a, b) => {
     if (orderMode === 'chronological') {
-      return a.chronologicalOrder - b.chronologicalOrder;
+      return (a.chronologicalOrder || 0) - (b.chronologicalOrder || 0);
     } else {
-      const sceneA = scenes[a.sceneId];
-      const sceneB = scenes[b.sceneId];
-      const numA = sceneA ? sceneA.sceneNumber : 0;
-      const numB = sceneB ? sceneB.sceneNumber : 0;
+      const sceneA = (typeof a.sceneId === 'object' && a.sceneId) ? a.sceneId : (scenes[a.sceneId] || scenes[(a.sceneId?._id || a.sceneId)?.toString()]);
+      const sceneB = (typeof b.sceneId === 'object' && b.sceneId) ? b.sceneId : (scenes[b.sceneId] || scenes[(b.sceneId?._id || b.sceneId)?.toString()]);
+      const numA = sceneA ? sceneA.sceneNumber : (a.chronologicalOrder || 0);
+      const numB = sceneB ? sceneB.sceneNumber : (b.chronologicalOrder || 0);
       return numA - numB;
     }
   });
@@ -78,8 +144,15 @@ export default function TimelineTab({
       {/* Horizontal Scrollable timeline lane */}
       <div className="w-full overflow-x-auto flex gap-6 pb-6 pt-4 px-2 select-none snap-x">
         {sortedEvents.map((evt, idx) => {
-          const scene = scenes[evt.sceneId];
-          if (!scene) return null;
+          const rawScene = (typeof evt.sceneId === 'object' && evt.sceneId !== null)
+            ? evt.sceneId
+            : (scenes[evt.sceneId] || scenes[(evt.sceneId?._id || evt.sceneId)?.toString()] || evt.scene);
+          const scene = rawScene || {
+            sceneNumber: idx + 1,
+            title: evt.title || evt.label || `Event ${idx + 1}`,
+            summary: evt.description || evt.summary || '',
+            location: evt.location || 'Scene ' + (idx + 1),
+          };
 
           return (
             <div 

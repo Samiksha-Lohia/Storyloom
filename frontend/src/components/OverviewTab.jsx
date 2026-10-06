@@ -16,24 +16,27 @@ export default function OverviewTab({ documentId, source, options = {} }) {
     () => source || (documentId ? { kind: 'document', id: documentId } : null),
     [source, documentId]
   );
-  const stableOptions = useMemo(() => options, [options]);
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
   const [doc, setDoc] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const jobsRef = useRef([]);
   const [stats, setStats] = useState({
     wordCount: 0,
     scenesCount: 0,
     charactersCount: 0,
-    dominantMood: 'Analyzing...'
+    dominantMood: null,
   });
   const [loading, setLoading] = useState(true);
-  const pollIntervalRef = useRef(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isBackground = false) => {
     if (!resolvedSource?.id || resolvedSource.id === 'null' || resolvedSource.id === 'undefined') {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!isBackground) {
+      setLoading(true);
+    }
     try {
       // Load source info
       let sourceData = null;
@@ -58,17 +61,10 @@ export default function OverviewTab({ documentId, source, options = {} }) {
         const jobsRes = await api.analysis.getPipelineStatus(resolvedSource.id, stableOptions);
         jobsList = jobsRes?.data?.jobs || jobsRes?.jobs || [];
       } catch {
-        // Mock fallback if route not fully ready
-        jobsList = [
-          { stage: 'scenes', status: scenes.length ? 'completed' : 'queued' },
-          { stage: 'characters', status: chars.length ? 'completed' : 'queued' },
-          { stage: 'relationships', status: 'queued' },
-          { stage: 'timeline', status: 'queued' },
-          { stage: 'continuity', status: 'queued' },
-          { stage: 'arc', status: 'queued' },
-        ];
+        jobsList = [];
       }
       setJobs(jobsList);
+      jobsRef.current = jobsList;
 
       // Estimate word count
       let words = 0;
@@ -84,27 +80,29 @@ export default function OverviewTab({ documentId, source, options = {} }) {
         wordCount: words,
         scenesCount: Array.isArray(scenes) ? scenes.length : 0,
         charactersCount: Array.isArray(chars) ? chars.length : 0,
-        dominantMood: 'Reflective'
+        dominantMood: sourceData?.dominantMood || sourceData?.overallTone || null,
       });
 
     } catch (err) {
       console.error('Failed to load overview data:', err);
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
-  }, [resolvedSource, stableOptions]);
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey]);
 
   useEffect(() => {
-    loadData();
+    loadData(false);
     // Poll for job updates if any job is queued or running
-    pollIntervalRef.current = setInterval(() => {
-      if (jobs.some(j => j.status === 'running' || j.status === 'queued')) {
-        loadData();
+    const interval = setInterval(() => {
+      if (jobsRef.current.some(j => j.status === 'running' || j.status === 'queued')) {
+        loadData(true);
       }
-    }, 5000);
+    }, 4000);
 
-    return () => clearInterval(pollIntervalRef.current);
-  }, [loadData, jobs]);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   const handleRetryStage = async (stage) => {
     try {
@@ -137,7 +135,7 @@ export default function OverviewTab({ documentId, source, options = {} }) {
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Analysis Summary</span>
           <h2 className="text-xl font-bold text-ink leading-tight">{doc?.title}</h2>
           <p className="text-xs text-muted leading-relaxed max-w-xl font-body">
-            Structured manuscript breakdown. Navigate the tabs to inspect timeline, character profiles, relationships, and continuity.
+            Structured manuscript breakdown. Navigate the tabs to inspect timeline, character profiles, and relationships.
           </p>
         </div>
       </div>

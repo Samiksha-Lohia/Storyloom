@@ -32,10 +32,13 @@ export function AdminBooksPage() {
         search: search.trim() || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       });
-      setBooks(res?.data?.books || res?.books || []);
+      const bookList = Array.isArray(res?.data)
+        ? res.data
+        : (res?.books || res?.data?.books || []);
+      setBooks(bookList);
       setPagination(
-        res?.data?.pagination ||
-          res?.pagination || { total: 0, totalPages: 1 }
+        res?.pagination ||
+          res?.data?.pagination || { total: bookList.length, totalPages: 1 }
       );
     } catch (err) {
       console.error('Failed to load admin books:', err);

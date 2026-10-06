@@ -13,15 +13,22 @@ export class LibraryService {
     const skip = (pageNum - 1) * limitNum;
 
     const filter = { readerId };
-    if (status) {
+    if (status && status !== 'unfinished') {
       filter.status = status;
+    } else if (status === 'unfinished') {
+      filter.status = { $ne: 'finished' };
+      filter.$or = [
+        { status: 'reading' },
+        { furthestOffset: { $gt: 0 } },
+        { currentOffset: { $gt: 0 } },
+      ];
     }
 
     const [entries, total] = await Promise.all([
       ReadingList.find(filter)
         .populate({
           path: 'bookId',
-          select: 'title coverUrl coverPublicId genre blurb tags pageCount mature status stats writerId',
+          select: 'title coverUrl coverPublicId genre blurb tags pageCount pageOffsets mature status stats writerId',
           populate: { path: 'writerId', select: 'name username' },
         })
         .sort({ updatedAt: -1 })
@@ -31,35 +38,50 @@ export class LibraryService {
       ReadingList.countDocuments(filter),
     ]);
 
-    const formatted = entries.map((entry) => {
-      const book = entry.bookId;
-      const pageOffsets = book?.pageOffsets || [];
-      return {
-        id: entry._id.toString(),
-        book: book
-          ? {
-              id: book._id.toString(),
-              title: book.title,
-              coverUrl: book.coverUrl,
-              coverPublicId: book.coverPublicId,
-              genre: book.genre,
-              blurb: book.blurb,
-              pageCount: book.pageCount,
-              mature: book.mature,
-              status: book.status,
-              stats: book.stats,
-              writer: book.writerId ? { name: book.writerId.name, username: book.writerId.username } : null,
-            }
-          : null,
-        status: entry.status,
-        currentOffset: entry.currentOffset,
-        currentPage: pageForOffset(pageOffsets, entry.currentOffset),
-        furthestOffset: entry.furthestOffset,
-        furthestPage: pageForOffset(pageOffsets, entry.furthestOffset),
-        bookmarksCount: entry.bookmarks?.length || 0,
-        updatedAt: entry.updatedAt,
-      };
-    });
+    const formatted = entries
+      .map((entry) => {
+        const book = entry.bookId;
+        const pageOffsets = book?.pageOffsets || [];
+        const totalPages = book?.pageCount || (pageOffsets.length > 0 ? pageOffsets.length : 1);
+        const currentPage = pageForOffset(pageOffsets, entry.currentOffset);
+        const furthestPage = pageForOffset(pageOffsets, entry.furthestOffset);
+        const progressPercent = Math.min(100, Math.round((currentPage / totalPages) * 100));
+
+        return {
+          id: entry._id.toString(),
+          book: book
+            ? {
+                id: book._id.toString(),
+                title: book.title,
+                coverUrl: book.coverUrl,
+                coverPublicId: book.coverPublicId,
+                genre: book.genre,
+                blurb: book.blurb,
+                pageCount: totalPages,
+                mature: book.mature,
+                status: book.status,
+                stats: book.stats,
+                writer: book.writerId ? { name: book.writerId.name, username: book.writerId.username } : null,
+              }
+            : null,
+          status: entry.status,
+          currentOffset: entry.currentOffset,
+          currentPage,
+          furthestOffset: entry.furthestOffset,
+          furthestPage,
+          totalPages,
+          progressPercent,
+          bookmarksCount: entry.bookmarks?.length || 0,
+          updatedAt: entry.updatedAt,
+        };
+      })
+      .filter((item) => {
+        if (!item.book) return false;
+        if (status === 'unfinished') {
+          return item.status !== 'finished' && (item.status === 'reading' || item.furthestPage <= item.totalPages);
+        }
+        return true;
+      });
 
     return {
       items: formatted,

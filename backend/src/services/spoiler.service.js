@@ -188,9 +188,12 @@ export async function filterAnalysis({
     .sort({ sceneNumber: 1 })
     .lean();
 
-  const visibleScenes = allScenes.filter(
-    (s) => (s.textRange?.start ?? 0) < furthestOffset
+  let visibleScenes = allScenes.filter(
+    (s) => (s.textRange?.start ?? 0) <= furthestOffset
   );
+  if (visibleScenes.length === 0 && allScenes.length > 0) {
+    visibleScenes = [allScenes[0]];
+  }
   const visibleSceneIdSet = new Set(visibleScenes.map((s) => s._id.toString()));
 
   // Apply per-feature spoiler filtering

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import AuthCollage from './AuthCollage';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, ArrowLeft } from 'lucide-react';
 import { getRoleHomePath } from '../../utils/roleRedirect';
 import { APP_NAME } from '../../constants/app';
 
@@ -18,23 +18,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getDestination = (targetUser) => {
+    const params = new URLSearchParams(location.search);
+    const queryRedirect = params.get('redirectTo');
+    if (queryRedirect) return queryRedirect;
+    if (location.state?.redirectTo) return location.state.redirectTo;
+    if (location.state?.from?.pathname) {
+      return `${location.state.from.pathname}${location.state.from.search || ''}`;
+    }
+    if (typeof location.state?.from === 'string') {
+      return location.state.from;
+    }
+    return getRoleHomePath(targetUser || user);
+  };
+
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (location.state?.from?.pathname) {
-        navigate(location.state.from.pathname, { replace: true });
-      } else {
-        navigate(getRoleHomePath(user), { replace: true });
-      }
+      navigate(getDestination(user), { replace: true });
     }
-  }, [isAuthenticated, user, navigate, location.state]);
-
-  const redirectByRole = (loggedInUser) => {
-    if (location.state?.from?.pathname) {
-      navigate(location.state.from.pathname);
-      return;
-    }
-    navigate(getRoleHomePath(loggedInUser));
-  };
+  }, [isAuthenticated, user, navigate, location.state, location.search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +45,7 @@ export default function LoginPage() {
 
     try {
       const data = await login(email, password);
-      redirectByRole(data.user);
+      navigate(getDestination(data.user), { replace: true });
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
     } finally {
@@ -52,7 +54,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-6">
+    <div className="min-h-[85vh] flex flex-col items-center justify-center py-6 px-4">
+      {/* Back to home navigation */}
+      <div className="w-full max-w-4xl mb-3 flex items-center justify-start">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-2 py-1 -ml-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to home</span>
+        </Link>
+      </div>
+
       <div className="w-full max-w-4xl bg-paper rounded border border-rule overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
         {/* Left Tinted Collage Panel */}
         <div className="h-full">
@@ -153,7 +166,11 @@ export default function LoginPage() {
           {/* Sign up link */}
           <div className="mt-6 text-center text-xs text-muted">
             New to {APP_NAME}?{' '}
-            <Link to="/signup" className="font-bold text-accent hover:underline">
+            <Link
+              to={`/signup${location.search}`}
+              state={location.state}
+              className="font-bold text-accent hover:underline"
+            >
               Create an account
             </Link>
           </div>

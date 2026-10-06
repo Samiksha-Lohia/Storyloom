@@ -11,6 +11,8 @@ import * as moodService from '../services/mood.service.js';
 import * as storyArcService from '../services/storyArc.service.js';
 import * as continuityService from '../services/continuity.service.js';
 import * as pitchService from '../services/pitch.service.js';
+import { triggerAnalysisIfPending, getJobsForDocument } from '../services/analysis.service.js';
+import logger from '../utilities/logger.js';
 import { BadRequestError } from '../utilities/custom-errors.js';
 
 const FEATURE_TO_STAGE = {
@@ -96,10 +98,19 @@ async function resolveRequestContext(req) {
     furthestOffset = parseInt(req.query.offset, 10) || 0;
   }
 
+  const documentId = book.documentId?._id || book.documentId;
+
+  // Automatically start processing narrative insights on-demand if pending
+  if (documentId) {
+    triggerAnalysisIfPending(documentId).catch((err) => {
+      logger.warn(`Failed to auto-trigger analysis on request for ${documentId}: ${err.message}`);
+    });
+  }
+
   return {
     user,
     book,
-    documentId: book.documentId?._id || book.documentId,
+    documentId,
     role,
     furthestOffset,
     showAll,
@@ -107,6 +118,20 @@ async function resolveRequestContext(req) {
 }
 
 export class AnalysisController {
+  static async triggerProcessing(req, res, next) {
+    try {
+      const ctx = await resolveRequestContext(req);
+      const triggered = await triggerAnalysisIfPending(ctx.documentId);
+      res.status(200).json({
+        success: true,
+        message: triggered
+          ? 'Narrative insights processing started.'
+          : 'Narrative insights processing already active or complete.',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
   static async getScenes(req, res, next) {
     try {
       const ctx = await resolveRequestContext(req);
@@ -405,7 +430,15 @@ export class AnalysisController {
     try {
       const ctx = await resolveRequestContext(req);
       const book = ctx.book;
-      const pitchPayload = await pitchService.getPitchPayload(book._id, req.user);
+      const raw = await pitchService.getPitchPayload(book._id, req.user);
+      const pitchPayload = await spoilerService.filterAnalysis({
+        feature: FEATURES.PITCH,
+        data: raw,
+        role: ctx.role,
+        book: ctx.book,
+        furthestOffset: ctx.furthestOffset,
+        showAll: ctx.showAll,
+      });
       const analysisStatus = await getAnalysisStatusForFeature(ctx.documentId, FEATURES.PITCH);
 
       res.status(200).json({
@@ -413,6 +446,20 @@ export class AnalysisController {
         message: 'Pitch analysis retrieved successfully.',
         data: pitchPayload,
         analysisStatus,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getPipelineStatus(req, res, next) {
+    try {
+      const ctx = await resolveRequestContext(req);
+      const jobs = await getJobsForDocument(ctx.documentId);
+      res.status(200).json({
+        success: true,
+        message: 'Pipeline status retrieved successfully.',
+        data: { jobs },
       });
     } catch (err) {
       next(err);

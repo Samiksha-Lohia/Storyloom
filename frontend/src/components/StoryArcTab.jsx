@@ -17,48 +17,62 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
     () => source || (documentId ? { kind: 'document', id: documentId } : null),
     [source, documentId]
   );
-  const stableOptions = useMemo(() => options, [options]);
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
   const [arc, setArc] = useState(initialData || null);
   const [scenes, setScenes] = useState({});
-  const [loading, setLoading] = useState(!initialData);
+  const [loading, setLoading] = useState(!initialData && Boolean(resolvedSource?.id));
 
   // Overlay toggles
   const [showThreeAct, setShowThreeAct] = useState(false);
   const [showHeroJourney, setShowHeroJourney] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (initialData) {
-      setArc(initialData);
-      setLoading(false);
-      return;
-    }
+  // Sync initialData if supplied
+  useEffect(() => {
+    if (!initialData) return;
+    setArc(initialData);
+    setLoading(false);
+  }, [initialData]);
+
+  // Network fetch if no initialData
+  useEffect(() => {
+    if (initialData) return;
     if (!resolvedSource?.id) {
       setLoading(false);
       return;
     }
+
+    let isCancelled = false;
     setLoading(true);
-    try {
-      const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
-      const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
-      const scenesMap = {};
-      scenesList.forEach(s => {
-        scenesMap[(s._id || s.id)?.toString()] = s;
-      });
-      setScenes(scenesMap);
 
-      const arcRes = await api.analysis.getArc(resolvedSource, stableOptions).catch(() => null);
-      const arcData = arcRes?.data !== undefined ? arcRes.data : arcRes;
-      setArc(arcData);
-    } catch (err) {
-      console.error('Failed to load story arc:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [resolvedSource, stableOptions, initialData]);
+    (async () => {
+      try {
+        const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
+        if (isCancelled) return;
+        const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
+        const scenesMap = {};
+        scenesList.forEach(s => {
+          scenesMap[(s._id || s.id)?.toString()] = s;
+        });
+        setScenes(scenesMap);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+        const arcRes = await api.analysis.getArc(resolvedSource, stableOptions).catch(() => null);
+        if (isCancelled) return;
+        const arcData = arcRes?.data !== undefined ? arcRes.data : arcRes;
+        setArc(arcData);
+      } catch (err) {
+        console.error('Failed to load story arc:', err);
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialData)]);
 
   // Build chart dataset including overlays
   const chartData = useMemo(() => {

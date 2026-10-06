@@ -28,14 +28,12 @@ import { PlaceholderPage, NotFoundPage } from './pages/PlaceholderPage';
 import { DevWorkspacePage } from './pages/dev/DevWorkspacePage';
 import { NewBookPage } from './pages/writer/NewBookPage';
 import { MyBooksPage } from './pages/writer/MyBooksPage';
-import { WriterBookInsightsPage } from './pages/writer/WriterBookInsightsPage';
 import { ReaderPage } from './pages/reader/ReaderPage';
 import { LibraryPage } from './pages/library/LibraryPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminPublishersPage from './pages/admin/AdminPublishersPage';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminBooksPage from './pages/admin/AdminBooksPage';
 import { WriterDashboardPage } from './pages/writer/WriterDashboardPage';
 import { WriterReviewsPage } from './pages/writer/WriterReviewsPage';
 import { EditBookPage } from './pages/writer/EditBookPage';
@@ -54,7 +52,14 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Dedicated Reader Route (Immersive full screen with custom top bar & scrubber) */}
-          <Route path="/read/:bookId" element={<ReaderPage />} />
+          <Route
+            path="/read/:bookId"
+            element={
+              <RoleRoute>
+                <ReaderPage />
+              </RoleRoute>
+            }
+          />
 
           {/* Public Routes with Top Bar & Footer */}
           <Route element={<PublicLayout />}>
@@ -62,7 +67,14 @@ function App() {
             <Route path="/browse" element={<CataloguePage />} />
             <Route path="/browse/:genre" element={<CataloguePage />} />
             <Route path="/search" element={<CataloguePage />} />
-            <Route path="/book/:id" element={<BookPage />} />
+            <Route
+              path="/book/:id"
+              element={
+                <RoleRoute>
+                  <BookPage />
+                </RoleRoute>
+              }
+            />
             <Route path="/writer/:username" element={<PublicWriterProfilePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
@@ -109,7 +121,6 @@ function App() {
             <Route path="books" element={<MyBooksPage />} />
             <Route path="books/new" element={<NewBookPage />} />
             <Route path="books/:id/edit" element={<EditBookPage />} />
-            <Route path="books/:id/insights" element={<WriterBookInsightsPage />} />
             <Route path="reviews" element={<WriterReviewsPage />} />
             <Route path="requests" element={<WriterRequestsPage />} />
             <Route path="chat" element={<ConversationsPage />} />
@@ -163,7 +174,6 @@ function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="publishers" element={<AdminPublishersPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
-            <Route path="books" element={<AdminBooksPage />} />
             <Route
               path="*"
               element={

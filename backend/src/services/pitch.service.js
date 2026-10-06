@@ -25,30 +25,118 @@ const pitchValidationSchema = Joi.object({
 });
 
 /**
- * Creates a fallback template-built pitch card when LLM generation fails or is unavailable.
+ * Creates a dynamic, book-tailored pitch card when LLM generation fails or is unavailable.
+ * Derives tone, target audience, and comparable titles directly from the book's specific
+ * metadata, tags, and blurb without hardcoding generic placeholders.
  */
 export const buildFallbackPitchCard = (book, inputHash = null) => {
   const blurbText = (book.blurb || '').trim();
   const logline = blurbText.length > 0
-    ? (blurbText.length > 200 ? blurbText.slice(0, 197) + '...' : blurbText)
-    : `A gripping ${book.genre || 'General Fiction'} journey through adversity, human connection, and destiny.`;
+    ? (blurbText.length > 240 ? blurbText.slice(0, 237) + '...' : blurbText)
+    : `A gripping ${book.genre || 'literary'} journey exploring conflict, ambition, and identity.`;
 
-  const forFansOf = [
-    `Contemporary ${book.genre || 'Fiction'}`,
-    'Character-Driven Literary Novels',
-  ];
+  const tags = (book.tags || []).map((t) => t.toLowerCase().trim());
+  const genreLower = (book.genre || '').toLowerCase();
+  const titleLower = (book.title || '').toLowerCase();
+
+  // 1. Dynamic Tone based on tags and genre
+  let tone = 'Narrative-Driven, Atmospheric, Resonant';
+  if (tags.length > 0) {
+    const formattedTags = tags.slice(0, 3).map((t) =>
+      t.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    );
+    tone = `${formattedTags.join(', ')}, Atmospheric`;
+  } else if (genreLower.includes('cyberpunk') || tags.includes('cyberpunk')) {
+    tone = 'Gritty, Fast-Paced, Neo-Noir';
+  } else if (genreLower.includes('sci') || genreLower.includes('science')) {
+    tone = 'Cerebral, Atmospheric, Visionary';
+  } else if (genreLower.includes('fantasy')) {
+    tone = 'Mythic, Immersive, High-Stakes';
+  } else if (genreLower.includes('horror')) {
+    tone = 'Chilling, Uncanny, Psychological Dread';
+  } else if (genreLower.includes('mystery')) {
+    tone = 'Suspenseful, Enigmatic, Meticulous';
+  } else if (genreLower.includes('romance')) {
+    tone = 'Intense, Emotionally Charged, Passionate';
+  } else if (genreLower.includes('thriller')) {
+    tone = 'Propulsive, High-Tension, Urgent';
+  } else if (genreLower.includes('historical')) {
+    tone = 'Evocative, Richly Detailed, Dramatic';
+  } else if (genreLower.includes('dystopian')) {
+    tone = 'Bleak, Resilient, World-Weary';
+  }
+
+  // 2. Dynamic Comparable Titles / Authors tailored to story theme
+  let forFansOf = [];
+  if (tags.includes('steampunk') || titleLower.includes('clockwork')) {
+    forFansOf = ['Philip Pullman (His Dark Materials)', 'China Miéville (Perdido Street Station)', 'Scott Lynch (Gentleman Bastard)'];
+  } else if (tags.includes('cosmic-horror') || tags.includes('hard-sci-fi') || tags.includes('alien-ruins')) {
+    forFansOf = ['Arthur C. Clarke (2001: A Space Odyssey)', 'Jeff VanderMeer (Annihilation)', 'Peter Watts (Blindsight)'];
+  } else if (tags.includes('cyberpunk') || tags.includes('synthwave') || genreLower.includes('cyberpunk')) {
+    forFansOf = ['William Gibson (Neuromancer)', 'Richard K. Morgan (Altered Carbon)', 'Neal Stephenson (Snow Crash)'];
+  } else if (tags.includes('ai') || tags.includes('space-station')) {
+    forFansOf = ['Ann Leckie (Ancillary Justice)', 'Martha Wells (Murderbot Diaries)', 'Adrian Tchaikovsky (Children of Time)'];
+  } else if (tags.includes('venice') || (genreLower.includes('historical') && tags.includes('espionage'))) {
+    forFansOf = ['Sarah Dunant (The Birth of Venus)', 'Hilary Mantel (Wolf Hall)', 'C.J. Sansom (Shardlake)'];
+  } else if (tags.includes('pirates') || tags.includes('enemies-to-lovers') || genreLower.includes('romance')) {
+    forFansOf = ['Tricia Levenseller (Daughter of the Pirate King)', 'Grace Draven (Radiance)', 'Samantha Shannon (The Priory of the Orange Tree)'];
+  } else if (tags.includes('gothic') || tags.includes('body-horror') || genreLower.includes('horror')) {
+    forFansOf = ['Shirley Jackson (The Haunting of Hill House)', 'Silvia Moreno-Garcia (Mexican Gothic)', 'Catriona Ward (The Last House on Needless Street)'];
+  } else if (tags.includes('whodunit') || tags.includes('detective') || genreLower.includes('mystery')) {
+    forFansOf = ['Agatha Christie', 'Tana French (In the Woods)', 'Anthony Horowitz (Magpie Murders)'];
+  } else if (tags.includes('titans') || tags.includes('desert') || (genreLower.includes('fantasy') && tags.includes('epic-fantasy'))) {
+    forFansOf = ['Brandon Sanderson (The Stormlight Archive)', 'Patrick Rothfuss (The Name of the Wind)', 'Robert Jordan (The Wheel of Time)'];
+  } else if (tags.includes('post-apocalyptic') || tags.includes('scavengers') || genreLower.includes('dystopian')) {
+    forFansOf = ['Hugh Howey (Wool)', 'Pierce Brown (Red Rising)', 'Emily St. John Mandel (Station Eleven)'];
+  } else if (tags.includes('conspiracy') || tags.includes('action') || genreLower.includes('thriller')) {
+    forFansOf = ['Blake Crouch (Dark Matter)', 'Michael Crichton (Jurassic Park)', 'Robert Ludlum (The Bourne Identity)'];
+  } else if (tags.includes('alchemy') || tags.includes('prague') || tags.includes('time-loop')) {
+    forFansOf = ['Umberto Eco (Foucault\'s Pendulum)', 'Helene Wecker (The Golem and the Jinni)', 'David Mitchell (The Bone Clocks)'];
+  } else if (genreLower.includes('fantasy')) {
+    forFansOf = ['Robin Hobb (Assassin\'s Apprentice)', 'N.K. Jemisin (The Fifth Season)', 'Samantha Shannon'];
+  } else if (genreLower.includes('sci')) {
+    forFansOf = ['Ursula K. Le Guin (The Left Hand of Darkness)', 'Alastair Reynolds (Revelation Space)', 'Ted Chiang'];
+  } else {
+    forFansOf = [`Contemporary ${book.genre || 'Fiction'} Aficionados`, `Readers of Character-Driven Literary ${book.genre || 'Novels'}`];
+  }
+
+  // 3. Dynamic Target Audience
+  let targetAudience = '';
+  if (tags.includes('steampunk')) {
+    targetAudience = 'Adult & New Adult readers of intricate worldbuilding, celestial gears, and rebellion fiction';
+  } else if (tags.includes('cosmic-horror') || tags.includes('hard-sci-fi')) {
+    targetAudience = 'Adult readers of hard sci-fi, extraterrestrial mysteries, and deep-space atmospheric horror';
+  } else if (genreLower.includes('cyberpunk') || tags.includes('cyberpunk')) {
+    targetAudience = 'Fans of gritty cyberpunk noir, neuro-hacking thrillers, and corporate espionage heists';
+  } else if (tags.includes('ai') || tags.includes('space-station')) {
+    targetAudience = 'Readers of speculative technological fiction, emergent consciousness, and space orbital drama';
+  } else if (tags.includes('venice') || genreLower.includes('historical')) {
+    targetAudience = 'Adult readers of Renaissance historical intrigue, Italian court espionage, and slow-burn suspense';
+  } else if (genreLower.includes('romance') || tags.includes('enemies-to-lovers')) {
+    targetAudience = 'Enthusiasts of high-seas adventure, enemies-to-lovers romantic tension, and dynamic duos';
+  } else if (genreLower.includes('horror') || tags.includes('gothic')) {
+    targetAudience = 'Gothic horror aficionados, dark academia enthusiasts, and fans of uncanny anatomical mysteries';
+  } else if (genreLower.includes('mystery') || tags.includes('whodunit')) {
+    targetAudience = 'Fans of classic British whodunits, coastal manor secrets, and meticulous procedural sleuths';
+  } else if (genreLower.includes('fantasy') || tags.includes('titans')) {
+    targetAudience = 'Epic fantasy enthusiasts drawn to expansive desert worldbuilding, nomadic clans, and titan lore';
+  } else if (genreLower.includes('dystopian') || tags.includes('survival')) {
+    targetAudience = 'Readers of post-apocalyptic scavenging fiction, found-family survival bonds, and lunar cataclysms';
+  } else if (genreLower.includes('thriller')) {
+    targetAudience = 'Fans of fast-paced speculative thrillers, covert military laboratories, and rogue operatives';
+  } else {
+    targetAudience = book.mature
+      ? `Adult & Mature Fiction Readers (18+) exploring ${book.genre || 'literary'} depth`
+      : `General Fiction & New Adult Readers who appreciate immersive ${book.genre || 'storytelling'}`;
+  }
 
   return {
     logline,
     genre: book.genre || 'General Fiction',
-    tone: 'Narrative-driven, Atmospheric, Emotionally resonant',
-    targetAudience: book.mature
-      ? 'Adult & Mature Fiction Readers (18+)'
-      : 'General Fiction & Young Adult Readers',
+    tone,
+    targetAudience,
     forFansOf,
-    audience: book.mature
-      ? 'Adult & Mature Fiction Readers (18+)'
-      : 'General Fiction & Young Adult Readers',
+    audience: targetAudience,
     comparableTitles: forFansOf,
     generatedAt: new Date(),
     inputHash: inputHash || '',
@@ -85,9 +173,10 @@ export const generatePitchCard = async (bookId, force = false) => {
   const rawInput = `${book.title || ''}::${book.blurb || ''}::${book.genre || ''}::${sampleExcerpt}`;
   const inputHash = crypto.createHash('sha256').update(rawInput).digest('hex');
 
-  // Check cache unless forced
+  // Check cache unless forced or old generic demo seed
   if (
     !force &&
+    book.pitchCard?.inputHash !== 'demo_seed_hash' &&
     book.pitchCard?.inputHash === inputHash &&
     book.pitchCard?.logline &&
     book.pitchCard?.logline.trim() !== ''
@@ -132,8 +221,7 @@ Return a single JSON object strictly matching this schema:
     if (error) {
       logger.warn(`Pitch card LLM output failed schema validation: ${error.message}. Using template fallback.`);
       const fallback = buildFallbackPitchCard(book, inputHash);
-      book.pitchCard = fallback;
-      await book.save();
+      await Book.findByIdAndUpdate(book._id, { pitchCard: fallback });
       return fallback;
     }
 
@@ -149,14 +237,12 @@ Return a single JSON object strictly matching this schema:
       inputHash,
     };
 
-    book.pitchCard = pitchCard;
-    await book.save();
+    await Book.findByIdAndUpdate(book._id, { pitchCard, pitchCardCleared: false });
     return pitchCard;
   } catch (err) {
     logger.warn(`Failed to generate pitch card via AI (${err.message}). Using fallback template card.`);
     const fallback = buildFallbackPitchCard(book, inputHash);
-    book.pitchCard = fallback;
-    await book.save();
+    await Book.findByIdAndUpdate(book._id, { pitchCard: fallback, pitchCardCleared: false });
     return fallback;
   }
 };
@@ -192,6 +278,33 @@ export const regeneratePitchCard = async (bookId, user) => {
   }
 
   return generatePitchCard(bookId, true);
+};
+
+/**
+ * Clear pitch card for a book (owner or admin only).
+ *
+ * @param {string} bookId
+ * @param {any} user
+ * @returns {Promise<object>}
+ */
+export const clearPitchCard = async (bookId, user) => {
+  const book = await Book.findById(bookId);
+  if (!book) {
+    throw new NotFoundError('Book not found.');
+  }
+
+  if (!user) {
+    throw new ForbiddenError('Authentication required.');
+  }
+
+  const isOwner = book.writerId?.toString() === (user.id || user._id)?.toString();
+  const isAdmin = user.role === USER_ROLES.ADMIN;
+  if (!isOwner && !isAdmin) {
+    throw new ForbiddenError('Only the book owner or an administrator can clear pitch cards.');
+  }
+
+  await Book.findByIdAndUpdate(book._id, { $set: { pitchCard: null, pitchCardCleared: true } });
+  return { success: true, message: 'Pitch card cleared successfully.' };
 };
 
 /**
@@ -233,10 +346,22 @@ export const getPitchPayload = async (bookId, user) => {
     throw new ForbiddenError('Pitch panel is restricted to approved publishers and authors.');
   }
 
-  // 2. Fetch or generate pitch card
+  // 2. Fetch cached pitch card; if cleared by user, respect cleared state
   let pitchCard = book.pitchCard;
-  if (!pitchCard || !pitchCard.logline || pitchCard.logline.trim() === '') {
-    pitchCard = await generatePitchCard(book._id);
+  const isOldGenericCard =
+    pitchCard?.inputHash === 'demo_seed_hash' ||
+    pitchCard?.tone === 'Narrative-driven, Atmospheric, Emotionally resonant' ||
+    (Array.isArray(pitchCard?.forFansOf) &&
+      pitchCard.forFansOf.length === 3 &&
+      pitchCard.forFansOf[0] === 'Brandon Sanderson' &&
+      pitchCard.forFansOf[1] === 'N.K. Jemisin' &&
+      pitchCard.forFansOf[2] === 'Ursula K. Le Guin' &&
+      book.genre !== 'Epic Fantasy');
+
+  if (book.pitchCardCleared) {
+    pitchCard = null;
+  } else if (!pitchCard || !pitchCard.logline || pitchCard.logline.trim() === '' || isOldGenericCard) {
+    pitchCard = await generatePitchCard(book._id, isOldGenericCard);
   }
 
   const documentId = book.documentId;
@@ -283,7 +408,7 @@ export const getPitchPayload = async (bookId, user) => {
   let moodSummary = {
     dominantEmotions: [],
     intensityRange: { min: 0, max: 0, average: 0 },
-    overallTone: pitchCard.tone || 'Balanced',
+    overallTone: pitchCard?.tone || 'Balanced',
   };
 
   if (moods && moods.length > 0) {
@@ -316,7 +441,7 @@ export const getPitchPayload = async (bookId, user) => {
         max: Math.round(maxIntensity * 100) / 100,
         average: Math.round((totalIntensity / moods.length) * 100) / 100,
       },
-      overallTone: dominant[0]?.emotion || pitchCard.tone || 'Engaging',
+      overallTone: dominant[0]?.emotion || pitchCard?.tone || 'Engaging',
     };
   }
 

@@ -6,7 +6,6 @@ import CharactersTab from './CharactersTab';
 import RelationshipsTab from './RelationshipsTab';
 import TimelineTab from './TimelineTab';
 import StoryArcTab from './StoryArcTab';
-import ContinuityTab from './ContinuityTab';
 import AskQuestionsTab from './AskQuestionsTab';
 
 import { 
@@ -64,7 +63,6 @@ export default function Workspace({ documentId, onBack }) {
     { id: 'relationships', label: 'Relationships', icon: <GitFork className="w-4 h-4" /> },
     { id: 'timeline', label: 'Story Timeline', icon: <Clock className="w-4 h-4" /> },
     { id: 'arc', label: 'Story Arc', icon: <BarChart2 className="w-4 h-4" /> },
-    { id: 'continuity', label: 'Continuity', icon: <ShieldAlert className="w-4 h-4" /> },
     { id: 'ask', label: 'Ask Questions', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
@@ -156,7 +154,6 @@ export default function Workspace({ documentId, onBack }) {
             {activeTab === 'relationships' && <RelationshipsTab documentId={documentId} />}
             {activeTab === 'timeline' && <TimelineTab documentId={documentId} />}
             {activeTab === 'arc' && <StoryArcTab documentId={documentId} />}
-            {activeTab === 'continuity' && <ContinuityTab documentId={documentId} />}
             {activeTab === 'ask' && <AskQuestionsTab documentId={documentId} />}
           </div>
         </main>

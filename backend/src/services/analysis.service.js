@@ -3,6 +3,8 @@ import { pipelineQueue } from '../queues/pipeline.queue.js';
 import { AnalysisDto } from '../dtos/analysis.dto.js';
 import { NotFoundError, BadRequestError } from '../utilities/custom-errors.js';
 import { JOB_STATUSES } from '../constants/job-status.js';
+import STAGES from '../constants/stages.js';
+import { enqueueReadyStages } from '../workers/pipeline.worker.js';
 import logger from '../utilities/logger.js';
 
 /**
@@ -43,11 +45,52 @@ const retryStage = async (documentId, stage) => {
   await pipelineQueue.add(
     stage,
     { documentId, stage },
-    { attempts: 3, backoff: { type: 'exponential', delay: 5000 } }
+    { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `${documentId}-${stage}-${Date.now()}` }
   );
 
   logger.info(`Stage '${stage}' for document ${documentId} re-queued.`);
   return AnalysisDto.toResponse(updated);
 };
 
-export { getJobsForDocument, retryStage };
+/**
+ * Kicks off narrative insights processing for a document on-demand when requested.
+ *
+ * @param {string} documentId
+ * @returns {Promise<boolean>}
+ */
+const triggerAnalysisIfPending = async (documentId) => {
+  if (!documentId) return false;
+
+  const jobs = await processingJobRepository.findByDocumentId(documentId);
+  if (!jobs || jobs.length === 0) return false;
+
+  const nonParsingJobs = jobs.filter((j) => j.stage !== STAGES.PARSING);
+  const allComplete = nonParsingJobs.length > 0 && nonParsingJobs.every((j) => j.status === JOB_STATUSES.COMPLETED);
+  if (allComplete) {
+    return false; // All analysis stages are already complete
+  }
+
+  // Check if any job is currently running
+  const anyRunning = jobs.some((j) => j.status === JOB_STATUSES.RUNNING);
+  if (anyRunning) {
+    return false; // Actively processing
+  }
+
+  // Reset any failed jobs back to queued so they can be re-run cleanly
+  for (const j of jobs) {
+    if (j.status === JOB_STATUSES.FAILED) {
+      await processingJobRepository.updateOne(
+        { documentId, stage: j.stage },
+        { status: JOB_STATUSES.QUEUED, progress: 0, error: null }
+      );
+    }
+  }
+
+  // Enqueue all stages whose dependencies are ready (starts with scenes)
+  await enqueueReadyStages(documentId);
+
+  logger.info(`Narrative insights processing triggered for document ${documentId}`);
+  return true;
+};
+
+export { getJobsForDocument, retryStage, triggerAnalysisIfPending };

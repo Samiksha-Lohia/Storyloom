@@ -88,6 +88,17 @@ router.get(
 );
 
 /**
+ * GET /api/me/reading-list
+ * Alias for /library
+ */
+router.get(
+  '/reading-list',
+  authorize(...ALLOWED_ROLES),
+  validate(libraryQuerySchema),
+  MeController.getLibrary
+);
+
+/**
  * GET /api/me/library/:bookId
  * Retrieves specific book progress and bookmarks
  */

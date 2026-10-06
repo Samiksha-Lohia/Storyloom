@@ -190,6 +190,7 @@ export function LibraryPage() {
                         <div className="rounded overflow-hidden border border-rule aspect-2/3">
                           <CoverImage
                             publicId={book.coverPublicId}
+                            url={book.coverUrl}
                             title={book.title}
                             genre={book.genre}
                             preset="small"

@@ -116,7 +116,11 @@ export function ReaderPage() {
           console.warn('Scene markers unavailable:', scErr);
         }
 
-        // 4. Fetch User Library Progress (Resume point)
+        // 4. Fetch User Library Progress and handle URL ?page query parameter (Resume point)
+        const queryParams = new URLSearchParams(window.location.search);
+        const urlPage = parseInt(queryParams.get('page'), 10);
+        let targetStartPage = 1;
+
         if (user) {
           try {
             const entry = await api.me.getLibraryBook(bookId);
@@ -124,12 +128,20 @@ export function ReaderPage() {
               setLibraryEntry(entry);
               const resumePage = entry.currentPage || 1;
               if (resumePage >= 1 && resumePage <= count) {
-                setCurrentPage(resumePage);
+                targetStartPage = resumePage;
               }
             }
           } catch {
             // First page fetch will auto-create entry on server
           }
+        }
+
+        if (!isNaN(urlPage) && urlPage >= 1 && urlPage <= count) {
+          targetStartPage = urlPage;
+        }
+
+        if (isMounted) {
+          setCurrentPage(targetStartPage);
         }
       } catch (err) {
         if (isMounted) {
@@ -209,7 +221,7 @@ export function ReaderPage() {
   // Debounced progress saving (~1s after page turn)
   const saveProgress = useCallback(
     (page) => {
-      if (!user || !book?.pageOffsets) return;
+      if (!user) return;
 
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
@@ -217,7 +229,10 @@ export function ReaderPage() {
 
       saveTimeoutRef.current = setTimeout(async () => {
         try {
-          const offset = book.pageOffsets[page - 1] || 0;
+          const offset =
+            book?.pageOffsets && book.pageOffsets[page - 1] !== undefined
+              ? book.pageOffsets[page - 1]
+              : 0;
           const updated = await api.me.updateLibraryBook(bookId, {
             currentPage: page,
             currentOffset: offset,
@@ -232,6 +247,13 @@ export function ReaderPage() {
     },
     [book, bookId, user]
   );
+
+  // Ensure reading progress saves when page changes or book loads
+  useEffect(() => {
+    if (user && book && currentPage > 0) {
+      saveProgress(currentPage);
+    }
+  }, [book, user, currentPage, saveProgress]);
 
   // Turn Page
   const goToPage = useCallback(

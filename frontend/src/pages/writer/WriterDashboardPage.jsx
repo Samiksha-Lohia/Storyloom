@@ -395,10 +395,10 @@ export function WriterDashboardPage() {
                         </td>
                         <td className="py-3 text-right">
                           <Link
-                            to={`/w/books/${book.id}/insights`}
+                            to={`/read/${book.id}`}
                             className="inline-flex items-center gap-1 text-[11px] font-bold text-accent hover:underline"
                           >
-                            <span>Analysis</span>
+                            <span>Read</span>
                             <ExternalLink className="w-3 h-3" />
                           </Link>
                         </td>

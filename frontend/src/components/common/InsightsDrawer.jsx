@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Users,
@@ -11,16 +11,17 @@ import {
   ShieldAlert,
   Eye,
   EyeOff,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
+import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import CharactersTab from '../CharactersTab';
 import RelationshipsTab from '../RelationshipsTab';
 import TimelineTab from '../TimelineTab';
-import OverviewTab from '../OverviewTab';
+import MoodTab from '../MoodTab';
 import StoryArcTab from '../StoryArcTab';
-import SearchTab from '../SearchTab';
 import AskQuestionsTab from '../AskQuestionsTab';
-import ContinuityTab from '../ContinuityTab';
 
 export function InsightsDrawer({
   isOpen = true,
@@ -32,7 +33,8 @@ export function InsightsDrawer({
 }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('characters');
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(Boolean(inline));
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Determine user role relative to this book
   const isWriterOwner = Boolean(
@@ -42,15 +44,28 @@ export function InsightsDrawer({
   const isPublisher = user?.role === 'publisher';
   const isReader = !isWriterOwner && !isAdmin && !isPublisher;
 
-  const bookId = book?._id || book?.id;
-  const source = { kind: 'book', id: bookId };
+  const bookId = (book?._id || book?.id)?.toString();
+  const source = useMemo(() => ({ kind: 'book', id: bookId }), [bookId]);
 
   // Page cutoff for spoilers: furthest read page, or currentPage
   const displayPage = Math.max(1, furthestPage || currentPage || 1);
-  const options = {
+  const options = useMemo(() => ({
     upto: displayPage,
     showAll: showAll,
-  };
+  }), [displayPage, showAll]);
+
+  // Trigger processing on-demand when user opens narrative insights
+  useEffect(() => {
+    if (bookId && isOpen) {
+      api.analysis.triggerProcessing({ kind: 'book', id: bookId }).then((res) => {
+        if (res?.message?.includes('started')) {
+          setIsProcessing(true);
+        }
+      }).catch((err) => {
+        console.warn('Failed to trigger narrative analysis:', err);
+      });
+    }
+  }, [bookId, isOpen]);
 
   const tabs = [
     { id: 'characters', label: 'Characters', icon: Users, roleAllowed: true },
@@ -58,14 +73,7 @@ export function InsightsDrawer({
     { id: 'timeline', label: 'Timeline', icon: Clock, roleAllowed: true },
     { id: 'mood', label: 'Mood', icon: Smile, roleAllowed: true },
     { id: 'arc', label: 'Arc', icon: TrendingUp, roleAllowed: true },
-    { id: 'search', label: 'Search', icon: Search, roleAllowed: true },
     { id: 'ask', label: 'Ask AI', icon: MessageSquare, roleAllowed: true },
-    {
-      id: 'continuity',
-      label: 'Continuity',
-      icon: ShieldAlert,
-      roleAllowed: isWriterOwner || isAdmin,
-    },
   ];
 
   if (!isOpen && !inline) return null;
@@ -150,6 +158,28 @@ export function InsightsDrawer({
         )}
       </div>
 
+      {/* Narrative Processing Active Indicator */}
+      {isProcessing && (
+        <div className="px-4 py-2 bg-accent/10 border-b border-rule flex items-center justify-between gap-2 text-xs text-ink">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-accent animate-spin" />
+            <span className="text-[11px] font-medium">
+              Narrative processing started! Character graphs, timeline, and emotional arcs will appear as stages complete.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="flex items-center gap-1 text-[11px] font-bold text-accent hover:underline cursor-pointer flex-shrink-0"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Tabs Navigation Bar */}
       <div className="px-4 py-2 border-b border-rule flex items-center gap-1.5 overflow-x-auto">
         {tabs.map((tab) => {
@@ -186,11 +216,11 @@ export function InsightsDrawer({
               Access Restricted
             </h4>
             <p className="text-xs text-muted mt-1 leading-relaxed">
-              Continuity analysis is reserved for the author and platform administrators.
+              This tab is reserved for authorized users.
             </p>
           </div>
         ) : (
-          <div className="insights-tab-content">
+          <div className="insights-tab-content min-h-[540px] w-full flex flex-col">
             {activeTab === 'characters' && (
               <CharactersTab source={source} options={options} />
             )}
@@ -201,19 +231,13 @@ export function InsightsDrawer({
               <TimelineTab source={source} options={options} />
             )}
             {activeTab === 'mood' && (
-              <OverviewTab source={source} options={options} />
+              <MoodTab source={source} options={options} />
             )}
             {activeTab === 'arc' && (
               <StoryArcTab source={source} options={options} />
             )}
-            {activeTab === 'search' && (
-              <SearchTab source={source} options={options} />
-            )}
             {activeTab === 'ask' && (
               <AskQuestionsTab source={source} options={options} />
-            )}
-            {activeTab === 'continuity' && (
-              <ContinuityTab source={source} options={options} />
             )}
           </div>
         )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, MessageSquare, BookOpen, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 
 export default function FinishCard({
@@ -52,67 +52,24 @@ export default function FinishCard({
           </p>
         </div>
 
-        {/* Rating & Review */}
-        <div className={`p-4 rounded border text-left space-y-3 ${styles.itemBg}`}>
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
-              <Star className="w-4 h-4 text-muted" />
-              Rate this Story
-            </span>
-            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
-              Coming in Phase 5
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 text-muted opacity-60 cursor-not-allowed">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <span key={s} className="text-xl">★</span>
-            ))}
-          </div>
-
-          <div className="pt-2 border-t border-rule flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
-              <MessageSquare className="w-4 h-4 text-muted" />
-              Write a Review
-            </span>
-            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
-              Coming in Phase 5
-            </span>
-          </div>
-        </div>
-
-        {/* Similar Books */}
-        <div className={`p-4 rounded border text-left space-y-2 ${styles.itemBg}`}>
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-xs flex items-center gap-1.5 text-ink">
-              <BookOpen className="w-4 h-4 text-muted" />
-              Similar Stories in {book.genre || 'General'}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider border border-rule text-muted px-2 py-0.5 rounded">
-              Coming in Phase 5
-            </span>
-          </div>
-          <p className={`text-xs ${styles.subtext}`}>
-            Personalized narrative recommendations will appear here.
-          </p>
-        </div>
-
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
           <Link to={`/book/${book.id || book._id}`}>
-            <Button variant="secondary" size="md">
+            <Button variant="primary" size="md">
               Return to Story Page
             </Button>
           </Link>
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={onReplayFromStart}
-            className="flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Read Again from Page 1
-          </Button>
+          {onReplayFromStart && (
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={onReplayFromStart}
+              className="flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Read Again from Page 1
+            </Button>
+          )}
         </div>
       </div>
     </div>

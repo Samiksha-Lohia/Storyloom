@@ -35,10 +35,13 @@ export function AdminUsersPage() {
         role: roleFilter !== 'all' ? roleFilter : undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       });
-      setUsers(res?.data?.users || res?.users || []);
+      const userList = Array.isArray(res?.data)
+        ? res.data
+        : (res?.users || res?.data?.users || []);
+      setUsers(userList);
       setPagination(
-        res?.data?.pagination ||
-          res?.pagination || { total: 0, totalPages: 1 }
+        res?.pagination ||
+          res?.data?.pagination || { total: userList.length, totalPages: 1 }
       );
     } catch (err) {
       console.error('Failed to load admin users:', err);

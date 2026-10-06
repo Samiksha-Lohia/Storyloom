@@ -35,8 +35,11 @@ export function BookPageData({
 
   const bookId = book?.id || book?._id;
 
-  // Effective template and accent
-  const templateName = (forcedTemplate || book?.template || 'classic').toLowerCase();
+  // Effective template and accent (safe fallback: 'accent' -> 'classic')
+  let templateName = (forcedTemplate || book?.template || 'classic').toLowerCase();
+  if (templateName === 'accent') {
+    templateName = 'classic';
+  }
   const accent = forcedAccent || book?.accent || DEFAULT_ACCENT;
 
   // Load library progress if not in preview mode
@@ -132,7 +135,13 @@ export function BookPageData({
           Start Reading (Preview)
         </button>
       ) : (
-        <Link to={`/read/${bookId}`}>
+        <Link
+          to={
+            libraryEntry?.currentPage && libraryEntry.currentPage > 1
+              ? `/read/${bookId}?page=${libraryEntry.currentPage}`
+              : `/read/${bookId}`
+          }
+        >
           <button
             type="button"
             style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
@@ -288,9 +297,9 @@ export function BookPageData({
               </div>
             ) : (
               <BookReviews
-                bookId={book?._id}
+                bookId={bookId}
                 bookTitle={book?.title}
-                writerId={book?.writerId?._id || book?.writerId}
+                writerId={book?.writerId?._id || book?.writerId?.id || book?.writerId}
               />
             )}
           </div>
@@ -374,12 +383,7 @@ export function BookPageData({
     user,
   };
 
-  if (templateName === 'showcase') {
-    return <ShowcaseTemplate {...dataProps} />;
-  }
-  if (templateName === 'notebook') {
-    return <NotebookTemplate {...dataProps} />;
-  }
+  // Whoever reads a book (reader, writer, publisher, admin) sees the Classic template
   return <ClassicTemplate {...dataProps} />;
 }
 

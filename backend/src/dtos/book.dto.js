@@ -1,6 +1,7 @@
 export class BookDto {
   constructor(book) {
     this.id = (book._id || book.id).toString();
+    this._id = this.id;
     this.writerId = book.writerId ? (book.writerId._id || book.writerId).toString() : null;
     if (book.writerId && typeof book.writerId === 'object' && book.writerId.name) {
       this.author = {

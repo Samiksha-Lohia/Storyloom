@@ -77,7 +77,11 @@ export default function NotificationBell() {
     setIsOpen(false);
 
     const role = currentUser?.role || 'reader';
-    if (notif.type === 'publish_request_received') {
+    if (notif.data?.url) {
+      navigate(notif.data.url);
+    } else if (notif.type === 'book_published') {
+      navigate(notif.data?.bookId ? `/book/${notif.data.bookId}` : '/browse');
+    } else if (notif.type === 'publish_request_received') {
       navigate('/w/requests');
     } else if (
       notif.type === 'publish_request_accepted' ||
@@ -90,6 +94,8 @@ export default function NotificationBell() {
       navigate(convoId ? `${chatBase}?convo=${convoId}` : chatBase);
     } else if (notif.type === 'review_received') {
       navigate('/w/reviews');
+    } else if (notif.type === 'moderation_action' || notif.type === 'report_action') {
+      navigate('/library');
     }
   };
 

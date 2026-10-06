@@ -1,7 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Award, Tag, BookOpen, Heart } from 'lucide-react';
+import { api } from '../services/api';
 
-export default function CharactersTab({ characters = [], loading }) {
+export default function CharactersTab({
+  documentId,
+  source,
+  options = {},
+  characters: initialCharacters = [],
+  loading: initialLoading,
+}) {
+  const resolvedSource = useMemo(
+    () => source || (documentId ? { kind: 'document', id: documentId } : null),
+    [source, documentId]
+  );
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
+
+  const [characters, setCharacters] = useState(initialCharacters || []);
+  const [loading, setLoading] = useState(
+    initialLoading !== undefined
+      ? initialLoading
+      : (!initialCharacters?.length && Boolean(resolvedSource?.id))
+  );
+
+  useEffect(() => {
+    if (initialCharacters && initialCharacters.length > 0) {
+      setCharacters(initialCharacters);
+      setLoading(false);
+      return;
+    }
+    if (!resolvedSource?.id) {
+      setLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const res = await api.analysis.getCharacters(resolvedSource, stableOptions);
+        if (isCancelled) return;
+        const raw = res?.data !== undefined ? res.data : res;
+        const list = Array.isArray(raw) ? raw : (raw?.results || raw?.characters || []);
+        setCharacters(list);
+      } catch (err) {
+        console.error('Failed to load characters:', err);
+        if (!isCancelled) setCharacters([]);
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialCharacters?.length)]);
+
   const getRoleBadgeColor = (role) => {
     const r = role?.toLowerCase();
     if (r === 'protagonist') {

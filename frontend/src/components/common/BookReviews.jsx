@@ -5,6 +5,7 @@ import ReportButton from './ReportButton.jsx';
 import Button from './Button.jsx';
 
 export default function BookReviews({ bookId, bookTitle, writerId }) {
+  const effectiveBookId = (bookId?._id || bookId?.id || bookId)?.toString();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({ ratingAvg: 0, ratingCount: 0, histogram: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
   const [userReview, setUserReview] = useState(null);
@@ -22,28 +23,26 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
   const [formSuccess, setFormSuccess] = useState(null);
 
   const currentUser = api.auth.getCurrentUser();
-  const isReader = currentUser?.role === 'reader';
-  const isWriterOrPub = currentUser?.role === 'writer' || currentUser?.role === 'publisher';
-  const isBookAuthor = currentUser && writerId && (currentUser.id === writerId || currentUser._id === writerId);
+  const authorIdStr = (writerId?._id || writerId?.id || writerId)?.toString();
+  const currentUserIdStr = (currentUser?.id || currentUser?._id)?.toString();
+  const isBookAuthor = Boolean(currentUserIdStr && authorIdStr && currentUserIdStr === authorIdStr);
 
   const loadReviews = useCallback(async (page = 1, sortOption = sort) => {
+    if (!effectiveBookId) return;
     try {
       setLoading(true);
-      const data = await api.reviews.getReviews(bookId, { page, limit: 10, sort: sortOption });
-      setReviews(data.reviews || []);
-      if (data.stats) setStats(data.stats);
-      if (data.pagination) setPagination(data.pagination);
-      if (data.userReview) {
-        setUserReview(data.userReview);
-      } else {
-        setUserReview(null);
-      }
+      const res = await api.reviews.getReviews(effectiveBookId, { page, limit: 10, sort: sortOption });
+      // api.reviews.list already normalizes the response (reviews, stats, pagination, userReview)
+      setReviews(res.reviews || []);
+      if (res.stats) setStats(res.stats);
+      if (res.pagination) setPagination(res.pagination);
+      setUserReview(res.userReview !== undefined ? res.userReview : null);
     } catch (err) {
       console.error('Failed to load reviews:', err);
     } finally {
       setLoading(false);
     }
-  }, [bookId, sort]);
+  }, [effectiveBookId, sort]);
 
   useEffect(() => {
     loadReviews(1, sort);
@@ -72,17 +71,23 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
+
+    if (!effectiveBookId) {
+      setFormError('Unable to identify book. Please reload the page and try again.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       if (userReview) {
-        await api.reviews.updateReview(bookId, userReview._id, {
+        await api.reviews.updateReview(effectiveBookId, userReview._id, {
           rating: ratingInput,
           text: textInput,
         });
         setFormSuccess('Review updated successfully.');
       } else {
-        await api.reviews.createReview(bookId, {
+        await api.reviews.createReview(effectiveBookId, {
           rating: ratingInput,
           text: textInput,
         });
@@ -99,11 +104,11 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
   };
 
   const handleDeleteReview = async () => {
-    if (!userReview) return;
+    if (!userReview || !effectiveBookId) return;
     if (!window.confirm('Are you sure you want to delete your review?')) return;
 
     try {
-      await api.reviews.deleteReview(bookId, userReview._id);
+      await api.reviews.deleteReview(effectiveBookId, userReview._id);
       setUserReview(null);
       setIsEditing(false);
       await loadReviews(1, sort);
@@ -175,10 +180,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
           isBookAuthor ? (
             <div className="text-center py-2 text-xs text-muted">
               As the author of this book, you cannot write reviews for it.
-            </div>
-          ) : isWriterOrPub ? (
-            <div className="text-center py-2 text-xs text-muted">
-              Only reader accounts can post community reviews and ratings.
             </div>
           ) : isEditing ? (
             /* Write / Edit Form */

@@ -7,7 +7,8 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     () => source || (documentId ? { kind: 'document', id: documentId } : null),
     [source, documentId]
   );
-  const stableOptions = useMemo(() => options, [options]);
+  const optionsKey = JSON.stringify(options || {});
+  const stableOptions = useMemo(() => options || {}, [optionsKey]);
   const [issues, setIssues] = useState([]);
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     } finally {
       setLoading(false);
     }
-  }, [resolvedSource, stableOptions]);
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey]);
 
   useEffect(() => {
     loadData();

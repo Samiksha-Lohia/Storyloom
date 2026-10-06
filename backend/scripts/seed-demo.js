@@ -26,6 +26,8 @@ import { BOOK_STATUSES, BOOK_TEMPLATES } from '../src/constants/book.js';
 import bcrypt from 'bcryptjs';
 import { paginate } from '../src/services/paginator.service.js';
 import logger from '../src/utilities/logger.js';
+import { BOOK_MANUSCRIPTS } from './seed-manuscripts.js';
+import { buildFallbackPitchCard } from '../src/services/pitch.service.js';
 
 const DEMO_PASSWORD = 'Password123!';
 
@@ -233,6 +235,7 @@ async function seedDemo() {
       reads: 14200,
       ratingAvg: 4.8,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Echoes of the Obsidian Spire',
@@ -243,6 +246,7 @@ async function seedDemo() {
       reads: 9800,
       ratingAvg: 4.6,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Neon Requiem',
@@ -253,6 +257,7 @@ async function seedDemo() {
       reads: 11400,
       ratingAvg: 4.7,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'The Ghost in the Lattice',
@@ -263,6 +268,7 @@ async function seedDemo() {
       reads: 6500,
       ratingAvg: 4.4,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'The Silk and the Dagger',
@@ -273,6 +279,7 @@ async function seedDemo() {
       reads: 8900,
       ratingAvg: 4.9,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Crimson Tide of Verona',
@@ -283,6 +290,7 @@ async function seedDemo() {
       reads: 12500,
       ratingAvg: 4.8,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'The Midnight Taxonomy',
@@ -293,6 +301,7 @@ async function seedDemo() {
       reads: 7800,
       ratingAvg: 4.5,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1507842229451-9f7506978e58?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Whispers at Ravenwood Manor',
@@ -303,6 +312,7 @@ async function seedDemo() {
       reads: 9100,
       ratingAvg: 4.7,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Children of the Ash King',
@@ -313,6 +323,7 @@ async function seedDemo() {
       reads: 15600,
       ratingAvg: 4.9,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'Chronicles of the Shattered Moon',
@@ -323,6 +334,7 @@ async function seedDemo() {
       reads: 10200,
       ratingAvg: 4.6,
       status: BOOK_STATUSES.PUBLISHED,
+      coverUrl: 'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=600&auto=format&fit=crop&q=80',
     },
     // 2 Drafts
     {
@@ -334,6 +346,7 @@ async function seedDemo() {
       reads: 0,
       ratingAvg: 0,
       status: BOOK_STATUSES.DRAFT,
+      coverUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: 'The Alchemist of Prague (Draft)',
@@ -344,6 +357,7 @@ async function seedDemo() {
       reads: 0,
       ratingAvg: 0,
       status: BOOK_STATUSES.DRAFT,
+      coverUrl: 'https://images.unsplash.com/photo-1532012164546-f432f2e3edd3?w=600&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -398,12 +412,11 @@ async function seedDemo() {
   for (let i = 0; i < BOOK_BLUEPRINTS.length; i++) {
     const bp = BOOK_BLUEPRINTS[i];
 
-    // Create realistic manuscript text with 3-5 chapters
-    const chaptersText = [
-      `# Chapter 1: The Inciting Spark\n\nThe dawn arrived without warmth, bleeding copper across the jagged horizon of the upper rim. Every breath tasted faintly of ozone and charred pine.\n\n"If the regulators fail today," Lyra muttered, checking the twin gauges on her wrist, "we won't even hear the pressure wave coming."\n\nAcross the staging gantry, the machinery began its low, resonant groan. The turbine blades spun up from slumber, slicing the fog into clean geometric ribbons. It was the third time this week the council had authorized an unsanctioned burn, and everyone in the district knew what that meant: they were running out of time.`,
-      `# Chapter 2: The Under-City\n\nDescend far enough past the steam exhaust grates, and the noise of the capital fades into an ancient silence. Here, beneath the foundation stone, the bedrock was laced with black glass.\n\n"Keep your lantern low," Corin warned, his voice muffled by the oiled leather of his respirator. "The dampness carries echoes down here. Three corridors from now, the patrol drones can hear a dropped coin."\n\nShe looked down at the parchment blueprint clutched in her gloves. The ink was faded, the seals centuries old, but the structural chambers were unmistakable: somewhere in the flooded vault ahead lay the dormant core.`,
-      `# Chapter 3: The Broken Seal\n\nThe archway stood intact, towering thirty paces above the subterranean lake. Runes of iron and mercury were etched deep into the lintel, glistening as if freshly poured.\n\n"It hasn't been opened since the Great Fracture," Lyra whispered. She stepped onto the floating walkway, feeling the vibration thrumming through the soles of her boots. A pulse. Rhythmic, measured, like the heartbeat of a sleeping leviathan.\n\n"Then let us pray," Corin said grimly, drawing his wrench, "that whatever is on the other side is still asleep."`,
-      `# Chapter 4: The Convergence\n\nWhen the blast gates shuddered open, blinding ultraviolet radiance spilled across the cistern. The shadows cast by the pillars danced frantically like living beings seeking escape.\n\n"Step back!" a voice cut through the hum. From the balcony above, three figures in polished carmine armor emerged, rifles leveled with surgical calm.\n\n"You've trespassed into sovereign jurisdiction," the lead commander declared. "Drop the core matrix, or be disassembled on site."`,
+    // Use story-specific manuscript text with unique characters and worldbuilding
+    const chaptersText = BOOK_MANUSCRIPTS[bp.title]?.text || [
+      `# Chapter 1: The Inciting Spark\n\n${bp.blurb}\n\nThe world stood at the precipice of change.`,
+      `# Chapter 2: The Rising Tension\n\nAllies and adversaries converged as the stakes escalated.`,
+      `# Chapter 3: The Climax\n\nA decisive confrontation determined the fate of everything.`,
     ].join('\n\n\n');
 
     // Create underlying Document
@@ -414,13 +427,15 @@ async function seedDemo() {
       fileType: 'txt',
       storageUrl: `uploads/demo-manuscripts/${bp.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`,
       status: 'ready',
-      wordCount: 850,
+      wordCount: chaptersText.split(/\s+/).length,
       parsedText: chaptersText,
     });
 
     const pages = paginate(chaptersText);
 
-    // Create Book
+    // Create Book with dynamic pitch card tailored to each story
+    const dynamicPitch = buildFallbackPitchCard(bp, `seed_${bp.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`);
+
     const book = await Book.create({
       writerId: bp.writer._id,
       documentId: doc._id,
@@ -429,18 +444,10 @@ async function seedDemo() {
       genre: bp.genre,
       tags: bp.tags,
       status: bp.status,
-      coverUrl: COVERS[i % COVERS.length],
+      coverUrl: bp.coverUrl || COVERS[i % COVERS.length],
       pageCount: pages.length,
       pageOffsets: pages.map((_, idx) => idx * 1500),
-      pitchCard: {
-        logline: bp.blurb.slice(0, 160),
-        genre: bp.genre,
-        tone: bp.tags.slice(0, 2).join(', '),
-        targetAudience: 'Adult & New Adult fiction readers',
-        forFansOf: ['Brandon Sanderson', 'N.K. Jemisin', 'Ursula K. Le Guin'],
-        generatedAt: new Date(),
-        inputHash: 'demo_seed_hash',
-      },
+      pitchCard: dynamicPitch,
       acceptedTermsAt: new Date('2026-08-01'),
       acceptedTermsVersion: '1.0',
       stats: {
@@ -678,6 +685,34 @@ async function seedDemo() {
       status: 'finished',
       currentOffset: 3800,
       furthestOffset: 3800,
+    },
+  ]);
+
+  // Platform Administrator (admin@scenecraft.com) - In-progress reading stories
+  await ReadingList.deleteMany({ readerId: admin._id });
+  await ReadingList.create([
+    {
+      readerId: admin._id,
+      bookId: books[8]._id, // Children of the Ash King (Fantasy)
+      status: 'reading',
+      currentOffset: 650,
+      furthestOffset: 650,
+      bookmarks: [{ offset: 300 }],
+    },
+    {
+      readerId: admin._id,
+      bookId: books[0]._id, // The Clockwork Sovereign (Fantasy)
+      status: 'reading',
+      currentOffset: 900,
+      furthestOffset: 900,
+      bookmarks: [{ offset: 450 }],
+    },
+    {
+      readerId: admin._id,
+      bookId: books[2]._id, // Neon Requiem (Cyberpunk)
+      status: 'reading',
+      currentOffset: 400,
+      furthestOffset: 400,
     },
   ]);
 

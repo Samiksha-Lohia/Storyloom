@@ -120,7 +120,7 @@ export default function ReaderSettingsPopover({
                     : 'border-rule hover:border-muted text-ink'
                 }`}
               >
-                Typewriter
+                Serif (Lora)
               </button>
               <button
                 type="button"
@@ -131,7 +131,7 @@ export default function ReaderSettingsPopover({
                     : 'border-rule hover:border-muted text-ink'
                 }`}
               >
-                Plain
+                Sans (Nunito)
               </button>
             </div>
           </div>

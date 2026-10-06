@@ -10,7 +10,8 @@
   --color-danger: #B42318;
   --color-success: #2F6B3A;
 
-  --font-body: "Courier Prime", monospace;
+  --font-body: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-reading: "Lora", Georgia, serif;
   --font-calligraphy: "Petit Formal Script", cursive;
 }
 
@@ -23,6 +24,9 @@
   --accent-hover: #7F2418;
   --danger: #B42318;
   --success: #2F6B3A;
+  --font-body: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-reading: "Lora", Georgia, serif;
+  --font-calligraphy: "Petit Formal Script", cursive;
 }
 
 /* Global: instant state changes, no animation, no transitions */
@@ -48,7 +52,7 @@ h1, .font-calligraphy {
   font-weight: 400;
 }
 
-/* Section headings and UI labels remain Courier Prime bold */
+/* Section headings and UI labels use Nunito Sans bold */
 h2, h3, h4, h5, h6 {
   font-family: var(--font-body);
   font-weight: 700;

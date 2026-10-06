@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -35,13 +35,28 @@ export function SignupPage() {
   const [generalError, setGeneralError] = useState('');
 
   const roleRefs = useRef({});
+  const location = useLocation();
+
+  const getDestination = (targetUser) => {
+    const params = new URLSearchParams(location.search);
+    const queryRedirect = params.get('redirectTo');
+    if (queryRedirect) return queryRedirect;
+    if (location.state?.redirectTo) return location.state.redirectTo;
+    if (location.state?.from?.pathname) {
+      return `${location.state.from.pathname}${location.state.from.search || ''}`;
+    }
+    if (typeof location.state?.from === 'string') {
+      return location.state.from;
+    }
+    return getRoleHomePath(targetUser || user);
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(getRoleHomePath(user), { replace: true });
+      navigate(getDestination(user), { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, location.state, location.search]);
 
   const calculatePasswordStrength = (pass) => {
     if (!pass) return { score: 0, label: '', color: 'bg-stone-200' };
@@ -181,7 +196,7 @@ export function SignupPage() {
 
       const res = await register(payload);
       const registeredUser = res?.user || { role, status: role === 'publisher' ? 'pending' : 'active' };
-      navigate(getRoleHomePath(registeredUser));
+      navigate(getDestination(registeredUser), { replace: true });
     } catch (err) {
       if (err.status === 409 || err.code === 11000) {
         setErrors((prev) => ({
@@ -189,7 +204,11 @@ export function SignupPage() {
           email: (
             <span>
               An account with this email already exists.{' '}
-              <Link to="/login" className="font-bold underline text-[#C2410C] hover:text-[#9A3412]">
+              <Link
+                to={`/login${location.search}`}
+                state={location.state}
+                className="font-bold underline text-[#C2410C] hover:text-[#9A3412]"
+              >
                 Log in instead?
               </Link>
             </span>
@@ -215,11 +234,23 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col md:flex-row">
-      {/* Left: Collage (Visual panel / mobile top banner) */}
-      <div className="w-full md:w-1/2 p-3 sm:p-4 md:p-6 lg:p-8 shrink-0">
-        <AuthCollage />
+    <div className="min-h-screen bg-paper flex flex-col">
+      {/* Back to home navigation */}
+      <div className="w-full px-4 sm:px-6 pt-4 pb-1">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded px-2 py-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to home</span>
+        </Link>
       </div>
+
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Left: Collage (Visual panel / mobile top banner) */}
+        <div className="w-full md:w-1/2 p-3 sm:p-4 md:p-6 lg:p-8 shrink-0">
+          <AuthCollage />
+        </div>
 
       {/* Right: Signup Form */}
       <div className="flex-1 flex flex-col justify-center px-6 py-8 lg:px-14 xl:px-20 max-w-xl mx-auto md:max-w-none md:w-1/2 overflow-y-auto">
@@ -499,12 +530,17 @@ export function SignupPage() {
           {/* Footer note */}
           <p className="text-center text-xs text-muted mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="font-bold text-accent hover:underline">
+            <Link
+              to={`/login${location.search}`}
+              state={location.state}
+              className="font-bold text-accent hover:underline"
+            >
               Log in
             </Link>
           </p>
         </div>
       </div>
+    </div>
     </div>
   );
 }

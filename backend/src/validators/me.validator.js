@@ -27,7 +27,7 @@ export const libraryQuerySchema = {
   query: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
-    status: Joi.string().valid('reading', 'want_to_read', 'finished', 'dropped').optional(),
+    status: Joi.string().valid('reading', 'want_to_read', 'finished', 'dropped', 'unfinished').optional(),
   }),
 };
 

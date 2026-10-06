@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -22,11 +22,9 @@ import ScenesTab from '../../components/ScenesTab';
 import CharactersTab from '../../components/CharactersTab';
 import RelationshipsTab from '../../components/RelationshipsTab';
 import TimelineTab from '../../components/TimelineTab';
-import OverviewTab from '../../components/OverviewTab';
+import MoodTab from '../../components/MoodTab';
 import StoryArcTab from '../../components/StoryArcTab';
-import SearchTab from '../../components/SearchTab';
 import AskQuestionsTab from '../../components/AskQuestionsTab';
-import ContinuityTab from '../../components/ContinuityTab';
 
 const WRITER_TABS = [
   { id: 'scenes', label: 'Scenes', icon: Layers },
@@ -35,9 +33,7 @@ const WRITER_TABS = [
   { id: 'timeline', label: 'Timeline', icon: Clock },
   { id: 'mood', label: 'Mood & Tone', icon: Smile },
   { id: 'arc', label: 'Story Arc', icon: TrendingUp },
-  { id: 'search', label: 'Semantic Search', icon: Search },
   { id: 'ask', label: 'Ask AI', icon: MessageSquare },
-  { id: 'continuity', label: 'Continuity Checker', icon: ShieldAlert },
 ];
 
 export function WriterBookInsightsPage() {
@@ -89,13 +85,15 @@ export function WriterBookInsightsPage() {
     );
   }
 
-  const source = {
+  const bookId = (book?._id || book?.id)?.toString();
+  const documentId = (book?.documentId?._id || book?.documentId)?.toString();
+  const source = useMemo(() => ({
     kind: 'book',
-    id: book._id || book.id,
-    documentId: book.documentId?._id || book.documentId,
-  };
+    id: bookId,
+    documentId,
+  }), [bookId, documentId]);
 
-  const options = { showAll: true };
+  const options = useMemo(() => ({ showAll: true }), []);
 
   return (
     <div className="space-y-6 pb-16 text-left">
@@ -179,7 +177,7 @@ export function WriterBookInsightsPage() {
       </div>
 
       {/* Main Tab Workspace Card */}
-      <div className="bg-paper rounded border border-rule p-6 sm:p-8">
+      <div className="bg-paper rounded border border-rule p-6 sm:p-8 min-h-[560px]">
         {activeTab === 'scenes' && (
           <ScenesTab source={source} options={options} />
         )}
@@ -193,19 +191,13 @@ export function WriterBookInsightsPage() {
           <TimelineTab source={source} options={options} />
         )}
         {activeTab === 'mood' && (
-          <OverviewTab source={source} options={options} />
+          <MoodTab source={source} options={options} />
         )}
         {activeTab === 'arc' && (
           <StoryArcTab source={source} options={options} />
         )}
-        {activeTab === 'search' && (
-          <SearchTab source={source} options={options} />
-        )}
         {activeTab === 'ask' && (
           <AskQuestionsTab source={source} options={options} />
-        )}
-        {activeTab === 'continuity' && (
-          <ContinuityTab source={source} options={options} />
         )}
       </div>
     </div>

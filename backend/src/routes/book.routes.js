@@ -258,6 +258,27 @@ router.post(
   }
 );
 
+/**
+ * DELETE /api/books/:bookId/pitch
+ * Roles: owner, admin
+ * Clears the AI pitch card
+ */
+router.delete(
+  '/:bookId/pitch',
+  authenticate,
+  requireActive,
+  authorize(USER_ROLES.WRITER, USER_ROLES.ADMIN),
+  validate(bookIdParamSchema),
+  async (req, res, next) => {
+    try {
+      const result = await pitchService.clearPitchCard(req.params.bookId, req.user);
+      sendSuccess(res, result, 200, 'Pitch card cleared successfully.');
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 
 
 /**

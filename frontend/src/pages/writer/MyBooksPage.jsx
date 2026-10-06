@@ -253,13 +253,7 @@ export function MyBooksPage() {
                     </Button>
                   </Link>
 
-                  {/* Insights */}
-                  <Link to={`/w/books/${bookId}/insights`}>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-accent" title="Narrative Insights">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Insights
-                    </Button>
-                  </Link>
+
 
                   {/* Publish / Unpublish */}
                   {isPublished ? (

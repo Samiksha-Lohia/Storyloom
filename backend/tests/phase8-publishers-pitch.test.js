@@ -405,6 +405,33 @@ describe('Phase 8: Publisher Journey, Pitch Panel, Private Wishlist, and Public 
       const res = await req('POST', `/books/${book._id}/pitch/regenerate`, null, writerB.token);
       assert.equal(res.status, 403);
     });
+
+    it('owner can clear pitch card and subsequent fetch returns null', async () => {
+      const writer = await createWriter('clear_author');
+      const { book } = await createSampleBook(writer.user._id, { title: 'Book to Clear' });
+
+      // First generate
+      await pitchService.generatePitchCard(book._id);
+
+      // Clear pitch card
+      const clearRes = await req('DELETE', `/books/${book._id}/pitch`, null, writer.token);
+      assert.equal(clearRes.status, 200);
+      assert.equal(clearRes.body.success, true);
+
+      // Verify pitch panel returns pitchCard: null
+      const fetchRes = await req('GET', `/books/${book._id}/pitch`, null, writer.token);
+      assert.equal(fetchRes.status, 200);
+      assert.strictEqual(fetchRes.body.data.pitchCard, null);
+    });
+
+    it('non-owner cannot clear pitch card', async () => {
+      const writerA = await createWriter('owner_clean');
+      const writerB = await createWriter('other_clean');
+      const { book } = await createSampleBook(writerA.user._id);
+
+      const res = await req('DELETE', `/books/${book._id}/pitch`, null, writerB.token);
+      assert.equal(res.status, 403);
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

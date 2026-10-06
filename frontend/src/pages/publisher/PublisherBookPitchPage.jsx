@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -26,7 +26,8 @@ import {
   Layers,
   Briefcase,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 export function PublisherBookPitchPage() {
@@ -36,10 +37,16 @@ export function PublisherBookPitchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
+
+  const relationshipsData = useMemo(() => ({
+    characters: pitch?.mainCast || [],
+    relationships: pitch?.relationships || [],
+  }), [pitch?.mainCast, pitch?.relationships]);
 
   useEffect(() => {
     loadPitch();
@@ -96,9 +103,27 @@ export function PublisherBookPitchPage() {
         pitchCard: updatedCard,
       }));
     } catch (err) {
-      alert(err.message || 'Failed to regenerate pitch card.');
+      alert(err.message || 'Failed to generate pitch card.');
     } finally {
       setRegenerating(false);
+    }
+  };
+
+  const handleClearPitch = async () => {
+    if (!window.confirm('Are you sure you want to clear this pitch deck?')) {
+      return;
+    }
+    setClearing(true);
+    try {
+      await api.pitch.clear(bookId);
+      setPitch((prev) => ({
+        ...prev,
+        pitchCard: null,
+      }));
+    } catch (err) {
+      alert(err.message || 'Failed to clear pitch card.');
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -267,75 +292,104 @@ export function PublisherBookPitchPage() {
                 <Sparkles className="w-3.5 h-3.5 text-accent" />
                 AI Story Pitch
               </span>
-              <span className="text-xs text-muted">
-                Generated {pitchCard?.generatedAt ? new Date(pitchCard.generatedAt).toLocaleDateString() : 'Recently'}
-              </span>
+              {pitchCard?.generatedAt && (
+                <span className="text-xs text-muted">
+                  Generated {new Date(pitchCard.generatedAt).toLocaleDateString()}
+                </span>
+              )}
             </div>
 
-            {/* Regenerate Button (limited 3/day) */}
+            {/* Owner or Admin Actions */}
             {isOwnerOrAdmin && (
-              <button
-                onClick={handleRegenerate}
-                disabled={regenerating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold bg-paper hover:border-ink text-ink border border-rule cursor-pointer"
-                title="Regenerate pitch card (max 3 times/day)"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                {regenerating ? 'Regenerating...' : 'Regenerate Pitch'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRegenerate}
+                  disabled={regenerating || clearing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold bg-paper hover:border-ink text-ink border border-rule cursor-pointer disabled:opacity-50"
+                  title={pitchCard ? 'Regenerate pitch card (max 3 times/day)' : 'Generate AI pitch card'}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+                  {regenerating ? 'Generating...' : pitchCard ? 'Regenerate Pitch' : 'Generate Pitch Deck'}
+                </button>
+                {pitchCard && (
+                  <button
+                    onClick={handleClearPitch}
+                    disabled={clearing || regenerating}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold text-danger border border-rule hover:border-danger bg-paper cursor-pointer disabled:opacity-50"
+                    title="Clear AI pitch deck"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {clearing ? 'Clearing...' : 'Clear Pitch Deck'}
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Hook / Logline */}
-          <blockquote className="text-base md:text-lg italic text-ink leading-relaxed max-w-4xl border-l-2 border-accent pl-4 font-body">
-            "{pitchCard?.logline || 'A captivating journey of suspense, identity, and dramatic tension.'}"
-          </blockquote>
+          {pitchCard ? (
+            <>
+              {/* Hook / Logline */}
+              <blockquote className="text-base md:text-lg italic text-ink leading-relaxed max-w-4xl border-l-2 border-accent pl-4 font-body">
+                "{pitchCard?.logline || 'A captivating journey of suspense, identity, and dramatic tension.'}"
+              </blockquote>
 
-          {/* Metadata Chips */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-rule text-xs">
-            <div className="bg-paper rounded p-3 border border-rule">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
-                Primary Genre
-              </span>
-              <span className="font-bold text-ink text-xs">
-                {pitchCard?.genre || pitch.genre || 'General Fiction'}
-              </span>
-            </div>
-
-            <div className="bg-paper rounded p-3 border border-rule">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
-                Narrative Tone
-              </span>
-              <span className="font-bold text-ink text-xs">
-                {pitchCard?.tone || 'Engaging & Expressive'}
-              </span>
-            </div>
-
-            <div className="bg-paper rounded p-3 border border-rule">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
-                Target Audience
-              </span>
-              <span className="font-bold text-ink text-xs">
-                {pitchCard?.targetAudience || 'Enthusiasts of character-driven drama'}
-              </span>
-            </div>
-
-            <div className="bg-paper rounded p-3 border border-rule">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
-                Comparative Titles
-              </span>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {(pitchCard?.forFansOf || ['Modern Drama', 'Literary Fiction']).map((comp, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-0.5 rounded bg-paper border border-rule text-ink text-[11px]"
-                  >
-                    {comp}
+              {/* Metadata Chips */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-rule text-xs">
+                <div className="bg-paper rounded p-3 border border-rule">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
+                    Primary Genre
                   </span>
-                ))}
+                  <span className="font-bold text-ink text-xs">
+                    {pitchCard?.genre || pitch.genre || 'General Fiction'}
+                  </span>
+                </div>
+
+                <div className="bg-paper rounded p-3 border border-rule">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
+                    Narrative Tone
+                  </span>
+                  <span className="font-bold text-ink text-xs">
+                    {pitchCard?.tone || 'Engaging & Expressive'}
+                  </span>
+                </div>
+
+                <div className="bg-paper rounded p-3 border border-rule">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
+                    Target Audience
+                  </span>
+                  <span className="font-bold text-ink text-xs">
+                    {pitchCard?.targetAudience || 'Enthusiasts of character-driven drama'}
+                  </span>
+                </div>
+
+                <div className="bg-paper rounded p-3 border border-rule">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
+                    Comparative Titles
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {(pitchCard?.forFansOf || ['Modern Drama', 'Literary Fiction']).map((comp, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 rounded bg-paper border border-rule text-ink text-[11px]"
+                      >
+                        {comp}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
+            </>
+          ) : (
+            <div className="py-8 text-center border border-dashed border-rule rounded p-6">
+              <Sparkles className="w-8 h-8 text-muted mx-auto mb-2 opacity-50" />
+              <p className="text-sm font-bold text-ink">No AI Story Pitch generated yet</p>
+              <p className="text-xs text-muted mt-1 max-w-md mx-auto">
+                {isOwnerOrAdmin
+                  ? 'Click "Generate Pitch Deck" to create an executive pitch card.'
+                  : 'The author has not yet generated an AI pitch card for this manuscript.'}
+              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -501,10 +555,7 @@ export function PublisherBookPitchPage() {
 
           <RelationshipsTab
             summary={true}
-            initialData={{
-              characters: mainCast,
-              relationships: relationships,
-            }}
+            initialData={relationshipsData}
           />
         </div>
       </div>

@@ -13,8 +13,8 @@ export default function PageView({
   const lineHeight = settings.lineHeight || 1.6;
   const fontFamily =
     settings.fontFamily === 'sans'
-      ? 'system-ui, -apple-system, sans-serif'
-      : "'Courier Prime', monospace";
+      ? 'var(--font-body), "Nunito Sans", -apple-system, sans-serif'
+      : 'var(--font-reading), "Lora", Georgia, serif';
 
   // Format page content into paragraphs
   const renderFormattedText = (text) => {

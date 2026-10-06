@@ -88,6 +88,10 @@ const bookSchema = new mongoose.Schema(
       generatedAt: { type: Date, default: null },
       inputHash: { type: String, default: null },
     },
+    pitchCardCleared: {
+      type: Boolean,
+      default: false,
+    },
     stats: {
       reads: { type: Number, default: 0 },
       ratingAvg: { type: Number, default: 0 },

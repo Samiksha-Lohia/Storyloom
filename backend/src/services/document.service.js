@@ -15,6 +15,9 @@ import { pipelineQueue } from '../queues/pipeline.queue.js';
 import { DocumentDto } from '../dtos/document.dto.js';
 import { NotFoundError } from '../utilities/custom-errors.js';
 import STAGES, { STAGE_LIST, STAGE_DEPENDENCIES } from '../constants/stages.js';
+import { parseDocumentFile } from '../parsers/document.parser.js';
+import { paginate } from './paginator.service.js';
+import { wordCount } from '../analysis/local-analyzer.js';
 import logger from '../utilities/logger.js';
 
 // STAGE_DEPENDENCIES is imported from constants/stages.js (single source of truth).
@@ -22,7 +25,7 @@ import logger from '../utilities/logger.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Upload a new document, store the file, seed job records, and kick off parsing.
+ * Upload a new document, store the file, prepare text/pagination, and seed job records.
  *
  * @param {string} userId   - Authenticated user's ID
  * @param {Object} file     - Multer file object (req.file)
@@ -39,36 +42,53 @@ const uploadDocument = async (userId, file, options = {}) => {
   // 1. Persist the file to storage
   const storageUrl = await uploadFile(file, storageKey);
 
-  // 2. Create the document record
+  // 2. Parse text immediately & compute page offsets
+  let parsedText = '';
+  try {
+    parsedText = await parseDocumentFile(storageUrl, ext);
+  } catch (parseErr) {
+    logger.warn(`Synchronous parse failed, falling back to background parser: ${parseErr.message}`);
+  }
+  const normalized = parsedText?.trim() || '';
+  const pageOffsets = normalized ? paginate(normalized) : [];
+  const calculatedWordCount = wordCount(normalized);
+
+  // 3. Create the document record
   const document = await documentRepository.create({
     userId,
     title: customTitle || path.basename(file.originalname, path.extname(file.originalname)),
     originalFilename: file.originalname,
     fileType: ext,
     storageUrl,
-    status: 'processing',
+    parsedText: normalized,
+    wordCount: calculatedWordCount,
+    status: normalized ? 'ready' : 'processing',
     ...(bookId && { bookId }),
   });
 
-  // 3. Seed a ProcessingJob record for every stage
+  // 4. Seed a ProcessingJob record for every stage
   const jobRecords = STAGE_LIST.map((stage) => ({
     documentId: document._id,
     stage,
-    status: 'queued',
+    status: (stage === STAGES.PARSING && normalized) ? 'completed' : 'queued',
+    progress: (stage === STAGES.PARSING && normalized) ? 100 : 0,
+    completedAt: (stage === STAGES.PARSING && normalized) ? new Date() : null,
     dependsOn: STAGE_DEPENDENCIES[stage],
   }));
   await processingJobRepository.create(jobRecords);
 
-  // 4. Dispatch the first job (parsing) to BullMQ
-  await pipelineQueue.add(
-    STAGES.PARSING,
-    { documentId: document._id.toString(), stage: STAGES.PARSING, storageUrl, fileType: ext },
-    { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `${document._id}-${STAGES.PARSING}` }
-  );
+  // 5. If text parsing failed synchronously, enqueue parsing to BullMQ as fallback
+  if (!normalized) {
+    await pipelineQueue.add(
+      STAGES.PARSING,
+      { documentId: document._id.toString(), stage: STAGES.PARSING, storageUrl, fileType: ext },
+      { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `${document._id}-${STAGES.PARSING}` }
+    );
+  }
 
-  logger.info(`Document ${document._id} uploaded — pipeline started.`);
+  logger.info(`Document ${document._id} uploaded — manuscript prepared (${pageOffsets.length} pages).`);
   const dto = DocumentDto.toResponse(document);
-  return returnRaw ? { document, dto } : dto;
+  return returnRaw ? { document, dto, pageOffsets, pageCount: pageOffsets.length } : dto;
 };
 
 /**
