@@ -7,6 +7,7 @@ import { documentIdParamSchema, searchQuerySchema, askQuestionSchema } from '../
 import * as searchService from '../services/search.service.js';
 import { sendSuccess } from '../utilities/response.js';
 import { generateJSON } from '../services/ai-provider.service.js';
+import { resolveStoryLanguage, getAnalysisLanguageInstruction } from '../utilities/language.helper.js';
 
 const router = Router({ mergeParams: true });
 
@@ -57,10 +58,13 @@ router.post('/ask', validate(documentIdParamSchema), validate(askQuestionSchema)
       .filter(Boolean)
       .join('\n\n---\n\n');
 
+    const language = await resolveStoryLanguage(documentId);
+    const langInstruction = getAnalysisLanguageInstruction(language);
+
     // 3. Prompt AI using existing OpenRouter architecture
     const prompt = `You are a story analysis assistant for SceneCraft. Answer the user's question about the story based on the provided analysis context.
 If the context doesn't contain the answer, use your intelligence to deduce the best response based on the available information, but keep it grounded in the provided context.
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Context:
 ${context || 'No specific context found.'}
 

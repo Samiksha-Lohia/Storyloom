@@ -51,6 +51,11 @@ const documentSchema = new mongoose.Schema(
       default: '',
       select: false,
     },
+    language: {
+      type: String,
+      default: 'en',
+      trim: true,
+    },
   },
   {
     timestamps: { createdAt: 'uploadedAt', updatedAt: false }, // mapping uploadedAt to createdAt

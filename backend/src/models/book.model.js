@@ -124,7 +124,7 @@ bookSchema.index({ status: 1, 'stats.ratingAvg': -1 });
 bookSchema.index({ status: 1, 'stats.completionRate': -1 });
 bookSchema.index({ status: 1, pageCount: 1 });
 bookSchema.index({ writerId: 1 });
-bookSchema.index({ title: 'text', tags: 'text' });
+bookSchema.index({ title: 'text', tags: 'text' }, { default_language: 'english', language_override: 'none' });
 
 const Book = mongoose.model('Book', bookSchema);
 

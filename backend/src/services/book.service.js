@@ -102,12 +102,12 @@ export const createBook = async (userId, files, data) => {
     const pageOffsets = documentResult.pageOffsets || [];
     const pageCount = documentResult.pageCount ?? pageOffsets.length;
 
-    // Default status to PROCESSING unless explicitly requested as published or draft
-    let initialStatus = BOOK_STATUSES.PROCESSING;
-    if (data.status === 'published' || data.publish === 'true' || data.publish === true) {
-      initialStatus = BOOK_STATUSES.PUBLISHED;
-    } else if (data.status === 'draft') {
+    // Default status to PUBLISHED unless explicitly requested as draft or processing
+    let initialStatus = BOOK_STATUSES.PUBLISHED;
+    if (data.status === 'draft') {
       initialStatus = BOOK_STATUSES.DRAFT;
+    } else if (data.status === 'processing') {
+      initialStatus = BOOK_STATUSES.PROCESSING;
     }
 
     const book = await bookRepository.create({
@@ -132,6 +132,9 @@ export const createBook = async (userId, files, data) => {
 
     // 4. Associate book with Document
     document.bookId = book._id;
+    if (book.language) {
+      document.language = book.language;
+    }
     await document.save();
 
     logger.info(`Book ${book._id} created successfully with document ${document._id}.`);

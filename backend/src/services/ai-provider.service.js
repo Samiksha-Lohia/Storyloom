@@ -173,6 +173,7 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
         'X-Title': 'SceneCraft',
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(60000),
     });
 
     if (!response.ok) {

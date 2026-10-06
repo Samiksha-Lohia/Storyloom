@@ -11,6 +11,23 @@ const connectDB = async () => {
 
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
     
+    // Ensure text index on books does not treat book.language as index stemmer override
+    try {
+      const booksCol = conn.connection.collection('books');
+      const indexes = await booksCol.indexes();
+      const textIdx = indexes.find((i) => i.name === 'title_text_tags_text');
+      if (textIdx && textIdx.language_override !== 'none') {
+        logger.info('Migrating books text index to language_override: none');
+        await booksCol.dropIndex('title_text_tags_text');
+        await booksCol.createIndex(
+          { title: 'text', tags: 'text' },
+          { default_language: 'english', language_override: 'none', background: true }
+        );
+      }
+    } catch (idxErr) {
+      logger.warn(`Books text index check notice: ${idxErr.message}`);
+    }
+
     // Additional listeners for ongoing connection management
     mongoose.connection.on('error', (err) => {
       logger.error(`MongoDB connection error: ${err}`);

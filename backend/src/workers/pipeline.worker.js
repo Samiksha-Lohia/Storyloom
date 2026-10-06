@@ -13,6 +13,12 @@ import {
 import { emitDocumentEvent } from '../socket/index.js';
 import { parseDocumentFile } from '../parsers/document.parser.js';
 import { generateJSON } from '../services/ai-provider.service.js';
+import {
+  getAnalysisLanguageInstruction,
+  resolveStoryLanguage,
+  isHindiLanguage,
+  buildWordBoundaryRegex,
+} from '../utilities/language.helper.js';
 
 import {
   buildTextEmbedding,
@@ -230,7 +236,9 @@ const enqueueReadyStages = async (documentId) => {
         stage: jobRecord.stage,
       },
       {
-        jobId: `${documentId}-${jobRecord.stage}-${Date.now()}`,
+        jobId: `${documentId}-${jobRecord.stage}`,
+        removeOnComplete: true,
+        removeOnFail: false,
       },
     );
   }
@@ -252,10 +260,14 @@ const enqueueReadyStages = async (documentId) => {
       status: DOCUMENT_STATUSES.READY,
     });
 
-    // Enqueue pitch generation on platform-maintenance queue
+    // Enqueue pitch generation on platform-maintenance queue and ensure book is published
     try {
       const book = await Book.findOne({ documentId });
       if (book) {
+        if (book.status === BOOK_STATUSES.PROCESSING) {
+          book.status = BOOK_STATUSES.PUBLISHED;
+          await book.save();
+        }
         await maintenanceQueue.add('generate-pitch', { bookId: book._id.toString() });
       }
     } catch (pitchErr) {
@@ -463,11 +475,15 @@ const runParsing = async ({
 /* -------------------------------------------------------------------------- */
 
 const runScenes = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
+  const langInstruction = getAnalysisLanguageInstruction(language);
+
   if (config.ai.provider === 'local') {
     const doc = await getDocumentWithText(documentId);
 
     const scenes = splitIntoScenes(
       doc?.parsedText || '',
+      language,
     );
 
     await Scene.deleteMany({ documentId });
@@ -522,7 +538,7 @@ IMPORTANT:
 - Do NOT include "primaryLocation".
 - Do NOT include any fields other than sceneNumber, title, summary, location, and sceneText.
 - sceneText must be copied exactly from the original text.
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Story text:
 ${parsedText}`;
 
@@ -640,7 +656,7 @@ ${parsedText}`;
     }
   } catch (err) {
     logger.warn(`OpenRouter scenes stage failed (${err.message}). Falling back to local scene analyzer.`);
-    const scenes = splitIntoScenes(parsedText);
+    const scenes = splitIntoScenes(parsedText, language);
     processedScenes = scenes.map((s) => ({
       ...s,
       documentId,
@@ -667,12 +683,17 @@ ${parsedText}`;
 /* -------------------------------------------------------------------------- */
 
 const runCharacters = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
+  const langInstruction = getAnalysisLanguageInstruction(language);
+  const isHindi = isHindiLanguage(language);
+
   if (config.ai.provider === 'local') {
     const doc = await getDocumentWithText(documentId);
     const scenes = await getScenesWithText(documentId);
 
     const candidates = extractCandidateNames(
       doc?.parsedText || '',
+      language,
     );
 
     await Character.deleteMany({ documentId });
@@ -681,10 +702,7 @@ const runCharacters = async ({ documentId }) => {
       candidates.map((candidate, index) => {
         const sceneIds = scenes
           .filter((scene) =>
-            new RegExp(
-              `\\b${escapeRegex(candidate.name)}\\b`,
-              'i',
-            ).test(scene.rawText || ''),
+            buildWordBoundaryRegex(candidate.name).test(scene.rawText || ''),
           )
           .map((scene) => scene._id);
 
@@ -698,11 +716,11 @@ const runCharacters = async ({ documentId }) => {
           traits: traitsForName(
             candidate.name,
             doc?.parsedText || '',
+            language,
           ),
-          description:
-            `${candidate.name} appears in ` +
-            `${sceneIds.length} scene` +
-            `${sceneIds.length === 1 ? '' : 's'}.`,
+          description: isHindi
+            ? `${candidate.name} कहानी के ${sceneIds.length} दृश्य में उपस्थित है।`
+            : `${candidate.name} appears in ${sceneIds.length} scene${sceneIds.length === 1 ? '' : 's'}.`,
           sceneIds,
         };
       }),
@@ -711,10 +729,7 @@ const runCharacters = async ({ documentId }) => {
     for (const scene of scenes) {
       const characterIds = characters
         .filter((character) =>
-          new RegExp(
-            `\\b${escapeRegex(character.name)}\\b`,
-            'i',
-          ).test(scene.rawText || ''),
+          buildWordBoundaryRegex(character.name).test(scene.rawText || ''),
         )
         .map((character) => character._id);
 
@@ -754,7 +769,7 @@ IMPORTANT:
 - Ignore unnamed/background entities that cannot be given a meaningful name.
 - Return ONLY the JSON array.
 - Do NOT return markdown or explanations.
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Story text:
 ${parsedText}`;
 
@@ -865,19 +880,10 @@ ${parsedText}`;
         const sceneIds = scenes
           .filter((scene) => {
             const text = scene.rawText || '';
-
-            const nameMatch = new RegExp(
-              `\\b${escapeRegex(candidate.name)}\\b`,
-              'i',
-            ).test(text);
-
-            const aliasMatch =
-              candidate.aliases?.some((alias) =>
-                new RegExp(
-                  `\\b${escapeRegex(alias)}\\b`,
-                  'i',
-                ).test(text),
-              );
+            const nameMatch = buildWordBoundaryRegex(candidate.name).test(text);
+            const aliasMatch = candidate.aliases?.some((alias) =>
+              buildWordBoundaryRegex(alias).test(text),
+            );
 
             return nameMatch || aliasMatch;
           })
@@ -901,17 +907,14 @@ ${parsedText}`;
       );
   } catch (err) {
     logger.warn(`OpenRouter characters stage failed (${err.message}). Falling back to local character analyzer.`);
-    const candidates = extractCandidateNames(doc?.parsedText || '');
+    const candidates = extractCandidateNames(doc?.parsedText || '', language);
     await Character.deleteMany({ documentId });
 
     insertedCharacters = await Character.insertMany(
       candidates.map((candidate, index) => {
         const sceneIds = scenes
           .filter((scene) =>
-            new RegExp(
-              `\\b${escapeRegex(candidate.name)}\\b`,
-              'i',
-            ).test(scene.rawText || ''),
+            buildWordBoundaryRegex(candidate.name).test(scene.rawText || ''),
           )
           .map((scene) => scene._id);
 
@@ -919,9 +922,13 @@ ${parsedText}`;
           documentId,
           name: candidate.name,
           role: classifyRole(index, candidates.length),
-          traits: traitsForName(candidate.name, doc?.parsedText || ''),
-          description: `${candidate.name} is a key figure appearing across ${sceneIds.length} scene(s).`,
-          arcSummary: `${candidate.name}'s trajectory unfolds across the narrative arc.`,
+          traits: traitsForName(candidate.name, doc?.parsedText || '', language),
+          description: isHindi
+            ? `${candidate.name} कहानी के ${sceneIds.length} दृश्य में उपस्थित मुख्य पात्र है।`
+            : `${candidate.name} is a key figure appearing across ${sceneIds.length} scene(s).`,
+          arcSummary: isHindi
+            ? `${candidate.name} की भूमिका कहानी के उतार-चढ़ाव में महत्वपूर्ण है।`
+            : `${candidate.name}'s trajectory unfolds across the narrative arc.`,
           sceneIds,
         };
       }),
@@ -932,19 +939,10 @@ ${parsedText}`;
     const characterIds = insertedCharacters
       .filter((character) => {
         const text = scene.rawText || '';
-
-        const nameMatch = new RegExp(
-          `\\b${escapeRegex(character.name)}\\b`,
-          'i',
-        ).test(text);
-
-        const aliasMatch =
-          character.aliases?.some((alias) =>
-            new RegExp(
-              `\\b${escapeRegex(alias)}\\b`,
-              'i',
-            ).test(text),
-          );
+        const nameMatch = buildWordBoundaryRegex(character.name).test(text);
+        const aliasMatch = character.aliases?.some((alias) =>
+          buildWordBoundaryRegex(alias).test(text),
+        );
 
         return nameMatch || aliasMatch;
       })
@@ -966,6 +964,10 @@ ${parsedText}`;
 /* -------------------------------------------------------------------------- */
 
 const runRelationships = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
+  const langInstruction = getAnalysisLanguageInstruction(language);
+  const isHindi = isHindiLanguage(language);
+
   if (config.ai.provider === 'local') {
     const scenes = await getScenesWithText(documentId);
 
@@ -1108,7 +1110,7 @@ IMPORTANT:
 - Use the primary names from the Characters list.
 - If there are no relationships or interactions in the story, return [].
 - Do NOT return markdown or explanations.
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Characters list:
 ${charactersListFormatted}
 
@@ -1514,6 +1516,10 @@ ${scenesListFormatted}
     }
   }
 
+  await Relationship.deleteMany({
+    documentId,
+  });
+
   if (relationshipsToInsert.length) {
     await Relationship.insertMany(
       relationshipsToInsert,
@@ -1531,6 +1537,11 @@ ${scenesListFormatted}
 /* -------------------------------------------------------------------------- */
 
 const runTimeline = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
+  const langInstruction = getAnalysisLanguageInstruction(language);
+  const isHindi = isHindiLanguage(language);
+  const flashbackRegex = /(?:\b(earlier|remembered|flashback|years ago|past|memory)\b|साल पहले|वर्ष पहले|याद आया|स्मृति|अतीत|बचपन में|पहले की बात)/i;
+
   if (config.ai.provider === 'local') {
     const scenes = await Scene.find({
       documentId,
@@ -1544,16 +1555,17 @@ const runTimeline = async ({ documentId }) => {
 
     if (scenes.length) {
       await TimelineEvent.insertMany(
-        scenes.map((scene, index) => ({
-          documentId,
-          sceneId: scene._id,
-          chronologicalOrder: index + 1,
-          timeLabel: `Scene ${scene.sceneNumber}`,
-          isFlashback:
-            /\b(earlier|remembered|flashback|years ago)\b/i.test(
-              scene.summary,
-            ),
-        })),
+        scenes.map((scene, index) => {
+          const isFlashback = flashbackRegex.test(scene.summary || '');
+          const defaultLabel = isHindi ? `दृश्य ${scene.sceneNumber}` : `Scene ${scene.sceneNumber}`;
+          return {
+            documentId,
+            sceneId: scene._id,
+            chronologicalOrder: index + 1,
+            timeLabel: isFlashback ? (isHindi ? 'अतीत की स्मृति' : 'Past memory') : defaultLabel,
+            isFlashback,
+          };
+        }),
       );
     }
 
@@ -1595,7 +1607,7 @@ IMPORTANT:
 - Do NOT generate sceneId.
 - Do NOT invent or modify scene numbers.
 - Every scene should have one timeline object.
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Scenes list:
 ${scenes
   .map(
@@ -1688,37 +1700,66 @@ ${scenes
       ]),
     );
 
-    timelineEventsToInsert =
-      validatedTimeline.map((item) => {
-        const scene = sceneByNumber.get(
-          item.sceneNumber,
-        );
+    const seenSceneIds = new Set();
+    const cleanList = [];
 
-        if (!scene) {
-          throw new Error(
-            `Timeline validation failed: sceneNumber ${item.sceneNumber} does not exist for document ${documentId}`,
-          );
-        }
+    for (const item of validatedTimeline) {
+      const scene = sceneByNumber.get(item.sceneNumber);
+      if (!scene) continue;
+      const sceneIdStr = scene._id.toString();
+      if (seenSceneIds.has(sceneIdStr)) continue;
+      seenSceneIds.add(sceneIdStr);
 
-        return {
+      cleanList.push({
+        documentId,
+        sceneId: scene._id,
+        chronologicalOrder: item.chronologicalOrder || (cleanList.length + 1),
+        timeLabel: item.timeLabel || (isHindi ? `दृश्य ${scene.sceneNumber}` : `Scene ${scene.sceneNumber}`),
+        isFlashback: Boolean(item.isFlashback),
+      });
+    }
+
+    // Ensure all scenes from the story are included
+    for (const scene of scenes) {
+      const sceneIdStr = scene._id.toString();
+      if (!seenSceneIds.has(sceneIdStr)) {
+        seenSceneIds.add(sceneIdStr);
+        cleanList.push({
           documentId,
           sceneId: scene._id,
-          chronologicalOrder:
-            item.chronologicalOrder,
-          timeLabel: item.timeLabel,
-          isFlashback: item.isFlashback,
-        };
-      });
+          chronologicalOrder: cleanList.length + 1,
+          timeLabel: isHindi ? `दृश्य ${scene.sceneNumber}` : `Scene ${scene.sceneNumber}`,
+          isFlashback: false,
+        });
+      }
+    }
+
+    // Normalize chronologicalOrder to 1..N to strictly obey unique index
+    cleanList.sort((a, b) => a.chronologicalOrder - b.chronologicalOrder);
+    cleanList.forEach((ev, idx) => {
+      ev.chronologicalOrder = idx + 1;
+    });
+
+    timelineEventsToInsert = cleanList;
   } catch (err) {
     logger.warn(`OpenRouter timeline stage failed (${err.message}). Falling back to local timeline analyzer.`);
-    timelineEventsToInsert = scenes.map((scene, index) => ({
-      documentId,
-      sceneId: scene._id,
-      chronologicalOrder: index + 1,
-      timeLabel: `Scene ${scene.sceneNumber}`,
-      isFlashback: /\b(earlier|remembered|flashback|years ago)\b/i.test(scene.summary || ''),
-    }));
+    timelineEventsToInsert = scenes.map((scene, index) => {
+      const isFlashback = flashbackRegex.test(scene.summary || '');
+      const defaultLabel = isHindi ? `दृश्य ${scene.sceneNumber}` : `Scene ${scene.sceneNumber}`;
+      return {
+        documentId,
+        sceneId: scene._id,
+        chronologicalOrder: index + 1,
+        timeLabel: isFlashback ? (isHindi ? 'अतीत की स्मृति' : 'Past memory') : defaultLabel,
+        isFlashback,
+      };
+    });
   }
+
+  // Clear existing timeline events right before inserting to prevent race-condition duplicate keys
+  await TimelineEvent.deleteMany({
+    documentId,
+  });
 
   if (timelineEventsToInsert.length) {
     await TimelineEvent.insertMany(
@@ -1737,6 +1778,7 @@ ${scenes
 /* -------------------------------------------------------------------------- */
 
 const runDialogue = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
   const scenes =
     await getScenesWithText(documentId);
 
@@ -1751,12 +1793,7 @@ const runDialogue = async ({ documentId }) => {
 
   for (const scene of scenes) {
     for (const character of characters) {
-      if (
-        !new RegExp(
-          `\\b${escapeRegex(character.name)}\\b`,
-          'i',
-        ).test(scene.rawText || '')
-      ) {
+      if (!buildWordBoundaryRegex(character.name).test(scene.rawText || '')) {
         continue;
       }
 
@@ -1776,6 +1813,7 @@ const runDialogue = async ({ documentId }) => {
         tone:
           moodForScene(
             scene.rawText,
+            language,
           ).primaryMood,
       });
     }
@@ -1798,6 +1836,7 @@ const runDialogue = async ({ documentId }) => {
 /* -------------------------------------------------------------------------- */
 
 const runMood = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
   const scenes =
     await getScenesWithText(documentId);
 
@@ -1824,6 +1863,7 @@ const runMood = async ({ documentId }) => {
           scene.rawText ||
             scene.summary ||
             '',
+          language,
         );
 
       const emotionScores = new Map(
@@ -1941,6 +1981,9 @@ const runArc = async ({ documentId }) => {
 const runContinuity = async ({
   documentId,
 }) => {
+  const language = await resolveStoryLanguage(documentId);
+  const langInstruction = getAnalysisLanguageInstruction(language);
+
   if (config.ai.provider === 'local') {
     const scenes =
       await getScenesWithText(
@@ -2077,7 +2120,7 @@ Output Rules:
   4. "severity": One of "low", "medium", or "high".
 - The "description" field is STRICTLY REQUIRED for every issue and MUST contain an actual meaningful explanation. Never generate an empty string "", whitespace only, null, or undefined for "description".
 - Return ONLY the JSON array (or [] if no issues).
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Characters:
 ${charactersFormatted}
 

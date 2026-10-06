@@ -25,6 +25,9 @@ export const createBookSchema = {
     accent: Joi.string()
       .valid(...BOOK_ACCENTS)
       .default(BOOK_ACCENTS[0]),
+    status: Joi.string()
+      .valid(...BOOK_STATUSES_LIST)
+      .default('published'),
     acceptedRights: Joi.alternatives()
       .try(
         Joi.boolean().valid(true),

@@ -9,6 +9,7 @@ import { USER_ROLES } from '../constants/user-roles.js';
 import { ForbiddenError, NotFoundError } from '../utilities/custom-errors.js';
 import * as searchService from './search.service.js';
 import { generateJSON } from './ai-provider.service.js';
+import { getAnalysisLanguageInstruction } from '../utilities/language.helper.js';
 
 /**
  * Resolves the effective role of a user for a given book.
@@ -526,9 +527,11 @@ export async function askWithSpoilerProtection({
       ? `CRITICAL SPOILER CONSTRAINT: The reader has only read up to Scene ${maxVisibleSceneNumber}. You MUST NOT reveal, mention, or hint at any events, twists, character deaths, or plot developments beyond Scene ${maxVisibleSceneNumber}. If the question asks about events not yet reached, explain that this happens later in the story and is hidden to protect spoilers.`
       : '';
 
+  const langInstruction = getAnalysisLanguageInstruction(book?.language || 'en');
+
   const prompt = `You are a story analysis assistant for SceneCraft. Answer the user's question about the story based ONLY on the provided analysis context.
 ${boundaryInstruction}
-
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Context:
 ${context || 'No specific context found within the pages read so far.'}
 

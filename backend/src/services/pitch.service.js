@@ -10,6 +10,7 @@ import User from '../models/user.model.js';
 import Wishlist from '../models/wishlist.model.js';
 import Follow from '../models/follow.model.js';
 import { generateJSON } from './ai-provider.service.js';
+import { getAnalysisLanguageInstruction, isHindiLanguage } from '../utilities/language.helper.js';
 import { redis } from '../config/redis.js';
 import { getDayString } from '../utilities/viewer-key.js';
 import logger from '../utilities/logger.js';
@@ -31,6 +32,25 @@ const pitchValidationSchema = Joi.object({
  */
 export const buildFallbackPitchCard = (book, inputHash = null) => {
   const blurbText = (book.blurb || '').trim();
+
+  if (isHindiLanguage(book?.language)) {
+    const defaultTone = book.dominantMood || book.overallTone || 'भावपूर्ण और सम्मोहक';
+    const targetAudience = book.mature ? 'वयस्क पाठक (18+)' : 'आम पाठक';
+    return {
+      logline: blurbText.length > 0
+        ? (blurbText.length > 240 ? blurbText.slice(0, 237) + '...' : blurbText)
+        : `${book.title} की एक गहन और प्रभावशाली कहानी।`,
+      genre: book.genre || 'सामान्य साहित्य',
+      tone: defaultTone,
+      targetAudience,
+      forFansOf: ['समकालीन साहित्य', 'लोकप्रिय कथाएं'],
+      audience: targetAudience,
+      comparableTitles: ['समकालीन साहित्य', 'लोकप्रिय कथाएं'],
+      generatedAt: new Date(),
+      inputHash: inputHash || '',
+    };
+  }
+
   const logline = blurbText.length > 0
     ? (blurbText.length > 240 ? blurbText.slice(0, 237) + '...' : blurbText)
     : `A gripping ${book.genre || 'literary'} journey exploring conflict, ambition, and identity.`;
@@ -201,7 +221,7 @@ Mature: ${book.mature ? 'Yes' : 'No'}
 Excerpt:
 ${sampleExcerpt || book.blurb || 'Sample excerpt unavailable.'}
 <<<END UNTRUSTED MANUSCRIPT DATA>>>
-
+${getAnalysisLanguageInstruction(book.language) ? `\nLANGUAGE INSTRUCTION:\n${getAnalysisLanguageInstruction(book.language)}\n` : ''}
 Return a single JSON object strictly matching this schema:
 {
   "logline": "1-2 sentence compelling premise capturing protagonist, central conflict, and stakes.",

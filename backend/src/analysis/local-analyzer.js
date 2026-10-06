@@ -1,30 +1,76 @@
-const SENTENCE_SPLIT = /(?<=[.!?])\s+/;
-const SCENE_BREAK = /\n\s*(?:#{1,3}\s+.+|chapter\s+\w+|scene\s+\w+|\*{3,}|-{3,})\s*\n/gi;
+const SENTENCE_SPLIT = /(?<=[.!?\u0964\u0965])\s+/;
+const SCENE_BREAK = /\n\s*(?:#{1,3}\s+.+|chapter\s+\w+|scene\s+\w+|अध्याय\s+[\w\u0900-\u097F]+|दृश्य\s+[\w\u0900-\u097F]+|\*{3,}|-{3,})\s*\n/gi;
 const NAME_PATTERN = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g;
+const HINDI_NAME_PATTERN = /[\u0900-\u097F]{2,}/g;
 
 const STOP_NAMES = new Set([
   'A', 'An', 'And', 'As', 'At', 'But', 'By', 'Chapter', 'He', 'Her', 'His', 'I',
   'In', 'It', 'On', 'Scene', 'She', 'The', 'They', 'This', 'We', 'When', 'You',
 ]);
 
+const HINDI_STOP_WORDS = new Set([
+  'और', 'है', 'हैं', 'था', 'थी', 'थे', 'की', 'के', 'का', 'में', 'ने', 'से', 'को', 'पर', 'यह', 'वह',
+  'तो', 'भी', 'ही', 'हो', 'रहे', 'रहा', 'रही', 'गए', 'गया', 'गई', 'हुए', 'हुआ', 'हुई', 'किया',
+  'किए', 'दिए', 'दिया', 'लिए', 'अपने', 'अपनी', 'अपना', 'उसके', 'उसकी', 'उसका', 'इसके', 'इसकी',
+  'इसका', 'उन्हें', 'उसे', 'इसे', 'इन्हें', 'जब', 'तब', 'अब', 'सब', 'कोई', 'कुछ', 'क्या', 'क्यों',
+  'कैसे', 'कहाँ', 'यहाँ', 'वहाँ', 'लेकिन', 'मगर', 'किंतु', 'परंतु', 'अगर', 'यदि', 'अध्याय', 'दृश्य',
+  'बात', 'समय', 'दिन', 'रात', 'एक', 'दो', 'तीन', 'चार', 'फिर', 'साथ', 'पास', 'दूर', 'आगे', 'पीछे',
+  'ऊपर', 'नीचे', 'कहा', 'बोला', 'बोली', 'सुना', 'देखा', 'जा', 'कर', 'होना', 'होने'
+]);
+
 const MOODS = [
-  { name: 'tense', words: ['danger', 'fear', 'fight', 'blood', 'threat', 'panic', 'angry', 'storm'] },
-  { name: 'hopeful', words: ['hope', 'light', 'smile', 'safe', 'promise', 'future', 'relief'] },
-  { name: 'melancholy', words: ['alone', 'loss', 'silence', 'tears', 'gone', 'empty', 'grief'] },
-  { name: 'romantic', words: ['love', 'kiss', 'heart', 'touch', 'warm', 'tender'] },
-  { name: 'mysterious', words: ['secret', 'shadow', 'unknown', 'whisper', 'hidden', 'strange'] },
+  {
+    name: 'tense',
+    hindiName: 'तनावपूर्ण',
+    words: [
+      'danger', 'fear', 'fight', 'blood', 'threat', 'panic', 'angry', 'storm',
+      'डर', 'भय', 'खतरा', 'आतंक', 'लड़ाई', 'खून', 'क्रोध', 'गुस्सा', 'तूफान', 'हमला', 'तनाव', 'चीख'
+    ],
+  },
+  {
+    name: 'hopeful',
+    hindiName: 'आशावादी',
+    words: [
+      'hope', 'light', 'smile', 'safe', 'promise', 'future', 'relief',
+      'आशा', 'उम्मीद', 'रोशनी', 'प्रकाश', 'मुस्कान', 'सुरक्षित', 'राहत', 'विश्वास', 'जीत', 'भरोसा'
+    ],
+  },
+  {
+    name: 'melancholy',
+    hindiName: 'उदास',
+    words: [
+      'alone', 'loss', 'silence', 'tears', 'gone', 'empty', 'grief',
+      'उदास', 'अकेला', 'दुख', 'आंसू', 'शोक', 'खाली', 'विलाप', 'दर्द', 'रोना', 'निराशा'
+    ],
+  },
+  {
+    name: 'romantic',
+    hindiName: 'रोमांटिक',
+    words: [
+      'love', 'kiss', 'heart', 'touch', 'warm', 'tender',
+      'प्यार', 'प्रेम', 'दिल', 'स्पर्श', 'कोमल', 'स्नेह', 'चाहत'
+    ],
+  },
+  {
+    name: 'mysterious',
+    hindiName: 'रहस्यमय',
+    words: [
+      'secret', 'shadow', 'unknown', 'whisper', 'hidden', 'strange',
+      'रहस्य', 'साया', 'छाया', 'अनजान', 'फुसफुसाहट', 'गुप्त', 'अजीब', 'पहेली', 'अंधेरा'
+    ],
+  },
 ];
 
 const normalizeText = (text = '') => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 
-const wordCount = (text = '') => (text.match(/\b[\w'-]+\b/g) || []).length;
+const wordCount = (text = '') => (text.match(/[\w\u0900-\u097F'-]+/g) || []).length;
 
 const summarize = (text = '', maxSentences = 2) => {
   const sentences = text.trim().split(SENTENCE_SPLIT).filter(Boolean);
   return sentences.slice(0, maxSentences).join(' ').slice(0, 600) || 'No summary available.';
 };
 
-const splitIntoScenes = (rawText = '') => {
+const splitIntoScenes = (rawText = '', language = 'en') => {
   const text = normalizeText(rawText);
   if (!text) return [];
 
@@ -40,7 +86,7 @@ const splitIntoScenes = (rawText = '') => {
 
     return {
       sceneNumber: index + 1,
-      title: deriveSceneTitle(part, index + 1),
+      title: deriveSceneTitle(part, index + 1, language),
       summary: summarize(part),
       location: deriveLocation(part),
       textRange: { start: safeStart, end },
@@ -70,11 +116,12 @@ const chunkByParagraphs = (text, targetWords) => {
   return chunks;
 };
 
-const deriveSceneTitle = (text, sceneNumber) => {
+const deriveSceneTitle = (text, sceneNumber, language = 'en') => {
   const firstLine = text.split('\n').find((line) => line.trim().length > 0) || '';
   const cleaned = firstLine.replace(/^#+\s*/, '').trim();
   if (cleaned.length > 8 && cleaned.length <= 80) return cleaned;
-  return `Scene ${sceneNumber}`;
+  const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(text);
+  return isHindi ? `दृश्य ${sceneNumber}` : `Scene ${sceneNumber}`;
 };
 
 const deriveLocation = (text) => {
@@ -82,13 +129,26 @@ const deriveLocation = (text) => {
   return match ? match[1].trim().replace(/[,.!?].*$/, '') : '';
 };
 
-const extractCandidateNames = (text = '') => {
+const extractCandidateNames = (text = '', language = 'en') => {
   const counts = new Map();
+  const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(text);
+
+  // 1. ASCII names
   for (const match of text.matchAll(NAME_PATTERN)) {
     const name = match[0].trim();
     if (STOP_NAMES.has(name) || /^\d/.test(name)) continue;
     counts.set(name, (counts.get(name) || 0) + 1);
   }
+
+  // 2. Devanagari names if Hindi or contains Devanagari
+  if (isHindi) {
+    for (const match of text.matchAll(HINDI_NAME_PATTERN)) {
+      const name = match[0].trim();
+      if (HINDI_STOP_WORDS.has(name) || name.length < 2) continue;
+      counts.set(name, (counts.get(name) || 0) + 1);
+    }
+  }
+
   return [...counts.entries()]
     .filter(([, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1])
@@ -102,7 +162,16 @@ const classifyRole = (index, total) => {
   return 'supporting';
 };
 
-const traitsForName = (name, text) => {
+const traitsForName = (name, text, language = 'en') => {
+  const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(name);
+  if (isHindi) {
+    const traits = [];
+    if (text.includes(`${name} ने कहा`) || text.includes(`${name} बोला`) || text.includes(`${name} बोली`)) traits.push('मुखर');
+    if (text.includes(`${name} भागा`) || text.includes(`${name} लड़ा`) || text.includes(`${name} दौड़ा`)) traits.push('सक्रिय');
+    if (text.includes(`${name} ने सोचा`) || text.includes(`${name} समझा`)) traits.push('विचारशील');
+    return traits.length ? traits : ['उपस्थित'];
+  }
+
   const lower = text.toLowerCase();
   const traits = [];
   if (lower.includes(`${name.toLowerCase()} said`)) traits.push('vocal');
@@ -111,25 +180,48 @@ const traitsForName = (name, text) => {
   return traits.length ? traits : ['present'];
 };
 
-const moodForScene = (text = '') => {
+const moodForScene = (text = '', language = 'en') => {
   const lower = text.toLowerCase();
+  const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(text);
+
   const scored = MOODS.map((mood) => ({
     mood,
     score: mood.words.reduce((sum, word) => sum + (lower.includes(word) ? 1 : 0), 0),
   })).sort((a, b) => b.score - a.score);
 
   const winner = scored[0];
+  const runnerUp = scored[1];
   const intensity = Math.min(1, Math.max(0.15, winner.score / 5));
-  const primaryMood = winner.score > 0 ? winner.mood.name : 'neutral';
+
+  let primaryMood = 'neutral';
+  if (isHindi) {
+    if (winner.score > 0) {
+      // Check for compound mood e.g. "उदास और तनावपूर्ण"
+      if (
+        runnerUp &&
+        runnerUp.score > 0 &&
+        ((winner.mood.name === 'melancholy' && runnerUp.mood.name === 'tense') ||
+         (winner.mood.name === 'tense' && runnerUp.mood.name === 'melancholy'))
+      ) {
+        primaryMood = 'उदास और तनावपूर्ण';
+      } else {
+        primaryMood = winner.mood.hindiName;
+      }
+    } else {
+      primaryMood = 'शांत';
+    }
+  } else {
+    primaryMood = winner.score > 0 ? winner.mood.name : 'neutral';
+  }
 
   return {
     primaryMood,
     emotionScores: {
-      joy: primaryMood === 'hopeful' ? intensity : 0.1,
-      tension: primaryMood === 'tense' ? intensity : 0.1,
-      sadness: primaryMood === 'melancholy' ? intensity : 0.1,
-      mystery: primaryMood === 'mysterious' ? intensity : 0.1,
-      romantic: primaryMood === 'romantic' ? intensity : 0.1,
+      joy: winner.mood.name === 'hopeful' && winner.score > 0 ? intensity : 0.1,
+      tension: winner.mood.name === 'tense' && winner.score > 0 ? intensity : 0.1,
+      sadness: winner.mood.name === 'melancholy' && winner.score > 0 ? intensity : 0.1,
+      mystery: winner.mood.name === 'mysterious' && winner.score > 0 ? intensity : 0.1,
+      romantic: winner.mood.name === 'romantic' && winner.score > 0 ? intensity : 0.1,
     },
     intensity,
   };
@@ -137,18 +229,18 @@ const moodForScene = (text = '') => {
 
 const relationTypeForPair = (text = '') => {
   const lower = text.toLowerCase();
-  if (lower.includes('love') || lower.includes('kiss')) return 'romantic';
-  if (lower.includes('father') || lower.includes('mother') || lower.includes('brother') || lower.includes('sister')) return 'family';
-  if (lower.includes('enemy') || lower.includes('rival') || lower.includes('fight')) return 'rival';
-  if (lower.includes('teacher') || lower.includes('mentor')) return 'mentor';
-  if (lower.includes('friend') || lower.includes('together')) return 'ally';
+  if (lower.includes('love') || lower.includes('kiss') || lower.includes('प्यार') || lower.includes('प्रेम') || lower.includes('स्नेह')) return 'romantic';
+  if (lower.includes('father') || lower.includes('mother') || lower.includes('brother') || lower.includes('sister') || lower.includes('पिता') || lower.includes('माता') || lower.includes('मां') || lower.includes('भाई') || lower.includes('बहन') || lower.includes('परिवार')) return 'family';
+  if (lower.includes('enemy') || lower.includes('rival') || lower.includes('fight') || lower.includes('दुश्मन') || lower.includes('शत्रु') || lower.includes('प्रतिद्वंद्वी') || lower.includes('लड़ाई')) return 'rival';
+  if (lower.includes('teacher') || lower.includes('mentor') || lower.includes('गुरु') || lower.includes('शिक्षक') || lower.includes('उस्ताद')) return 'mentor';
+  if (lower.includes('friend') || lower.includes('together') || lower.includes('दोस्त') || lower.includes('मित्र') || lower.includes('साथी') || lower.includes('सखा')) return 'ally';
   return 'other';
 };
 
 const sentimentForText = (text = '') => {
   const lower = text.toLowerCase();
-  const positive = ['smile', 'hope', 'friend', 'love', 'safe', 'laugh'].filter((word) => lower.includes(word)).length;
-  const negative = ['fear', 'angry', 'enemy', 'fight', 'blood', 'hate'].filter((word) => lower.includes(word)).length;
+  const positive = ['smile', 'hope', 'friend', 'love', 'safe', 'laugh', 'मुस्कान', 'आशा', 'उम्मीद', 'दोस्त', 'प्यार', 'प्रेम', 'सुरक्षित', 'हंसी', 'खुशी'].filter((word) => lower.includes(word)).length;
+  const negative = ['fear', 'angry', 'enemy', 'fight', 'blood', 'hate', 'डर', 'भय', 'गुस्सा', 'क्रोध', 'दुश्मन', 'लड़ाई', 'खून', 'नफरत', 'उदास', 'दुख'].filter((word) => lower.includes(word)).length;
   return Math.max(-1, Math.min(1, (positive - negative) / 4));
 };
 
@@ -163,7 +255,7 @@ const hashToken = (token, dimensions) => {
 
 const buildTextEmbedding = (text = '', dimensions = 64) => {
   const vector = Array.from({ length: dimensions }, () => 0);
-  const tokens = text.toLowerCase().match(/\b[a-z0-9'-]{2,}\b/g) || [];
+  const tokens = text.toLowerCase().match(/[\w\u0900-\u097F'-]{2,}/g) || [];
   for (const token of tokens) {
     vector[hashToken(token, dimensions)] += 1;
   }
