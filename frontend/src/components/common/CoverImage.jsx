@@ -7,10 +7,12 @@ const PRESETS = {
   avatar: 'c_fill,w_256,h_256,g_face,f_auto,q_auto',
 };
 
+const defaultCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'n7j7nivw';
+
 /**
  * Builds a Cloudinary transformation URL from a publicId and preset.
  */
-export const coverUrl = (publicId, preset = 'thumb', cloudName = 'scenecraft') => {
+export const coverUrl = (publicId, preset = 'thumb', cloudName = defaultCloudName) => {
   if (!publicId) return '';
   if (publicId.startsWith('http://') || publicId.startsWith('https://')) {
     return publicId;

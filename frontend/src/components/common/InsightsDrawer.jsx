@@ -35,6 +35,7 @@ export function InsightsDrawer({
   const [activeTab, setActiveTab] = useState('characters');
   const [showAll, setShowAll] = useState(Boolean(inline));
   const [isProcessing, setIsProcessing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Determine user role relative to this book
   const isWriterOwner = Boolean(
@@ -54,17 +55,48 @@ export function InsightsDrawer({
     showAll: showAll,
   }), [displayPage, showAll]);
 
-  // Trigger processing on-demand when user opens narrative insights
+  // Monitor pipeline status and automatically poll while jobs are running/queued
   useEffect(() => {
-    if (bookId && isOpen) {
-      api.analysis.triggerProcessing({ kind: 'book', id: bookId }).then((res) => {
-        if (res?.message?.includes('started')) {
+    if (!bookId || !isOpen) return;
+
+    let isMounted = true;
+    let pollTimeout = null;
+
+    const checkPipelineStatus = async () => {
+      try {
+        const res = await api.analysis.getPipelineStatus(bookId);
+        const jobs = res?.data?.jobs || [];
+        const hasPendingJobs = jobs.some(
+          (j) => j.status === 'running' || j.status === 'queued'
+        );
+
+        if (!isMounted) return;
+
+        if (hasPendingJobs) {
           setIsProcessing(true);
+          // Poll every 3.5 seconds until background jobs finish
+          pollTimeout = setTimeout(checkPipelineStatus, 3500);
+        } else {
+          setIsProcessing((wasRunning) => {
+            if (wasRunning) {
+              // Background jobs just finished! Auto-refresh tab data
+              setRefreshKey((k) => k + 1);
+            }
+            return false;
+          });
         }
-      }).catch((err) => {
-        console.warn('Failed to trigger narrative analysis:', err);
-      });
-    }
+      } catch (_err) {
+        // Fallback: trigger if pending
+        api.analysis.triggerProcessing({ kind: 'book', id: bookId }).catch(() => {});
+      }
+    };
+
+    checkPipelineStatus();
+
+    return () => {
+      isMounted = false;
+      if (pollTimeout) clearTimeout(pollTimeout);
+    };
   }, [bookId, isOpen]);
 
   const tabs = [
@@ -170,7 +202,7 @@ export function InsightsDrawer({
           <button
             type="button"
             onClick={() => {
-              window.location.reload();
+              setRefreshKey((k) => k + 1);
             }}
             className="flex items-center gap-1 text-[11px] font-bold text-accent hover:underline cursor-pointer flex-shrink-0"
           >
@@ -220,7 +252,7 @@ export function InsightsDrawer({
             </p>
           </div>
         ) : (
-          <div className="insights-tab-content min-h-[540px] w-full flex flex-col">
+          <div key={refreshKey} className="insights-tab-content min-h-[540px] w-full flex flex-col">
             {activeTab === 'characters' && (
               <CharactersTab source={source} options={options} />
             )}

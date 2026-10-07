@@ -29,10 +29,47 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
   const VIEWPORT_W = 240;
   const VIEWPORT_H = 360;
 
+  // Export 600x900 crop to callback
+  const exportCrop = useCallback((img, currentZoom, currentOffset, filename) => {
+    if (!img) return;
+
+    const exportW = 600;
+    const exportH = 900;
+    const exportScale = exportW / VIEWPORT_W;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = exportW;
+    exportCanvas.height = exportH;
+    const exportCtx = exportCanvas.getContext('2d');
+
+    exportCtx.fillStyle = '#1C1917';
+    exportCtx.fillRect(0, 0, exportW, exportH);
+
+    exportCtx.drawImage(
+      img,
+      currentOffset.x * exportScale,
+      currentOffset.y * exportScale,
+      img.width * currentZoom * exportScale,
+      img.height * currentZoom * exportScale
+    );
+
+    exportCanvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], filename || 'cover.jpg', { type: 'image/jpeg' });
+      const localUrl = URL.createObjectURL(blob);
+      setPreviewUrl(localUrl);
+
+      if (onCropComplete) {
+        onCropComplete(file, localUrl);
+      }
+    }, 'image/jpeg', 0.92);
+  }, [onCropComplete]);
+
   // Load image from file
   const loadFile = useCallback((file) => {
     if (!file || !file.type.startsWith('image/')) return;
-    setOriginalFilename(file.name.replace(/\.[^/.]+$/, '') + '-cropped.jpg');
+    const croppedFilename = file.name.replace(/\.[^/.]+$/, '') + '-cropped.jpg';
+    setOriginalFilename(croppedFilename);
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -42,23 +79,27 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
         const scaleX = VIEWPORT_W / img.width;
         const scaleY = VIEWPORT_H / img.height;
         const baseZoom = Math.max(scaleX, scaleY);
-        setZoom(baseZoom);
-        setOffset({
+        const initOffset = {
           x: (VIEWPORT_W - img.width * baseZoom) / 2,
           y: (VIEWPORT_H - img.height * baseZoom) / 2,
-        });
+        };
+        setZoom(baseZoom);
+        setOffset(initOffset);
         setImageSrc(e.target.result);
+
+        // Automatically export immediately so coverFile is captured right away in form state
+        exportCrop(img, baseZoom, initOffset, croppedFilename);
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [exportCrop]);
 
   useEffect(() => {
-    if (initialFile) {
+    if (initialFile && !imageSrc) {
       loadFile(initialFile);
     }
-  }, [initialFile, loadFile]);
+  }, [initialFile, imageSrc, loadFile]);
 
   // Redraw canvas on changes
   const draw = useCallback(() => {
@@ -151,49 +192,20 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     const scaleX = VIEWPORT_W / img.width;
     const scaleY = VIEWPORT_H / img.height;
     const baseZoom = Math.max(scaleX, scaleY);
-    setZoom(baseZoom);
-    setOffset({
+    const resetOffset = {
       x: (VIEWPORT_W - img.width * baseZoom) / 2,
       y: (VIEWPORT_H - img.height * baseZoom) / 2,
-    });
+    };
+    setZoom(baseZoom);
+    setOffset(resetOffset);
+    exportCrop(img, baseZoom, resetOffset, originalFilename);
   };
 
-  // Export full 600x900 crop
+  // Export full 600x900 crop on manual confirmation
   const handleConfirmCrop = () => {
     const img = imageRef.current;
     if (!img) return;
-
-    // Create high-res offscreen canvas (600 × 900)
-    const exportW = 600;
-    const exportH = 900;
-    const exportScale = exportW / VIEWPORT_W;
-
-    const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = exportW;
-    exportCanvas.height = exportH;
-    const exportCtx = exportCanvas.getContext('2d');
-
-    exportCtx.fillStyle = '#1C1917';
-    exportCtx.fillRect(0, 0, exportW, exportH);
-
-    exportCtx.drawImage(
-      img,
-      offset.x * exportScale,
-      offset.y * exportScale,
-      img.width * zoom * exportScale,
-      img.height * zoom * exportScale
-    );
-
-    exportCanvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], originalFilename, { type: 'image/jpeg' });
-      const localUrl = URL.createObjectURL(blob);
-      setPreviewUrl(localUrl);
-
-      if (onCropComplete) {
-        onCropComplete(file, localUrl);
-      }
-    }, 'image/jpeg', 0.92);
+    exportCrop(img, zoom, offset, originalFilename);
   };
 
   return (

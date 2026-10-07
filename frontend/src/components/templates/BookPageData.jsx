@@ -113,10 +113,11 @@ export function BookPageData({
   const displayDesc =
     isLongDesc && !descExpanded ? `${fullDesc.slice(0, 320)}...` : fullDesc;
 
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'n7j7nivw';
   const coverUrl =
     book?.coverPreviewUrl ||
     book?.coverUrl ||
-    (book?.coverPublicId ? `https://res.cloudinary.com/demo/image/upload/${book.coverPublicId}` : null);
+    (book?.coverPublicId ? `https://res.cloudinary.com/${cloudName}/image/upload/${book.coverPublicId}` : null);
 
   const authorName = book?.writerId?.name || book?.authorId?.name || 'Storyloom Author';
   const authorUsername = book?.writerId?.username || book?.authorId?.username || null;
