@@ -43,3 +43,18 @@ scratch/
 *.rdb
 dump.rdb
 
+# Project documentation & reference files
+SceneCraft_Project_Overview.docx
+SceneCraft_Project_Overview.md
+CLAUDE.md
+
+# Ignored assets
+frontend/src/assets/9d261ec3344c8925537fae690a9c8c4b-removebg-preview.png
+frontend/src/assets/146e1e1cb5b63457348ee9e19be589c6-removebg-preview.png
+frontend/src/assets/00371261227346a59bdb24adc0932063-removebg-preview.png
+frontend/src/assets/d0f01b872f5c3ada81d7b52897de0387-removebg-preview.png
+frontend/src/assets/download__1_-removebg-preview.png
+frontend/src/assets/hero.png
+frontend/src/assets/Lost_in_a_Book-removebg-preview.png
+frontend/src/assets/react.svg
+frontend/src/assets/vite.svg
