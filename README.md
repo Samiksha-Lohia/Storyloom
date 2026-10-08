@@ -94,55 +94,28 @@ flowchart TD
     Worker --> AIModel
 ```
 
-### Architecture Data Flow
-1. The client sends authenticated HTTP requests to Express route handlers and establishes a WebSocket connection with Socket.io for live chat and processing alerts.
-2. When a manuscript is uploaded, the file is saved and Express dispatches a job to the BullMQ processing queue in Redis.
-3. The background worker pulls the job from Redis, runs text extraction, and processes the story through sequential analysis stages.
-4. During analysis, the worker makes structured prompts to the LLM API to extract characters, scenes, emotional arcs, and pitch details.
-5. All generated analysis documents, book records, and user profiles are stored in MongoDB.
-6. The worker emits completion events through Socket.io back to the client to update the user interface without a page reload.
-
 ## Project Structure
 
 ```text
 Storyloom/
 ├── backend/
-│   ├── scripts/          # Database seeding, migration, and maintenance utility scripts
-│   ├── src/
-│   │   ├── analysis/     # Rule-based text analysis, tokenizers, and similarity math
-│   │   ├── config/       # Environment variables, database, and Redis configuration
-│   │   ├── constants/    # User roles, pipeline stage definitions, and system constants
-│   │   ├── controllers/  # Route controllers processing incoming requests and responses
-│   │   ├── middleware/   # JWT authentication, role-based authorization, and error handling
-│   │   ├── models/       # Mongoose schemas for books, users, scenes, and analysis entities
-│   │   ├── parsers/      # Text extraction utilities for PDF, Word, and text files
-│   │   ├── queues/       # BullMQ queue declarations for asynchronous jobs
-│   │   ├── repositories/ # Data access layer abstracting MongoDB queries
-│   │   ├── routes/       # Express route definitions for all public and private endpoints
-│   │   ├── services/     # Core business logic, search services, and AI orchestration
-│   │   ├── socket/       # Socket.io event listeners for real-time messaging
-│   │   ├── utilities/    # Logger instances, custom error classes, and response formatters
-│   │   ├── validators/   # Joi schema validation rules for incoming request payloads
-│   │   ├── workers/      # BullMQ background worker executing the manuscript pipeline
-│   │   ├── app.js        # Express application setup, security middleware, and route mounting
-│   │   └── server.js     # Entry point initializing HTTP server, WebSockets, and database
-│   └── tests/            # Automated test suites for routes, auth, and pipeline features
+│   ├── src/controllers/  # Request handlers for authentication, books, and analytics
+│   ├── src/models/       # Mongoose schemas for users, books, scenes, and insights
+│   ├── src/routes/       # Express API routes for public and protected endpoints
+│   ├── src/services/     # Business logic, narrative analysis, and AI orchestration
+│   ├── src/workers/      # BullMQ background worker executing the analysis pipeline
+│   ├── src/analysis/     # Rule-based text processing, metrics, and boundary detection
+│   ├── src/socket/       # Socket.io handlers for real-time chat and progress events
+│   ├── src/parsers/      # Manuscript text extraction for PDF, DOCX, and TXT files
+│   ├── src/middleware/   # JWT authentication, role authorization, and error handling
+│   └── tests/            # Automated integration and unit test suites
 └── frontend/
-    ├── public/           # Static icons, brand logos, and public web assets
-    ├── src/
-    │   ├── components/   # Reusable views, modal dialogues, and story detail tabs
-    │   ├── constants/    # Frontend application routes and shared lookup tables
-    │   ├── context/      # React context providers managing user authentication
-    │   ├── hooks/        # Custom React hooks for pipeline polling and API calls
-    │   ├── layouts/      # Base layouts providing navigation headers and sidebars
-    │   ├── pages/        # Route page views for readers, writers, publishers, and admins
-    │   ├── services/     # HTTP API request wrappers and WebSocket client connection
-    │   ├── utils/        # Helper functions for formatting, validation, and route guards
-    │   ├── App.jsx       # Root component configuring application router and page routes
-    │   ├── index.css     # Global styles and typography definitions
-    │   └── main.jsx      # Application entry point mounting React into the DOM
-    ├── index.html        # HTML template entry point
-    └── vite.config.js    # Vite configuration file with dev server proxy settings
+    ├── src/components/   # Reusable views and narrative insight tabs
+    ├── src/pages/        # Views for reader, writer, publisher, and admin portals
+    ├── src/services/     # HTTP client API endpoints and WebSocket connection
+    ├── src/context/      # React context providers for authentication and state
+    ├── src/layouts/      # Shell layouts with navigation and sidebars
+    └── src/hooks/        # Custom React hooks for pipeline and state management
 ```
 
 ## API Overview
