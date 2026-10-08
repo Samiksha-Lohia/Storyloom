@@ -31,9 +31,10 @@ export const TEMPLATE_OPTIONS = [
 export const ACCENT_PRESETS = [
   {
     id: 'orange',
-    name: 'Warm Red',
-    hex: '#9B2D20',
-    description: 'Accent Rust',
+    name: 'Brand Orange',
+    hex: '#C2410C',
+    legacyHex: '#FF500A',
+    description: 'Warm & Energetic (Accessible 5.2:1)',
   },
   {
     id: 'blue',

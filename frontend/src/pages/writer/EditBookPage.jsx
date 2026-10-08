@@ -15,6 +15,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import CoverCropper from '../../components/common/CoverCropper';
 import { GENRES } from '../../constants/app';
+import { DEFAULT_ACCENT } from '../../constants/templates';
 
 export function EditBookPage() {
   const { id } = useParams();
@@ -136,7 +137,7 @@ export function EditBookPage() {
       if (updated.coverUrl) setCoverPreviewUrl(updated.coverUrl);
       setNewCoverFile(null);
       setShowCoverCropper(false);
-      setSuccessMsg('Story details, template, and presentation updated successfully!');
+      setSuccessMsg('Story details updated successfully!');
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err) {
       setError(err.message || 'Failed to update book.');

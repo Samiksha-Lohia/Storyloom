@@ -28,6 +28,7 @@ export const BOOK_ACCENTS = [
   '#7C3AED',
   '#B91C1C',
   '#0F766E',
+  '#9B2D20',
 ];
 
 export default BOOK_STATUSES;
