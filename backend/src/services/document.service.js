@@ -20,29 +20,16 @@ import { paginate } from './paginator.service.js';
 import { wordCount } from '../analysis/local-analyzer.js';
 import logger from '../utilities/logger.js';
 
-// STAGE_DEPENDENCIES is imported from constants/stages.js (single source of truth).
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Upload a new document, store the file, prepare text/pagination, and seed job records.
- *
- * @param {string} userId   - Authenticated user's ID
- * @param {Object} file     - Multer file object (req.file)
- * @returns {Promise<DocumentDto>}
- */
 const uploadDocument = async (userId, file, options = {}) => {
   const customTitle = typeof options === 'string' ? options : options.title;
   const bookId = typeof options === 'object' ? options.bookId : null;
   const returnRaw = typeof options === 'object' ? Boolean(options.returnRaw) : false;
 
-  const ext = path.extname(file.originalname).toLowerCase().slice(1); // 'pdf' | 'docx' | 'txt'
+  const ext = path.extname(file.originalname).toLowerCase().slice(1);
   const storageKey = `documents/${userId}/${Date.now()}-${file.originalname}`;
 
-  // 1. Persist the file to storage
   const storageUrl = await uploadFile(file, storageKey);
 
-  // 2. Parse text immediately & compute page offsets
   let parsedText = '';
   try {
     parsedText = await parseDocumentFile(storageUrl, ext);
@@ -53,7 +40,6 @@ const uploadDocument = async (userId, file, options = {}) => {
   const pageOffsets = normalized ? paginate(normalized) : [];
   const calculatedWordCount = wordCount(normalized);
 
-  // 3. Create the document record
   const document = await documentRepository.create({
     userId,
     title: customTitle || path.basename(file.originalname, path.extname(file.originalname)),
@@ -66,7 +52,6 @@ const uploadDocument = async (userId, file, options = {}) => {
     ...(bookId && { bookId }),
   });
 
-  // 4. Seed a ProcessingJob record for every stage
   const jobRecords = STAGE_LIST.map((stage) => ({
     documentId: document._id,
     stage,
@@ -77,7 +62,6 @@ const uploadDocument = async (userId, file, options = {}) => {
   }));
   await processingJobRepository.create(jobRecords);
 
-  // 5. If text parsing failed synchronously, enqueue parsing to BullMQ as fallback
   if (!normalized) {
     await pipelineQueue.add(
       STAGES.PARSING,
@@ -91,14 +75,6 @@ const uploadDocument = async (userId, file, options = {}) => {
   return returnRaw ? { document, dto, pageOffsets, pageCount: pageOffsets.length } : dto;
 };
 
-/**
- * List all documents belonging to a user, with optional pagination.
- *
- * @param {string} userId
- * @param {number} [page]
- * @param {number} [limit]
- * @returns {Promise<{ results: DocumentDto[], pagination?: object }>}
- */
 const getUserDocuments = async (userId, page, limit) => {
   if (page !== undefined && limit !== undefined) {
     const skip = (page - 1) * limit;
@@ -118,28 +94,16 @@ const getUserDocuments = async (userId, page, limit) => {
   return { results: DocumentDto.toResponseList(docs) };
 };
 
-/**
- * Get a single document by ID.
- *
- * @param {string} documentId
- * @returns {Promise<DocumentDto>}
- */
 const getDocumentById = async (documentId) => {
   const doc = await documentRepository.findById(documentId);
   if (!doc) throw new NotFoundError('Document not found.');
   return DocumentDto.toResponse(doc);
 };
 
-/**
- * Delete a document and cascade-delete all related analysis data.
- *
- * @param {string} documentId
- */
 const deleteDocument = async (documentId) => {
   const doc = await documentRepository.findById(documentId);
   if (!doc) throw new NotFoundError('Document not found.');
 
-  // Cascade deletions in parallel
   await Promise.all([
     sceneRepository.deleteMany({ documentId }),
     characterRepository.deleteMany({ documentId }),
@@ -153,7 +117,6 @@ const deleteDocument = async (documentId) => {
     processingJobRepository.deleteMany({ documentId }),
   ]);
 
-  // Delete the stored file (best-effort)
   const storageKey = doc.storageUrl.includes('amazonaws.com')
     ? doc.storageUrl.split('.amazonaws.com/')[1]
     : doc.storageUrl;
@@ -165,19 +128,10 @@ const deleteDocument = async (documentId) => {
   logger.info(`Document ${documentId} and all related records deleted.`);
 };
 
-/**
- * Update a document's title.
- *
- * @param {string} documentId
- * @param {string} userId    - Used to confirm ownership at the service layer.
- * @param {string} title
- * @returns {Promise<DocumentDto>}
- */
 const updateDocumentTitle = async (documentId, userId, title) => {
   const doc = await documentRepository.findById(documentId);
   if (!doc) throw new NotFoundError('Document not found.');
 
-  // Service-layer ownership guard (belt-and-suspenders alongside route middleware)
   if (doc.userId.toString() !== userId.toString()) {
     const { ForbiddenError } = await import('../utilities/custom-errors.js');
     throw new ForbiddenError('You do not have access to this document.');

@@ -28,22 +28,18 @@ export function ConversationsPage() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [activeConvo, setActiveConvo] = useState(null);
 
-  // Message thread state
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
 
-  // Send state
   const [inputText, setInputText] = useState('');
   const [sendError, setSendError] = useState(null);
   const [isTypingCounterpart, setIsTypingCounterpart] = useState(false);
 
-  // Mobile navigation state ('list' or 'thread')
   const [mobilePane, setMobilePane] = useState(targetConvoId ? 'thread' : 'list');
 
-  // References
   const messageEndRef = useRef(null);
   const messageListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -51,14 +47,12 @@ export function ConversationsPage() {
 
   activeConvoIdRef.current = activeConvo?._id;
 
-  // ─── 1. Load Conversations List ───────────────────────────────────────────
   const loadConversations = useCallback(async () => {
     try {
       const res = await api.conversations.list({ limit: 50 });
       const list = res.data || [];
       setConversations(list);
 
-      // Select active conversation
       if (targetConvoId) {
         const found = list.find((c) => c._id === targetConvoId);
         if (found) {
@@ -81,7 +75,6 @@ export function ConversationsPage() {
     loadConversations();
   }, [loadConversations]);
 
-  // ─── 2. Load Messages for Active Conversation ─────────────────────────────
   const loadMessages = useCallback(async (convoId) => {
     setLoadingMessages(true);
     setSendError(null);
@@ -91,10 +84,8 @@ export function ConversationsPage() {
       setHasMoreMessages(res.hasMore || false);
       setNextCursor(res.nextCursor || null);
 
-      // Mark as read via socket and REST
       socketClient.emit('message:read', { conversationId: convoId });
 
-      // Scroll to bottom
       setTimeout(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'auto' });
       }, 50);
@@ -105,7 +96,6 @@ export function ConversationsPage() {
     }
   }, []);
 
-  // When activeConvo changes, join socket room and fetch messages
   useEffect(() => {
     if (!activeConvo?._id) return;
 
@@ -113,7 +103,6 @@ export function ConversationsPage() {
     setSearchParams({ convo: convoId }, { replace: true });
     loadMessages(convoId);
 
-    // Socket room join
     socketClient.joinRoom(`conversation:${convoId}`);
     socketClient.emit('conversation:join', { conversationId: convoId });
 
@@ -123,7 +112,6 @@ export function ConversationsPage() {
     };
   }, [activeConvo?._id, loadMessages, setSearchParams]);
 
-  // Load older messages (infinite scroll upward)
   const handleLoadOlder = async () => {
     if (!activeConvo || !nextCursor || loadingMore) return;
     setLoadingMore(true);
@@ -140,7 +128,6 @@ export function ConversationsPage() {
       setHasMoreMessages(res.hasMore || false);
       setNextCursor(res.nextCursor || null);
 
-      // Maintain scroll position
       setTimeout(() => {
         if (scrollContainer) {
           scrollContainer.scrollTop = scrollContainer.scrollHeight - prevScrollHeight;
@@ -153,14 +140,12 @@ export function ConversationsPage() {
     }
   };
 
-  // ─── 3. Socket Live Events Listener ───────────────────────────────────────
   useEffect(() => {
     const handleNewMessage = (payload) => {
       const message = payload?.message || payload;
       const conversationId = (payload?.conversationId || message?.conversationId)?.toString();
       if (!message || !message.text) return;
 
-      // Update conversations list with latest snippet and timestamp
       setConversations((prev) =>
         prev.map((c) => {
           if (c._id?.toString() === conversationId) {
@@ -182,10 +167,8 @@ export function ConversationsPage() {
         })
       );
 
-      // If for currently open conversation
       if (activeConvoIdRef.current?.toString() === conversationId) {
         setMessages((prev) => {
-          // Check if replacing an optimistic pending message
           const idx = prev.findIndex(
             (m) =>
               m._id === message._id ||
@@ -199,10 +182,8 @@ export function ConversationsPage() {
           return [...prev, message];
         });
 
-        // Mark as read immediately since we have it open
         socketClient.emit('message:read', { conversationId });
 
-        // Auto-scroll
         setTimeout(() => {
           messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 50);
@@ -271,12 +252,10 @@ export function ConversationsPage() {
     };
   }, [user]);
 
-  // ─── 4. Typing Indicator Handler ──────────────────────────────────────────
   const handleInputChange = (e) => {
     setInputText(e.target.value);
     if (!activeConvo) return;
 
-    // Emit typing true
     socketClient.emit('conversation:typing', {
       conversationId: activeConvo._id,
       isTyping: true,
@@ -291,7 +270,6 @@ export function ConversationsPage() {
     }, 2000);
   };
 
-  // ─── 5. Send Message ──────────────────────────────────────────────────────
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!inputText.trim() || !activeConvo) return;
@@ -301,7 +279,6 @@ export function ConversationsPage() {
     setInputText('');
     setSendError(null);
 
-    // Optimistic message
     const optimisticMsg = {
       _id: clientMsgId,
       clientMsgId,
@@ -321,7 +298,6 @@ export function ConversationsPage() {
     }, 30);
 
     try {
-      // Send via socket first for instant feedback
       const socket = socketClient.getSocket();
       if (socket && socket.connected) {
         socketClient.emit('message:send', {
@@ -330,7 +306,6 @@ export function ConversationsPage() {
           clientMsgId,
         });
       } else {
-        // Fallback to REST if socket disconnected
         const saved = await api.conversations.sendMessage(activeConvo._id, textToSend);
         setMessages((prev) =>
           prev.map((m) => (m.clientMsgId === clientMsgId ? saved : m))
@@ -346,7 +321,6 @@ export function ConversationsPage() {
     }
   };
 
-  // Retry sending a failed message
   const handleRetry = async (failedMsg) => {
     try {
       setSendError(null);
@@ -364,7 +338,6 @@ export function ConversationsPage() {
     }
   };
 
-  // ─── 6. Writer Contact Sharing Toggle ──────────────────────────────────────
   const handleToggleContactSharing = async () => {
     if (!activeConvo || role !== 'writer') return;
     const nextState = !activeConvo.contactSharingEnabled;
@@ -388,7 +361,6 @@ export function ConversationsPage() {
     }
   };
 
-  // Helper to determine counterpart
   const getCounterpart = (convo) => {
     if (!convo) return {};
     const isCurrentUserWriter =
@@ -421,13 +393,11 @@ export function ConversationsPage() {
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-8.5rem)] flex flex-col bg-paper border border-rule rounded overflow-hidden">
       <div className="flex-1 flex min-h-0">
-        {/* ─── LEFT PANE: Conversation List ──────────────────────────────── */}
         <div
           className={`w-full md:w-80 lg:w-96 border-r border-rule flex flex-col bg-paper shrink-0 ${
             mobilePane === 'thread' ? 'hidden md:flex' : 'flex'
           }`}
         >
-          {/* List Header */}
           <div className="p-4 border-b border-rule bg-paper flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-ink" />
@@ -440,7 +410,6 @@ export function ConversationsPage() {
             </span>
           </div>
 
-          {/* List Content */}
           <div className="flex-1 overflow-y-auto divide-y divide-rule">
             {loadingConversations ? (
               <div className="p-4 text-center text-xs text-muted">
@@ -475,7 +444,6 @@ export function ConversationsPage() {
                         : 'hover:bg-rule/5'
                     }`}
                   >
-                    {/* Thumbnail */}
                     <div className="w-12 h-16 bg-paper rounded overflow-hidden shrink-0 border border-rule">
                       {book.coverUrl ? (
                         <img
@@ -490,7 +458,6 @@ export function ConversationsPage() {
                       )}
                     </div>
 
-                    {/* Meta info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <span className="font-semibold text-xs text-ink truncate">
@@ -528,7 +495,6 @@ export function ConversationsPage() {
           </div>
         </div>
 
-        {/* ─── RIGHT PANE: Chat Thread ───────────────────────────────────── */}
         <div
           className={`flex-1 flex flex-col bg-paper min-w-0 ${
             mobilePane === 'list' ? 'hidden md:flex' : 'flex'
@@ -536,10 +502,8 @@ export function ConversationsPage() {
         >
           {activeConvo ? (
             <>
-              {/* Thread Header */}
               <div className="p-4 border-b border-rule flex items-center justify-between gap-3 bg-paper sticky top-0 z-10">
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* Mobile Back Button */}
                   <button
                     onClick={() => setMobilePane('list')}
                     className="md:hidden p-1 text-muted hover:text-ink rounded cursor-pointer"
@@ -578,9 +542,7 @@ export function ConversationsPage() {
                   </div>
                 </div>
 
-                {/* Right Header Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Writer Contact Sharing Toggle */}
                   {isWriter ? (
                     <button
                       onClick={handleToggleContactSharing}
@@ -626,7 +588,6 @@ export function ConversationsPage() {
                     </span>
                   )}
 
-                  {/* Report Button */}
                   <ReportButton
                     targetType="conversation"
                     targetId={activeConvo._id}
@@ -636,7 +597,6 @@ export function ConversationsPage() {
                 </div>
               </div>
 
-              {/* Contact Sharing Status Banner */}
               {activeConvo.contactSharingEnabled ? (
                 <div className="bg-paper border-b border-rule px-4 py-2 text-[11px] text-success flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -657,13 +617,11 @@ export function ConversationsPage() {
                 </div>
               )}
 
-              {/* Message List */}
               <div
                 ref={messageListRef}
                 className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-paper"
                 aria-live="polite"
               >
-                {/* Load More Button */}
                 {hasMoreMessages && (
                   <div className="text-center pb-2">
                     <button
@@ -710,11 +668,9 @@ export function ConversationsPage() {
                               : 'bg-paper text-ink border border-rule'
                           } ${msg.status === 'failed' ? 'border border-danger' : ''}`}
                         >
-                          {/* Plain text only rendering for strict XSS safety */}
                           <span>{msg.text}</span>
                         </div>
 
-                        {/* Message status & timestamp */}
                         <div className="flex items-center gap-1.5 text-[10px] text-muted mt-1 px-1">
                           <span>
                             {msg.createdAt
@@ -752,7 +708,6 @@ export function ConversationsPage() {
                   })
                 )}
 
-                {/* Counterpart Typing Indicator */}
                 {isTypingCounterpart && (
                   <div className="text-xs text-muted italic p-2 border border-rule rounded bg-paper w-fit">
                     {currentCounterpart.name} is typing…
@@ -762,7 +717,6 @@ export function ConversationsPage() {
                 <div ref={messageEndRef} />
               </div>
 
-              {/* Error banner */}
               {sendError && (
                 <div className="p-2.5 bg-paper border-t border-danger text-danger text-xs flex items-center justify-between px-4">
                   <div className="flex items-center gap-2">
@@ -778,7 +732,6 @@ export function ConversationsPage() {
                 </div>
               )}
 
-              {/* Message Input Bar */}
               {isConversationClosed ? (
                 <div className="p-4 bg-paper border-t border-rule text-center text-xs text-muted flex items-center justify-center gap-2">
                   <Lock className="w-4 h-4 text-muted" />

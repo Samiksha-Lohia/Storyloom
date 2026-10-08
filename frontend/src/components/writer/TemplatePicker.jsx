@@ -43,9 +43,7 @@ export function TemplatePicker({
 
   return (
     <div className="space-y-6">
-      {/* ─── Top Controls: Template Selector & Accent Swatches ─────────── */}
       <div className="space-y-4">
-        {/* Template Choice Cards */}
         <div>
           <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-2">
             1. Select Presentation Template
@@ -88,7 +86,6 @@ export function TemplatePicker({
           </div>
         </div>
 
-        {/* Accent Color Swatches */}
         <div>
           <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-2">
             2. Choose Accent Palette
@@ -124,7 +121,6 @@ export function TemplatePicker({
         </div>
       </div>
 
-      {/* ─── Live Preview Pane ─────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rule pb-2">
           <div className="flex items-center gap-2">
@@ -136,7 +132,6 @@ export function TemplatePicker({
             </span>
           </div>
 
-          {/* Viewport switch */}
           <div className="inline-flex rounded border border-rule bg-paper p-0.5">
             <button
               type="button"
@@ -165,7 +160,6 @@ export function TemplatePicker({
           </div>
         </div>
 
-        {/* Preview Frame */}
         <div className="bg-paper p-4 rounded border border-rule flex justify-center overflow-x-auto min-h-[400px]">
           <div
             className={`w-full bg-paper rounded border border-rule p-4 overflow-hidden ${

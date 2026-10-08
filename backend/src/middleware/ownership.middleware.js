@@ -1,15 +1,6 @@
 import documentRepository from '../repositories/document.repository.js';
 import { ForbiddenError, NotFoundError } from '../utilities/custom-errors.js';
 
-/**
- * Ownership guard middleware.
- *
- * - Loads the document referenced by req.params.documentId
- * - Confirms the authenticated user owns it
- * - Attaches req.document so downstream handlers don't have to re-fetch
- *
- * Must be used AFTER the authenticate middleware.
- */
 const requireDocumentOwnership = async (req, _res, next) => {
   try {
     const { documentId } = req.params;

@@ -44,7 +44,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
     await new Promise((resolve) => server.close(resolve));
   });
 
-  // Helper to create users
   const createUser = async (role = 'reader', emailSuffix = 'user', overrides = {}) => {
     const email = `${role}_${emailSuffix}@example.com`;
     const password = 'password123';
@@ -73,7 +72,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
     return { user: userModel, token: tokens.accessToken };
   };
 
-  // Helper to create a test book
   const createTestBook = async (writerOrId, { status = BOOK_STATUSES.PUBLISHED, title = 'Test Book' } = {}) => {
     const writerId = writerOrId?._id || writerOrId?.id || writerOrId;
 
@@ -165,11 +163,9 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(reviewRes.status, 201);
       const reviewId = reviewRes.body.data._id;
 
-      // Other reader cannot mark as read
       const forbiddenRes = await req('PATCH', `/books/${book._id}/reviews/${reviewId}/read`, {}, strangerToken);
       assert.equal(forbiddenRes.status, 403);
 
-      // Book writer can mark as read
       const successRes = await req('PATCH', `/books/${book._id}/reviews/${reviewId}/read`, {}, writerToken);
       assert.equal(successRes.status, 200);
       assert.equal(successRes.body.success, true);
@@ -189,7 +185,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       const { token: r2Token } = await createUser('reader', 's2');
       const { token: r3Token, user: r3User } = await createUser('reader', 's3');
 
-      // Post 3 reviews: 5, 4, 3 -> avg = (5+4+3)/3 = 4.0
       await req('POST', `/books/${book._id}/reviews`, { rating: 5, text: 'Awesome' }, r1Token);
       await req('POST', `/books/${book._id}/reviews`, { rating: 4, text: 'Pretty good' }, r2Token);
       const r3Res = await req('POST', `/books/${book._id}/reviews`, { rating: 3, text: 'Average' }, r3Token);
@@ -198,7 +193,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(currentBook.stats.ratingCount, 3);
       assert.equal(currentBook.stats.ratingAvg, 4.0);
 
-      // Reader 3 updates from 3 to 5 -> avg = (5+4+5)/3 = 4.7
       const review3Id = r3Res.body.data._id;
       const updateRes = await req('PATCH', `/books/${book._id}/reviews/${review3Id}`, { rating: 5 }, r3Token);
       assert.equal(updateRes.status, 200);
@@ -207,7 +201,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(currentBook.stats.ratingCount, 3);
       assert.equal(currentBook.stats.ratingAvg, 4.7);
 
-      // Reader 3 deletes their review -> avg = (5+4)/2 = 4.5, count = 2
       const deleteRes = await req('DELETE', `/books/${book._id}/reviews/${review3Id}`, null, r3Token);
       assert.equal(deleteRes.status, 200);
 
@@ -227,7 +220,7 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
         createUser('reader', 'c4'),
       ]);
 
-      const ratings = [5, 4, 3, 2]; // sum = 14 / 4 = 3.5
+      const ratings = [5, 4, 3, 2];
       await Promise.all(
         readers.map((r, i) =>
           req('POST', `/books/${book._id}/reviews`, { rating: ratings[i], text: `Review ${i}` }, r.token)
@@ -238,7 +231,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(updatedBook.stats.ratingCount, 4);
       assert.equal(updatedBook.stats.ratingAvg, 3.5);
 
-      // Check histogram from GET /books/:bookId/reviews
       const getRes = await req('GET', `/books/${book._id}/reviews`);
       assert.equal(getRes.status, 200);
       assert.equal(getRes.body.data.stats.ratingAvg, 3.5);
@@ -271,7 +263,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(firstReport.status, 201);
       assert.equal(firstReport.body.data.status, 'open');
 
-      // Duplicate report on the same book while still open should be blocked
       const dupReport = await req(
         'POST',
         '/reports',
@@ -354,7 +345,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       assert.equal(actionRes.body.data.status, 'closed');
       assert.equal(actionRes.body.data.outcome, 'dismissed');
 
-      // Verify AuditLog entry
       const audit = await AuditLog.findOne({ action: 'report_dismiss', targetId: reportId.toString() });
       assert.ok(audit);
       assert.equal(audit.actor.toString(), admin._id.toString());
@@ -384,16 +374,13 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       );
       assert.equal(actionRes.status, 200);
 
-      // Verify book status changed to removed
       const updatedBook = await Book.findById(book._id);
       assert.equal(updatedBook.status, BOOK_STATUSES.REMOVED);
 
-      // Verify notification sent to writer
       const notif = await Notification.findOne({ recipientId: writer._id, type: 'book_removed' });
       assert.ok(notif);
       assert.match(notif.message, /removed/i);
 
-      // Verify AuditLog entry
       const audit = await AuditLog.findOne({ action: 'book_unpublish', targetId: book._id });
       assert.ok(audit);
       assert.equal(audit.actor.toString(), admin._id.toString());
@@ -415,7 +402,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       );
       const reportId = repRes.body.data._id;
 
-      // Strike user from the report
       const actionRes = await req(
         'PATCH',
         `/admin/reports/${reportId}`,
@@ -424,23 +410,19 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       );
       assert.equal(actionRes.status, 200);
 
-      // Check writer is now suspended with 3 strikes
       const suspendedWriter = await User.findById(writer._id);
       assert.equal(suspendedWriter.strikes, 3);
       assert.equal(suspendedWriter.status, USER_STATUSES.SUSPENDED);
 
-      // Check all published books were set to removed
       const b1 = await Book.findById(book1._id);
       const b2 = await Book.findById(book2._id);
       assert.equal(b1.status, BOOK_STATUSES.REMOVED);
       assert.equal(b2.status, BOOK_STATUSES.REMOVED);
 
-      // Check account_suspended notification
       const notif = await Notification.findOne({ recipientId: writer._id, type: 'account_suspended' });
       assert.ok(notif);
       assert.match(notif.message, /appeal/i);
 
-      // Check user_suspend audit entry
       const audit = await AuditLog.findOne({ action: 'user_suspend', targetId: writer._id });
       assert.ok(audit);
       assert.equal(audit.actor.toString(), admin._id.toString());
@@ -451,7 +433,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
     it('provides user notifications list, unread count, and read status management', async () => {
       const { user, token } = await createUser('reader', 'notif_user');
 
-      // Create 2 test notifications directly
       await Notification.create({
         recipientId: user._id,
         type: 'test_alert',
@@ -467,23 +448,19 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
         read: false,
       });
 
-      // Unread count
       const countRes = await req('GET', '/notifications/unread-count', null, token);
       assert.equal(countRes.status, 200);
       assert.equal(countRes.body.data.unreadCount, 2);
 
-      // Mark single notification read
       const markRes = await req('PATCH', `/notifications/${n2._id}/read`, null, token);
       assert.equal(markRes.status, 200);
       assert.equal(markRes.body.data.read, true);
 
-      // Check list
       const listRes = await req('GET', '/notifications', null, token);
       assert.equal(listRes.status, 200);
       assert.equal(listRes.body.data.notifications.length, 2);
       assert.equal(listRes.body.data.unreadCount, 1);
 
-      // Mark all read
       const allReadRes = await req('PATCH', '/notifications/read-all', null, token);
       assert.equal(allReadRes.status, 200);
 
@@ -495,7 +472,6 @@ describe('Phase 5: Reviews, Reports, Admin Queue, AuditLog, and Notifications Te
       const { user: writer, token: writerToken } = await createUser('writer', 'w_terms');
       const book = await createTestBook(writer);
 
-      // Manually set older terms version
       book.termsVersion = '0.9';
       await book.save();
 

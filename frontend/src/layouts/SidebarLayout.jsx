@@ -69,15 +69,12 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
 
   return (
     <div className="min-h-screen flex bg-paper text-ink">
-      {/* ─── Fixed Left Sidebar (Desktop) ─────────────────────────────────── */}
       <aside className="fixed top-0 left-0 h-screen w-64 bg-paper border-r border-rule flex flex-col justify-between z-40 hidden md:flex">
         <div className="flex flex-col min-h-0">
-          {/* Logo */}
           <div className="h-16 px-6 border-b border-rule flex items-center shrink-0">
             <Logo />
           </div>
 
-          {/* Nav Items */}
           <nav className="p-3 flex flex-col gap-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -101,7 +98,6 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
           </nav>
         </div>
 
-        {/* User Info + Sign out (at the bottom, once) */}
         <div className="p-4 border-t border-rule bg-paper shrink-0">
           <div className="mb-2">
             <p className="font-bold text-xs text-ink truncate">{user?.name || 'User'}</p>
@@ -119,7 +115,6 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
         </div>
       </aside>
 
-      {/* ─── Main Content Area (Offset by 256px on Desktop) ──────────────── */}
       <div className="flex-1 flex flex-col min-w-0 md:ml-64 bg-paper text-ink min-h-screen">
         <header className="h-16 bg-paper border-b border-rule px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
@@ -194,7 +189,6 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
           </div>
         </header>
 
-        {/* Mobile Navigation Row (Under top bar, no animation) */}
         <div className="md:hidden border-b border-rule bg-paper px-3 py-2 flex flex-wrap gap-1.5 text-xs">
           {navItems.map((item) => {
             const Icon = item.icon;

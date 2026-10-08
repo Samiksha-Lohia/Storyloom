@@ -23,14 +23,11 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(!initialData && Boolean(resolvedSource?.id));
   
-  // Filter states
   const [selectedType, setSelectedType] = useState('all');
   const [sentimentRange, setSentimentRange] = useState([-1, 1]);
   
-  // Edge detail panel state
   const [selectedEdge, setSelectedEdge] = useState(null);
 
-  // Sync initialData if supplied
   useEffect(() => {
     if (!initialData) return;
     if (initialData.relationships) {
@@ -46,7 +43,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     setLoading(false);
   }, [initialData]);
 
-  // Network fetch if no initialData
   useEffect(() => {
     if (initialData) return;
     if (!resolvedSource?.id) {
@@ -59,7 +55,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
 
     (async () => {
       try {
-        // 1. Load characters
         const charsRes = await api.analysis.getCharacters(resolvedSource, stableOptions).catch(() => []);
         if (isCancelled) return;
         const charsList = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
@@ -69,7 +64,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
         });
         setCharacters(charsMap);
 
-        // 2. Load scenes
         const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
         if (isCancelled) return;
         const scenesList = sceneRes?.data?.results || sceneRes?.results || sceneRes?.data || sceneRes || [];
@@ -79,7 +73,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
         });
         setScenes(scenesMap);
 
-        // 3. Load relationships
         const relRes = await api.analysis.getRelationships(resolvedSource, stableOptions).catch(() => []);
         if (isCancelled) return;
         const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
@@ -99,7 +92,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     };
   }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialData)]);
 
-  // Filtered relationships
   const filteredRelationships = useMemo(() => {
     return relationships
       .map(r => ({
@@ -115,7 +107,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       });
   }, [relationships, selectedType, sentimentRange]);
 
-  // Construct React Flow nodes and edges
   const { flowNodes, flowEdges } = useMemo(() => {
     const activeCharIds = new Set();
     filteredRelationships.forEach(r => {
@@ -128,7 +119,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
       activeChars = Object.values(characters);
     }
     
-    // Auto circular layout
     const total = activeChars.length;
     const radius = Math.max(140, Math.min(240, total * 30));
     const centerX = 280;
@@ -165,9 +155,9 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     const edges = filteredRelationships.map((rel, index) => {
       const relId = rel._id || rel.id || `edge-${index}`;
       
-      let color = '#6B6358'; // muted
-      if (rel.sentimentScore > 0.2) color = '#1C1917'; // ink
-      else if (rel.sentimentScore < -0.2) color = '#9B2D20'; // accent
+      let color = '#6B6358';
+      if (rel.sentimentScore > 0.2) color = '#1C1917';
+      else if (rel.sentimentScore < -0.2) color = '#9B2D20';
 
       const thickness = Math.max(1.5, Math.min(4, (rel.sceneIds?.length || 1) * 1.2));
 
@@ -206,7 +196,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     );
   }
 
-  // Read-only summary mode for pitch panel
   if (summary) {
     return (
       <div className="border border-rule rounded overflow-hidden bg-paper relative w-full h-[320px] min-h-[300px]">
@@ -251,12 +240,9 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
     );
   }
 
-  // Full interactive mode for Writer & Pitch detailed tabs
   return (
     <div className="flex flex-col w-full space-y-4">
-      {/* Controls Bar */}
       <div className="bg-paper p-4 rounded border border-rule flex flex-wrap items-center justify-between gap-4">
-        {/* Left: Category selector pills */}
         <div className="flex items-center gap-2 overflow-x-auto">
           <span className="text-xs font-bold text-muted uppercase tracking-wider mr-1">Filter:</span>
           {['all', 'ally', 'rival', 'family', 'mentor', 'romantic'].map((type) => (
@@ -274,7 +260,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
           ))}
         </div>
 
-        {/* Right: Sentiment filter slider */}
         <div className="flex items-center gap-3 text-xs">
           <span className="text-muted font-bold">Min Sentiment:</span>
           <div className="flex items-center gap-2">
@@ -292,7 +277,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
         </div>
       </div>
 
-      {/* Main Graph Canvas */}
       <div className="w-full h-[540px] min-h-[480px] border border-rule rounded overflow-hidden bg-paper relative flex">
         <div className="w-full h-full relative" style={{ width: '100%', height: '100%' }}>
           {flowNodes.length === 0 ? (
@@ -325,7 +309,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
           )}
         </div>
 
-        {/* Floating Side Info Panel for Clicked Connections */}
         {selectedEdge && (
           <div className="absolute top-4 right-4 bottom-4 w-80 bg-paper border border-rule rounded p-5 overflow-y-auto flex flex-col justify-between z-20 text-left">
             <div className="space-y-4">
@@ -342,7 +325,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                 </button>
               </div>
 
-              {/* Characters pair */}
               <div className="flex items-center justify-between bg-paper p-3 rounded border border-rule">
                 <span className="text-sm font-bold text-ink">
                   {characters[selectedEdge.characterAId]?.name}
@@ -353,7 +335,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                 </span>
               </div>
 
-              {/* Stats */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="bg-paper p-2.5 rounded border border-rule">
                   <span className="block text-muted uppercase font-bold text-[9px] tracking-wider">Type</span>
@@ -365,7 +346,6 @@ export default function RelationshipsTab({ documentId, source, options = {}, sum
                 </div>
               </div>
 
-              {/* Shared scenes list */}
               {selectedEdge.sceneIds && selectedEdge.sceneIds.length > 0 && (
                 <div className="space-y-2">
                   <span className="block text-[10px] font-bold uppercase tracking-widest text-muted flex items-center gap-1">

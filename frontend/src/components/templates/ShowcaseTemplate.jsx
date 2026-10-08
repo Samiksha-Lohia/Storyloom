@@ -25,13 +25,10 @@ export function ShowcaseTemplate({
 }) {
   return (
     <div className="book-template-showcase space-y-8 pb-16">
-      {/* 18+ Warning */}
       {renderMatureWarning()}
 
-      {/* ─── Hero Section ───────── */}
       <section className="bg-paper border border-rule rounded p-6 sm:p-8">
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto space-y-6">
-          {/* Centered Cover */}
           <div className="w-48 sm:w-56 aspect-[2/3] rounded border border-rule overflow-hidden bg-paper shrink-0">
             {coverUrl ? (
               <img
@@ -50,7 +47,6 @@ export function ShowcaseTemplate({
             )}
           </div>
 
-          {/* Badges */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="text-xs font-bold px-2.5 py-0.5 rounded border border-rule text-ink uppercase tracking-wider">
               {book?.genre || 'Showcase'}
@@ -65,7 +61,6 @@ export function ShowcaseTemplate({
             )}
           </div>
 
-          {/* Title & Author */}
           <div className="space-y-2">
             <h1 className="font-calligraphy text-4xl sm:text-5xl lg:text-6xl font-normal text-ink leading-tight">
               {book?.title || 'Untitled Story'}
@@ -76,7 +71,6 @@ export function ShowcaseTemplate({
             </p>
           </div>
 
-          {/* Stat Chips in Hero */}
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted border-y border-rule py-3 w-full">
             <div className="flex items-center gap-1.5">
               <Eye className="w-4 h-4 text-muted" />
@@ -104,16 +98,13 @@ export function ShowcaseTemplate({
             </div>
           </div>
 
-          {/* Action Buttons in Hero */}
           <div className="pt-2">
             {renderActionButtons('justify-center')}
           </div>
         </div>
       </section>
 
-      {/* ─── Two-Column Section: Wide Synopsis + Side Author Card ─────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Wide Synopsis (Left / Main) */}
         <div className="lg:col-span-8 bg-paper rounded border border-rule p-6 space-y-6">
           <div>
             <h2 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">
@@ -133,7 +124,6 @@ export function ShowcaseTemplate({
             )}
           </div>
 
-          {/* Tags */}
           {book?.tags && book.tags.length > 0 && (
             <div className="pt-4 border-t border-rule">
               <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-2.5">
@@ -157,7 +147,6 @@ export function ShowcaseTemplate({
           </div>
         </div>
 
-        {/* Author Card (Side Column) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-paper rounded border border-rule p-6 space-y-4">
             <span className="text-xs font-bold text-muted uppercase tracking-wider block">
@@ -195,10 +184,8 @@ export function ShowcaseTemplate({
         </div>
       </section>
 
-      {/* Tabs */}
       {renderTabsSection()}
 
-      {/* Related Books */}
       {renderRelatedBooks()}
     </div>
   );

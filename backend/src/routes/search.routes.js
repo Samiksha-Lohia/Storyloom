@@ -17,7 +17,6 @@ router.get('/', validate(documentIdParamSchema), validate(searchQuerySchema), re
   try {
     const { q, character, sceneRange, sceneRangeFrom, sceneRangeTo, mood } = req.query;
     
-    // Package filters
     const filters = {
       character,
       sceneRange,
@@ -38,10 +37,8 @@ router.post('/ask', validate(documentIdParamSchema), validate(askQuestionSchema)
     const { question } = req.body;
     const documentId = req.params.documentId;
 
-    // 1. Perform semantic search to get context (top 5 matches)
     const results = await searchService.semanticSearch(documentId, question, {}, 5);
 
-    // 2. Hydrate context text
     const context = results
       .map((item) => {
         if (item.sourceType === 'scene') {
@@ -61,7 +58,6 @@ router.post('/ask', validate(documentIdParamSchema), validate(askQuestionSchema)
     const language = await resolveStoryLanguage(documentId);
     const langInstruction = getAnalysisLanguageInstruction(language);
 
-    // 3. Prompt AI using existing OpenRouter architecture
     const prompt = `You are a story analysis assistant for SceneCraft. Answer the user's question about the story based on the provided analysis context.
 If the context doesn't contain the answer, use your intelligence to deduce the best response based on the available information, but keep it grounded in the provided context.
 ${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
@@ -76,7 +72,6 @@ Return your response as a JSON object matching this schema:
   "answer": "A detailed and accurate answer based on the context."
 }`;
 
-    // Call generateJSON using 'continuity' stage settings
     const responseObj = await generateJSON(prompt, null, 'continuity');
     
     sendSuccess(res, { answer: responseObj.answer || 'I am sorry, I could not extract an answer.' }, 200, 'Question answered.');

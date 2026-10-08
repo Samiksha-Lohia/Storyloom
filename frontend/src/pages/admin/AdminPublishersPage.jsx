@@ -14,12 +14,11 @@ import { api } from '../../services/api';
 export function AdminPublishersPage() {
   const [publishers, setPublishers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('pending'); // 'pending' | 'active' | 'all'
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
 
-  // Review Modal State
   const [selectedPublisher, setSelectedPublisher] = useState(null);
-  const [reviewAction, setReviewAction] = useState(null); // 'approve' | 'reject'
+  const [reviewAction, setReviewAction] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -103,7 +102,6 @@ export function AdminPublishersPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-2">
@@ -132,7 +130,6 @@ export function AdminPublishersPage() {
         </div>
       </div>
 
-      {/* Success Notification */}
       {successMsg && (
         <div className="p-3 bg-paper border border-success text-success rounded text-xs font-semibold flex items-center gap-2">
           <CheckCircle className="w-4 h-4 shrink-0" />
@@ -140,7 +137,6 @@ export function AdminPublishersPage() {
         </div>
       )}
 
-      {/* Filters Bar */}
       <div className="flex items-center gap-2 border-b border-rule pb-3">
         {['pending', 'active', 'all'].map((s) => (
           <button
@@ -157,7 +153,6 @@ export function AdminPublishersPage() {
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-paper border border-rule rounded overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-xs text-muted">
@@ -192,13 +187,11 @@ export function AdminPublishersPage() {
 
                   return (
                     <tr key={pub._id} className="hover:bg-rule/10">
-                      {/* Name & Email */}
                       <td className="py-3 px-4">
                         <div className="font-bold text-ink text-sm">{pub.name}</div>
                         <div className="text-muted font-mono text-[11px]">{pub.email}</div>
                       </td>
 
-                      {/* Company & Imprint */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-ink">
                           {profile.company || 'Not Specified'}
@@ -208,7 +201,6 @@ export function AdminPublishersPage() {
                         )}
                       </td>
 
-                      {/* Website */}
                       <td className="py-3 px-4">
                         {profile.website ? (
                           <a
@@ -230,12 +222,10 @@ export function AdminPublishersPage() {
                         )}
                       </td>
 
-                      {/* Applied Date */}
                       <td className="py-3 px-4 text-muted font-mono">
                         {pub.createdAt ? new Date(pub.createdAt).toLocaleDateString() : '—'}
                       </td>
 
-                      {/* Status */}
                       <td className="py-3 px-4">
                         {isApproved ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-success text-success text-[10px] font-bold uppercase tracking-wider">
@@ -260,7 +250,6 @@ export function AdminPublishersPage() {
                         )}
                       </td>
 
-                      {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         {isPending ? (
                           <div className="inline-flex items-center gap-2">
@@ -302,7 +291,6 @@ export function AdminPublishersPage() {
         )}
       </div>
 
-      {/* Review Modal */}
       {selectedPublisher && (
         <div className="fixed inset-0 bg-ink/40 flex items-center justify-center p-4 z-50">
           <div className="bg-paper border border-rule rounded max-w-md w-full p-6 space-y-4 text-left">

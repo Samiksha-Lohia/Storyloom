@@ -62,7 +62,6 @@ class SocketClient {
 
     this.socket.on('connect', () => {
       this.isConnecting = false;
-      // Re-join all active rooms after connection or reconnection
       this.activeRooms.forEach((room) => {
         this.emitJoin(room);
       });

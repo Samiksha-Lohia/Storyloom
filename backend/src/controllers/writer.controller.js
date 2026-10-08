@@ -54,7 +54,6 @@ export const getProfile = async (req, res, next) => {
     const currentUserId = req.user?.id || req.user?._id || null;
     const result = await writerService.getWriterProfile(identifier, currentUserId);
 
-    // Record profile_view event server-side
     if (result.writer?.id) {
       await recordProfileView(result.writer.id, req);
     }

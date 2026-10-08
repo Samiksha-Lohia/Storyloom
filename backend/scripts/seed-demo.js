@@ -36,10 +36,8 @@ async function seedDemo() {
   await connectDB();
   const hashedPassword = await bcrypt.hash(DEMO_PASSWORD, 10);
 
-  // ─── 1. Users ──────────────────────────────────────────────────────────────
   console.log('👤 Seeding Users (1 Admin, 3 Approved Publishers, 1 Pending, 5 Writers)...');
 
-  // 1 Admin
   const admin = await User.findOneAndUpdate(
     { email: 'admin@scenecraft.com' },
     {
@@ -54,7 +52,6 @@ async function seedDemo() {
     { upsert: true, new: true }
   );
 
-  // 3 Approved Publishers
   const pub1 = await User.findOneAndUpdate(
     { email: 'publisher@scenecraft.com' },
     {
@@ -118,7 +115,6 @@ async function seedDemo() {
     { upsert: true, new: true }
   );
 
-  // 1 Pending Publisher
   const pubPending = await User.findOneAndUpdate(
     { email: 'pending.publisher@scenecraft.com' },
     {
@@ -139,7 +135,6 @@ async function seedDemo() {
     { upsert: true, new: true }
   );
 
-  // 5 Writers
   const writersData = [
     {
       name: 'Elena Vance',
@@ -193,7 +188,6 @@ async function seedDemo() {
     writers.push(writerDoc);
   }
 
-  // 2 Readers
   const readersData = [
     {
       name: 'Alex Reader',
@@ -224,7 +218,6 @@ async function seedDemo() {
     readers.push(readerDoc);
   }
 
-  // ─── 2. Books & Documents ──────────────────────────────────────────────────
   const BOOK_BLUEPRINTS = [
     {
       title: 'The Clockwork Sovereign',
@@ -336,7 +329,6 @@ async function seedDemo() {
       status: BOOK_STATUSES.PUBLISHED,
       coverUrl: 'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=600&auto=format&fit=crop&q=80',
     },
-    // 2 Drafts
     {
       title: 'Project Chimera (WIP)',
       genre: 'Thriller',
@@ -412,14 +404,12 @@ async function seedDemo() {
   for (let i = 0; i < BOOK_BLUEPRINTS.length; i++) {
     const bp = BOOK_BLUEPRINTS[i];
 
-    // Use story-specific manuscript text with unique characters and worldbuilding
     const chaptersText = BOOK_MANUSCRIPTS[bp.title]?.text || [
       `# Chapter 1: The Inciting Spark\n\n${bp.blurb}\n\nThe world stood at the precipice of change.`,
       `# Chapter 2: The Rising Tension\n\nAllies and adversaries converged as the stakes escalated.`,
       `# Chapter 3: The Climax\n\nA decisive confrontation determined the fate of everything.`,
     ].join('\n\n\n');
 
-    // Create underlying Document
     const doc = await Document.create({
       userId: bp.writer._id,
       title: bp.title,
@@ -433,7 +423,6 @@ async function seedDemo() {
 
     const pages = paginate(chaptersText);
 
-    // Create Book with dynamic pitch card tailored to each story
     const dynamicPitch = buildFallbackPitchCard(bp, `seed_${bp.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`);
 
     const book = await Book.create({
@@ -463,14 +452,12 @@ async function seedDemo() {
     doc.bookId = book._id;
     await doc.save();
 
-    // Generate comprehensive story analysis suite for document
     console.log(`   ⚙️ Analyzing manuscript ${i + 1}/${BOOK_BLUEPRINTS.length}: "${bp.title}"...`);
     await processDocumentDirectly(doc._id);
 
     books.push(book);
   }
 
-  // ─── 3. Reviews ────────────────────────────────────────────────────────────
   console.log('⭐ Seeding 20 Community Reviews...');
   const REVIEW_COMMENTS = [
     'An absolute masterpiece! The character depth and worldbuilding pulled me in from the very first page.',
@@ -486,9 +473,9 @@ async function seedDemo() {
   ];
 
   for (let i = 0; i < 20; i++) {
-    const targetBook = books[i % 10]; // Distribute across published books
-    const reviewer = writers[(i + 1) % writers.length]; // Other writers as readers
-    const rating = 4 + (i % 2); // 4 or 5 stars
+    const targetBook = books[i % 10];
+    const reviewer = writers[(i + 1) % writers.length];
+    const rating = 4 + (i % 2);
 
     await Review.findOneAndUpdate(
       { bookId: targetBook._id, readerId: reviewer._id },
@@ -503,7 +490,6 @@ async function seedDemo() {
     );
   }
 
-  // ─── 4. Wishlists ──────────────────────────────────────────────────────────
   console.log('✨ Seeding 15 Publisher Acquisitions Wishlist Entries...');
   const publishers = [pub1, pub2, pub3];
   let wishlistCount = 0;
@@ -520,10 +506,8 @@ async function seedDemo() {
     }
   }
 
-  // ─── 5. Publish Requests & Chat ───────────────────────────────────────────
   console.log('🤝 Seeding 3 Publish Requests (1 Pending, 1 Accepted with Chat, 1 Declined)...');
 
-  // Request 1: Pending Offer from pub1 to writers[0] on Book 0
   await PublishRequest.create({
     publisherId: pub1._id,
     bookId: books[0]._id,
@@ -537,10 +521,9 @@ async function seedDemo() {
     status: 'pending',
   });
 
-  // Request 2: Accepted Offer -> opens Conversation with 6 Chat Messages
   const acceptedRequest = await PublishRequest.create({
     publisherId: pub2._id,
-    bookId: books[2]._id, // Neon Requiem by Kai Sterling
+    bookId: books[2]._id,
     writerId: books[2].writerId,
     company: pub2.publisherProfile.company,
     contactName: pub2.name,
@@ -551,7 +534,6 @@ async function seedDemo() {
     status: 'accepted',
   });
 
-  // Create Conversation for the accepted request
   const conversation = await Conversation.create({
     participants: [writers[1]._id, pub2._id],
     requestId: acceptedRequest._id,
@@ -564,7 +546,6 @@ async function seedDemo() {
   acceptedRequest.conversationId = conversation._id;
   await acceptedRequest.save();
 
-  // 6 Chat Messages
   const CHAT_EXCHANGE = [
     { sender: pub2, text: 'Hello Kai! Thrilled to connect. We are enormous fans of Neon Requiem.' },
     { sender: writers[1], text: 'Thank you Julian! Really excited about Beacon Press’s editorial vision.' },
@@ -585,10 +566,9 @@ async function seedDemo() {
     });
   }
 
-  // Request 3: Declined Offer with 30-day cooldown
   await PublishRequest.create({
     publisherId: pub3._id,
-    bookId: books[4]._id, // The Silk and the Dagger
+    bookId: books[4]._id,
     writerId: books[4].writerId,
     company: pub3.publisherProfile.company,
     contactName: pub3.name,
@@ -598,13 +578,11 @@ async function seedDemo() {
     message: 'We would love to shop The Silk and the Dagger to major streaming networks.',
     status: 'declined',
     note: 'Author is currently in talks with another studio regarding media rights.',
-    cooldownUntil: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // 25 days left in cooldown
+    cooldownUntil: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
   });
 
-  // ─── 6. Moderation Reports ────────────────────────────────────────────────
   console.log('🚨 Seeding 2 Open Moderation Reports (1 Book, 1 Conversation)...');
 
-  // Report 1: Book content report
   await Report.create({
     reporterId: writers[3]._id,
     targetType: 'book',
@@ -614,7 +592,6 @@ async function seedDemo() {
     status: 'open',
   });
 
-  // Report 2: Conversation report
   await Report.create({
     reporterId: writers[1]._id,
     targetType: 'conversation',
@@ -624,15 +601,13 @@ async function seedDemo() {
     status: 'open',
   });
 
-  // ─── 7. Reader Reading Lists & Library ────────────────────────────────────
   console.log('📚 Seeding Reader Reading Lists for Demo Reader Accounts...');
   await ReadingList.deleteMany({ readerId: { $in: [readers[0]._id, readers[1]._id] } });
 
-  // Alex Reader (reader@scenecraft.com)
   await ReadingList.create([
     {
       readerId: readers[0]._id,
-      bookId: books[0]._id, // The Clockwork Sovereign (Fantasy)
+      bookId: books[0]._id,
       status: 'reading',
       currentOffset: 1250,
       furthestOffset: 1800,
@@ -640,7 +615,7 @@ async function seedDemo() {
     },
     {
       readerId: readers[0]._id,
-      bookId: books[1]._id, // Echoes of the Obsidian Spire (Science Fiction)
+      bookId: books[1]._id,
       status: 'reading',
       currentOffset: 2400,
       furthestOffset: 2400,
@@ -648,25 +623,24 @@ async function seedDemo() {
     },
     {
       readerId: readers[0]._id,
-      bookId: books[2]._id, // Neon Requiem (Cyberpunk)
+      bookId: books[2]._id,
       status: 'want_to_read',
       currentOffset: 0,
       furthestOffset: 0,
     },
     {
       readerId: readers[0]._id,
-      bookId: books[4]._id, // The Silk and the Dagger (Historical Fiction)
+      bookId: books[4]._id,
       status: 'finished',
       currentOffset: 4500,
       furthestOffset: 4500,
     },
   ]);
 
-  // Clara Page (clara.reader@scenecraft.com)
   await ReadingList.create([
     {
       readerId: readers[1]._id,
-      bookId: books[3]._id, // The Ghost in the Lattice (Science Fiction)
+      bookId: books[3]._id,
       status: 'reading',
       currentOffset: 800,
       furthestOffset: 800,
@@ -674,26 +648,25 @@ async function seedDemo() {
     },
     {
       readerId: readers[1]._id,
-      bookId: books[5]._id, // Crimson Tide of Verona (Romance)
+      bookId: books[5]._id,
       status: 'want_to_read',
       currentOffset: 0,
       furthestOffset: 0,
     },
     {
       readerId: readers[1]._id,
-      bookId: books[1]._id, // Echoes of the Obsidian Spire (Science Fiction)
+      bookId: books[1]._id,
       status: 'finished',
       currentOffset: 3800,
       furthestOffset: 3800,
     },
   ]);
 
-  // Platform Administrator (admin@scenecraft.com) - In-progress reading stories
   await ReadingList.deleteMany({ readerId: admin._id });
   await ReadingList.create([
     {
       readerId: admin._id,
-      bookId: books[8]._id, // Children of the Ash King (Fantasy)
+      bookId: books[8]._id,
       status: 'reading',
       currentOffset: 650,
       furthestOffset: 650,
@@ -701,7 +674,7 @@ async function seedDemo() {
     },
     {
       readerId: admin._id,
-      bookId: books[0]._id, // The Clockwork Sovereign (Fantasy)
+      bookId: books[0]._id,
       status: 'reading',
       currentOffset: 900,
       furthestOffset: 900,
@@ -709,7 +682,7 @@ async function seedDemo() {
     },
     {
       readerId: admin._id,
-      bookId: books[2]._id, // Neon Requiem (Cyberpunk)
+      bookId: books[2]._id,
       status: 'reading',
       currentOffset: 400,
       furthestOffset: 400,

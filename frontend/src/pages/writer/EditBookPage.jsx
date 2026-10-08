@@ -28,7 +28,6 @@ export function EditBookPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Book State
   const [book, setBook] = useState(null);
   const [title, setTitle] = useState('');
   const [blurb, setBlurb] = useState('');
@@ -41,7 +40,6 @@ export function EditBookPage() {
   const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [status, setStatus] = useState('draft');
 
-  // Cover replacement state
   const [showCoverCropper, setShowCoverCropper] = useState(false);
   const [newCoverFile, setNewCoverFile] = useState(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
@@ -108,7 +106,6 @@ export function EditBookPage() {
 
       let updated;
       if (newCoverFile) {
-        // Multipart FormData for cover replacement + metadata
         const formData = new FormData();
         formData.append('cover', newCoverFile);
         formData.append('title', title.trim());
@@ -123,7 +120,6 @@ export function EditBookPage() {
 
         updated = await api.books.update(id, formData, true);
       } else {
-        // JSON payload
         const payload = {
           title: title.trim(),
           blurb: blurb.trim(),
@@ -180,7 +176,6 @@ export function EditBookPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8 pb-20 text-left">
-      {/* ─── Top Navigation Bar ────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div className="flex items-center gap-3">
           <button
@@ -225,7 +220,6 @@ export function EditBookPage() {
         </div>
       </div>
 
-      {/* ─── Alerts ────────────────────────────────────────────────────── */}
       {successMsg && (
         <div className="bg-paper border border-success text-success rounded p-4 flex items-center gap-3 text-xs">
           <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
@@ -240,16 +234,13 @@ export function EditBookPage() {
         </div>
       )}
 
-      {/* ─── Main Form Section ─────────────────────────────────────────── */}
       <form onSubmit={handleSave} className="space-y-10">
-        {/* Cover Artwork & Metadata Card */}
         <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
           <h2 className="text-base font-bold text-ink border-b border-rule pb-3">
             Cover Artwork & Story Details
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* Cover Column */}
             <div className="md:col-span-4 flex flex-col items-center space-y-4">
               <div className="w-44 aspect-[2/3] rounded overflow-hidden border border-rule bg-paper">
                 {coverPreviewUrl ? (
@@ -283,7 +274,6 @@ export function EditBookPage() {
               )}
             </div>
 
-            {/* Metadata Fields Column */}
             <div className="md:col-span-8 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
@@ -363,7 +353,6 @@ export function EditBookPage() {
                 </div>
               </div>
 
-              {/* Tags */}
               <div>
                 <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Tags (up to 10)
@@ -396,7 +385,6 @@ export function EditBookPage() {
                 </div>
               </div>
 
-              {/* Mature toggle */}
               <div className="pt-2 flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-ink block">Mature Content (18+)</span>
@@ -414,7 +402,6 @@ export function EditBookPage() {
             </div>
           </div>
 
-          {/* Inline Cover Cropper if requested */}
           {showCoverCropper && (
             <div className="pt-6 border-t border-rule space-y-3">
               <h3 className="font-bold text-xs text-ink">
@@ -430,7 +417,6 @@ export function EditBookPage() {
           )}
         </div>
 
-        {/* Template Picker & Live Preview Card */}
         <div className="bg-paper rounded border border-rule p-6 sm:p-8">
           <TemplatePicker
             selectedTemplate={template}
@@ -454,7 +440,6 @@ export function EditBookPage() {
           />
         </div>
 
-        {/* Bottom Save Action */}
         <div className="flex justify-end gap-3 pt-4">
           <Button
             type="button"

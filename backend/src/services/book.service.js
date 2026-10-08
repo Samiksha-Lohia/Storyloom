@@ -19,15 +19,10 @@ import { LibraryService } from './library.service.js';
 import Wishlist from '../models/wishlist.model.js';
 import PublishRequest from '../models/publish-request.model.js';
 
-
-
 function escapeRegex(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
 
-/**
- * Parses tags from array or comma-separated string.
- */
 function parseTags(tags) {
   if (Array.isArray(tags)) {
     return tags.map((t) => t.toString().trim()).filter(Boolean);
@@ -37,18 +32,12 @@ function parseTags(tags) {
       const parsed = JSON.parse(tags);
       if (Array.isArray(parsed)) return parsed.map((t) => t.toString().trim()).filter(Boolean);
     } catch {
-      // Not JSON, split by comma
       return tags.split(',').map((t) => t.trim()).filter(Boolean);
     }
   }
   return [];
 }
 
-/**
- * Creates a new Book with manuscript and optional cover.
- * Kicks off the parsing pipeline on the manuscript.
- * Rolls back all created assets if any step fails.
- */
 export const createBook = async (userId, files, data) => {
   const manuscriptFile = files?.manuscript?.[0] || files?.file?.[0];
   if (!manuscriptFile) {
@@ -65,7 +54,6 @@ export const createBook = async (userId, files, data) => {
   let coverResult = null;
 
   try {
-    // 1. Upload manuscript and kick off document processing
     documentResult = await documentService.uploadDocument(userId, manuscriptFile, {
       title: data.title,
       returnRaw: true,
@@ -73,7 +61,6 @@ export const createBook = async (userId, files, data) => {
 
     const document = documentResult.document;
 
-    // 2. Upload cover to Cloudinary if provided
     if (coverFile) {
       if (process.env.MOCK_CLOUDINARY_FAIL === 'true') {
         coverResult = await imageService.saveImage(coverFile.buffer, {
@@ -93,7 +80,6 @@ export const createBook = async (userId, files, data) => {
       }
     }
 
-    // 3. Create Book record
     const tags = parseTags(data.tags);
     const mature = data.mature === true || data.mature === 'true';
     const template = BOOK_TEMPLATES_LIST.includes(data.template) ? data.template : 'classic';
@@ -102,7 +88,6 @@ export const createBook = async (userId, files, data) => {
     const pageOffsets = documentResult.pageOffsets || [];
     const pageCount = documentResult.pageCount ?? pageOffsets.length;
 
-    // Default status to PUBLISHED unless explicitly requested as draft or processing
     let initialStatus = BOOK_STATUSES.PUBLISHED;
     if (data.status === 'draft') {
       initialStatus = BOOK_STATUSES.DRAFT;
@@ -130,7 +115,6 @@ export const createBook = async (userId, files, data) => {
       termsVersion: TERMS_VERSION,
     });
 
-    // 4. Associate book with Document
     document.bookId = book._id;
     if (book.language) {
       document.language = book.language;
@@ -142,14 +126,12 @@ export const createBook = async (userId, files, data) => {
   } catch (err) {
     logger.error(`Error in createBook flow, initiating rollback: ${err.message}`);
 
-    // Rollback Cloudinary asset if created
     if (coverResult?.publicId) {
       await imageService.deleteImage(coverResult.publicId).catch((cleanupErr) => {
         logger.warn(`Failed to rollback Cloudinary image: ${cleanupErr.message}`);
       });
     }
 
-    // Rollback document, storage, and queued jobs if created
     if (documentResult?.document?._id) {
       await documentService.deleteDocument(documentResult.document._id).catch((cleanupErr) => {
         logger.warn(`Failed to rollback Document: ${cleanupErr.message}`);
@@ -160,9 +142,6 @@ export const createBook = async (userId, files, data) => {
   }
 };
 
-/**
- * Invalidates all Redis catalogue cache keys on book mutations.
- */
 export const invalidateCatalogueCache = async () => {
   try {
     const keys = await redis.keys('catalogue:*');
@@ -170,14 +149,9 @@ export const invalidateCatalogueCache = async () => {
       await redis.del(...keys);
     }
   } catch (_err) {
-    // Non-blocking cache invalidation
   }
 };
 
-/**
- * Retrieves published catalogue with filtering, search, sorting, and pagination.
- * Caches anonymous/reader catalogue queries in Redis with 60s TTL.
- */
 export const getCatalogue = async (query = {}, user = null) => {
   const isAnonymousCatalogue = !user || (!query.wishlisted && user.role !== 'publisher');
   const cacheKey = `catalogue:${JSON.stringify(query)}`;
@@ -199,13 +173,11 @@ export const getCatalogue = async (query = {}, user = null) => {
     status: BOOK_STATUSES.PUBLISHED,
   };
 
-  // Mature filter: excluded by default unless explicitly requested
   const allowMature = query.mature === true || query.mature === 'true';
   if (!allowMature) {
     filter.mature = { $ne: true };
   }
 
-  // Genre filter
   if (query.genre && query.genre.trim()) {
     const rawGenre = query.genre.trim();
     if (/^sci-?fi$/i.test(rawGenre) || /^science fiction$/i.test(rawGenre)) {
@@ -215,12 +187,10 @@ export const getCatalogue = async (query = {}, user = null) => {
     }
   }
 
-  // Tag filter
   if (query.tag && query.tag.trim()) {
     filter.tags = { $in: [new RegExp(`^${escapeRegex(query.tag.trim())}$`, 'i')] };
   }
 
-  // Minimum rating filter
   if (query.minRating !== undefined && query.minRating !== '') {
     const minRating = parseFloat(query.minRating);
     if (!isNaN(minRating)) {
@@ -228,7 +198,6 @@ export const getCatalogue = async (query = {}, user = null) => {
     }
   }
 
-  // Minimum completion rate filter
   if (query.completionMin !== undefined && query.completionMin !== '') {
     const completionMin = parseFloat(query.completionMin);
     if (!isNaN(completionMin)) {
@@ -236,7 +205,6 @@ export const getCatalogue = async (query = {}, user = null) => {
     }
   }
 
-  // Length bucket filter (short < 150, medium 150-350, long > 350)
   const lengthBucket = query.lengthBucket || query.length;
   if (lengthBucket) {
     if (lengthBucket === 'short') {
@@ -248,7 +216,6 @@ export const getCatalogue = async (query = {}, user = null) => {
     }
   }
 
-  // Wishlisted filter (approved publisher only)
   if (query.wishlisted === true || query.wishlisted === 'true') {
     const isApprovedPublisher = user && user.role === 'publisher' && user.status === 'active';
     if (isApprovedPublisher) {
@@ -260,7 +227,6 @@ export const getCatalogue = async (query = {}, user = null) => {
     }
   }
 
-  // Search filter
   if (query.search && query.search.trim()) {
     const term = escapeRegex(query.search.trim());
     filter.$or = [
@@ -269,7 +235,6 @@ export const getCatalogue = async (query = {}, user = null) => {
     ];
   }
 
-  // Sorting
   let sort = { createdAt: -1 };
   if (
     query.sort === 'trending' ||
@@ -302,7 +267,6 @@ export const getCatalogue = async (query = {}, user = null) => {
       .exec(),
   ]);
 
-  // If approved publisher, check which books are wishlisted and which have accepted requests
   let wishlistedIds = new Set();
   let inTalksIds = new Set();
   if (user && user.role === 'publisher' && user.status === 'active') {
@@ -337,21 +301,16 @@ export const getCatalogue = async (query = {}, user = null) => {
     },
   };
 
-  // Cache in Redis with 60s TTL for anonymous/standard catalogue queries
   if (isAnonymousCatalogue) {
     try {
       await redis.set(cacheKey, JSON.stringify(responsePayload), 'EX', 60);
     } catch (_cacheErr) {
-      // Non-blocking
     }
   }
 
   return responsePayload;
 };
 
-/**
- * Retrieves all books for a writer across all active statuses (processing, draft, published, unpublished).
- */
 export const getWriterBooks = async (writerId) => {
   const books = await Book.find({
     writerId,
@@ -364,10 +323,6 @@ export const getWriterBooks = async (writerId) => {
   return BookDto.toResponseList(books);
 };
 
-/**
- * Retrieves a single book by ID.
- * Returns 404 to non-owners/non-admins if the book is not published.
- */
 export const getBookById = async (bookId, user = null) => {
   const book = await Book.findById(bookId).populate('writerId', 'name username avatarUrl');
   if (!book) {
@@ -386,9 +341,6 @@ export const getBookById = async (bookId, user = null) => {
   return BookDto.toResponse(book);
 };
 
-/**
- * Updates book metadata, template, accent, status, or replaces cover.
- */
 export const updateBook = async (bookId, updateData, user, newCoverFile = null) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -402,7 +354,6 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
     throw new ForbiddenError('You do not have permission to modify this book.');
   }
 
-  // Handle cover replacement if a new file is uploaded
   if (newCoverFile) {
     try {
       const newCover = await imageService.saveImage(newCoverFile.buffer, {
@@ -419,7 +370,6 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
     }
   }
 
-  // Status transition validation
   if (updateData.status && updateData.status !== book.status) {
     const nextStatus = updateData.status;
 
@@ -454,7 +404,6 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
     }
   }
 
-  // Update allowed metadata fields
   if (updateData.title !== undefined) book.title = updateData.title.trim();
   if (updateData.blurb !== undefined) book.blurb = updateData.blurb.trim();
   if (updateData.genre !== undefined) book.genre = updateData.genre.trim();
@@ -475,9 +424,6 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
   return BookDto.toResponse(book);
 };
 
-/**
- * Deletes a book, its cover, and cascades through documentService.deleteDocument.
- */
 export const deleteBook = async (bookId, user) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -491,22 +437,17 @@ export const deleteBook = async (bookId, user) => {
     throw new ForbiddenError('You do not have permission to delete this book.');
   }
 
-  // Destroy cover on Cloudinary if present
   if (book.coverPublicId) {
     await imageService.deleteImage(book.coverPublicId);
   }
 
-  // Invalidate Redis page cache
   try {
     await redis.del(`book:${book._id}:pages:text`);
   } catch (cacheErr) {
-    // Non-blocking
   }
 
-  // Cascade delete document and analysis data
   await documentService.deleteDocument(book.documentId);
 
-  // Delete Book record
   await bookRepository.deleteById(book._id);
   await invalidateCatalogueCache();
   logger.info(`Book ${bookId} deleted successfully.`);
@@ -514,11 +455,6 @@ export const deleteBook = async (bookId, user) => {
   return { success: true, message: 'Book deleted successfully.' };
 };
 
-/**
- * Retrieves a windowed range of pages (max 5 pages) for a book.
- * Caches full parsed manuscript in Redis with 1 hour TTL.
- * Slices using JS string offsets (UTF-16 code units).
- */
 export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -528,12 +464,10 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
   const isOwner = user && book.writerId && book.writerId.toString() === user.id.toString();
   const isAdmin = user && user.role === USER_ROLES.ADMIN;
 
-  // Published only for non-owners (404 hides unpublished books)
   if (book.status !== BOOK_STATUSES.PUBLISHED && !isOwner && !isAdmin) {
     throw new NotFoundError('Book not found.');
   }
 
-  // Mature gate: 403 MATURE_ACK_REQUIRED unless owner or admin
   if (book.mature && !isOwner && !isAdmin) {
     let hasAck = Boolean(user?.matureAckAt);
     if (!hasAck && user) {
@@ -548,8 +482,6 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
     }
   }
 
-
-  // Parse and validate page window
   const fromPage = Math.max(1, parseInt(from, 10) || 1);
   const toPage = to !== null && to !== undefined ? Math.max(1, parseInt(to, 10)) : fromPage;
 
@@ -569,7 +501,6 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
     return { pages: [], pageCount: 0 };
   }
 
-  // Redis cache lookup
   const cacheKey = `book:${book._id}:pages:text`;
   let fullText = null;
 
@@ -587,13 +518,12 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
     fullText = doc.parsedText;
 
     try {
-      await redis.set(cacheKey, fullText, 'EX', 3600); // 1 hour TTL
+      await redis.set(cacheKey, fullText, 'EX', 3600);
     } catch (setErr) {
       logger.warn(`Redis set cache error for book ${bookId}: ${setErr.message}`);
     }
   }
 
-  // Slice pages strictly using JS string indices
   const pages = [];
   const endLimit = Math.min(toPage, pageCount);
 
@@ -605,7 +535,6 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
     });
   }
 
-  // Auto-record reading progress for authenticated user (Task 7 & Task 9)
   if (user) {
     await LibraryService.recordPageRead(user.id, book, { from: fromPage, to: toPage });
   }
@@ -616,10 +545,6 @@ export const getBookPages = async (bookId, user, { from = 1, to = null } = {}) =
   };
 };
 
-/**
- * Returns scene marker page numbers for the reader scrubber.
- * Only returns numbers, no titles or text (strictly spoiler-free).
- */
 export const getSceneMarkers = async (bookId, user) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -629,12 +554,10 @@ export const getSceneMarkers = async (bookId, user) => {
   const isOwner = user && book.writerId && book.writerId.toString() === user.id.toString();
   const isAdmin = user && user.role === USER_ROLES.ADMIN;
 
-  // Published only for non-owners
   if (book.status !== BOOK_STATUSES.PUBLISHED && !isOwner && !isAdmin) {
     throw new NotFoundError('Book not found.');
   }
 
-  // Mature gate
   if (book.mature && !isOwner && !isAdmin) {
     let hasAck = Boolean(user?.matureAckAt);
     if (!hasAck && user) {
@@ -648,7 +571,6 @@ export const getSceneMarkers = async (bookId, user) => {
       );
     }
   }
-
 
   const pageOffsets = book.pageOffsets || [];
   if (pageOffsets.length === 0) {
@@ -698,5 +620,4 @@ export default {
   getSceneMarkers,
   acceptTerms,
 };
-
 

@@ -13,9 +13,8 @@ const router = Router({ mergeParams: true });
 
 router.use(authenticate);
 
-// Dedicated Rate Limiter for jobs status polling: 1000 requests per 15 minutes per IP
 const jobsLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   limit: 1000,
   standardHeaders: true,
   legacyHeaders: false,
@@ -27,10 +26,6 @@ const jobsLimiter = rateLimit({
   message: { success: false, message: 'Too many status check requests, please try again later.' },
 });
 
-/**
- * GET /api/documents/:documentId/jobs
- * Returns all 10 processing job records (pipeline progress).
- */
 router.get(
   '/',
   jobsLimiter,
@@ -46,10 +41,6 @@ router.get(
   }
 );
 
-/**
- * POST /api/documents/:documentId/jobs/:stage/retry
- * Re-queues a failed pipeline stage.
- */
 router.post(
   '/:stage/retry',
   validate(stageParamSchema),

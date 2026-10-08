@@ -101,7 +101,6 @@ export default function PublishRequestModal({
         aria-labelledby="publish-offer-title"
         className="relative w-full max-w-xl bg-paper rounded border border-rule overflow-hidden text-left max-h-[90vh] flex flex-col text-ink"
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-rule bg-paper">
           <div className="flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-ink" />
@@ -123,7 +122,6 @@ export default function PublishRequestModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-5 overflow-y-auto space-y-4">
           {submitted ? (
             <div className="py-6 text-center space-y-3">
@@ -152,7 +150,6 @@ export default function PublishRequestModal({
                 </div>
               )}
 
-              {/* Company & Contact Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-ink mb-1">
@@ -206,7 +203,6 @@ export default function PublishRequestModal({
                 </div>
               </div>
 
-              {/* Rights Sought */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1">
                   Rights Sought *
@@ -239,7 +235,6 @@ export default function PublishRequestModal({
                 </div>
               </div>
 
-              {/* Proposed Terms */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1">
                   Proposed Commercial Terms *
@@ -254,7 +249,6 @@ export default function PublishRequestModal({
                 />
               </div>
 
-              {/* Message to Author */}
               <div>
                 <label className="block text-xs font-bold text-ink mb-1">
                   Introductory Message to Author *
@@ -273,7 +267,6 @@ export default function PublishRequestModal({
                 </div>
               </div>
 
-              {/* Submit button */}
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-rule">
                 <button
                   type="button"

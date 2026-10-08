@@ -62,6 +62,16 @@ export function WriterBookInsightsPage() {
     }
   }, [id]);
 
+  const bookId = (book?._id || book?.id)?.toString();
+  const documentId = (book?.documentId?._id || book?.documentId)?.toString();
+  const source = useMemo(() => ({
+    kind: 'book',
+    id: bookId,
+    documentId,
+  }), [bookId, documentId]);
+
+  const options = useMemo(() => ({ showAll: true }), []);
+
   if (loading) {
     return (
       <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper max-w-5xl mx-auto my-8">
@@ -85,19 +95,8 @@ export function WriterBookInsightsPage() {
     );
   }
 
-  const bookId = (book?._id || book?.id)?.toString();
-  const documentId = (book?.documentId?._id || book?.documentId)?.toString();
-  const source = useMemo(() => ({
-    kind: 'book',
-    id: bookId,
-    documentId,
-  }), [bookId, documentId]);
-
-  const options = useMemo(() => ({ showAll: true }), []);
-
   return (
     <div className="space-y-6 pb-16 text-left">
-      {/* Header Bar */}
       <div className="bg-paper rounded border border-rule p-6 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3">
@@ -134,7 +133,6 @@ export function WriterBookInsightsPage() {
             </div>
           </div>
 
-          {/* Action preview link */}
           <div className="flex items-center gap-3">
             <Link to={`/read/${book.id || book._id}`}>
               <Button variant="secondary" size="sm" className="gap-2">
@@ -151,7 +149,6 @@ export function WriterBookInsightsPage() {
           </div>
         </div>
 
-        {/* Navigation Tabs Bar */}
         <div className="flex items-center gap-2 mt-8 pt-4 border-t border-rule overflow-x-auto" role="tablist">
           {WRITER_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -176,7 +173,6 @@ export function WriterBookInsightsPage() {
         </div>
       </div>
 
-      {/* Main Tab Workspace Card */}
       <div className="bg-paper rounded border border-rule p-6 sm:p-8 min-h-[560px]">
         {activeTab === 'scenes' && (
           <ScenesTab source={source} options={options} />

@@ -5,10 +5,6 @@ import { sendSuccess } from '../utilities/response.js';
 import { NotFoundError } from '../utilities/custom-errors.js';
 
 export class MeController {
-  /**
-   * PUT /me/mature-ack
-   * Acknowledges mature (18+) content warning.
-   */
   static async matureAck(req, res, next) {
     try {
       const user = await User.findById(req.user.id);
@@ -33,10 +29,6 @@ export class MeController {
     }
   }
 
-  /**
-   * PATCH /me/profile
-   * Updates user profile (name, bio, defaultTemplate).
-   */
   static async updateProfile(req, res, next) {
     try {
       const user = await User.findById(req.user.id);
@@ -61,10 +53,6 @@ export class MeController {
     }
   }
 
-  /**
-   * PATCH /me/settings
-   * Updates reader typography and theme settings.
-   */
   static async updateSettings(req, res, next) {
     try {
       const user = await User.findById(req.user.id);
@@ -92,10 +80,6 @@ export class MeController {
     }
   }
 
-  /**
-   * GET /me/library
-   * Retrieves reader's reading list.
-   */
   static async getLibrary(req, res, next) {
     try {
       const result = await LibraryService.getLibrary(req.user.id, req.query);
@@ -105,10 +89,6 @@ export class MeController {
     }
   }
 
-  /**
-   * GET /me/library/:bookId
-   * Retrieves progress for a specific book.
-   */
   static async getLibraryBook(req, res, next) {
     try {
       const entry = await LibraryService.getLibraryEntry(req.user.id, req.params.bookId);
@@ -121,10 +101,6 @@ export class MeController {
     }
   }
 
-  /**
-   * PUT /me/library/:bookId
-   * Updates progress, furthest point, and bookmarks.
-   */
   static async updateLibraryBook(req, res, next) {
     try {
       const updated = await LibraryService.updateLibraryEntry(
@@ -138,10 +114,6 @@ export class MeController {
     }
   }
 
-  /**
-   * DELETE /me/library/:bookId
-   * Removes book from reader's library.
-   */
   static async deleteLibraryBook(req, res, next) {
     try {
       await LibraryService.deleteLibraryEntry(req.user.id, req.params.bookId);

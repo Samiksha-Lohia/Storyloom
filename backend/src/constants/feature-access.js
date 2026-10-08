@@ -24,10 +24,6 @@ export const FEATURE_ACCESS_MODES = {
 
 export const FEATURE_ACCESS_MODES_LIST = Object.values(FEATURE_ACCESS_MODES);
 
-/**
- * Feature Access Matrix from Platform Spec Section 2.
- * Roles: writer (owner), reader, publisher, admin.
- */
 export const FEATURE_ACCESS_MATRIX = {
   [FEATURES.SCENES]: {
     writer: FEATURE_ACCESS_MODES.FULL,
@@ -91,13 +87,6 @@ export const FEATURE_ACCESS_MATRIX = {
   },
 };
 
-/**
- * Get access mode for a specific feature and effective role.
- *
- * @param {string} feature - Feature name (e.g. 'scenes', 'characters')
- * @param {string} effectiveRole - 'writer', 'reader', 'publisher', 'admin'
- * @returns {string} Mode: 'full' | 'filtered' | 'summary' | 'main-cast' | 'hidden' | 'spoilers-allowed'
- */
 export function getFeatureAccessMode(feature, effectiveRole = 'reader') {
   const featureRow = FEATURE_ACCESS_MATRIX[feature];
   if (!featureRow) {

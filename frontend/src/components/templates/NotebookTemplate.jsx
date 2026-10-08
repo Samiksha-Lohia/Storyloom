@@ -23,13 +23,10 @@ export function NotebookTemplate({
 }) {
   return (
     <div className="book-template-notebook space-y-8 pb-16">
-      {/* 18+ Warning */}
       {renderMatureWarning()}
 
-      {/* ─── Notebook Paper Card ─────────── */}
       <section className="bg-paper rounded border border-rule p-6 sm:p-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Cover Column */}
           <div className="md:col-span-4 flex flex-col items-center">
             <div className="w-48 sm:w-56 aspect-[2/3] rounded border border-rule overflow-hidden bg-paper">
               {coverUrl ? (
@@ -49,7 +46,6 @@ export function NotebookTemplate({
               )}
             </div>
 
-            {/* Author Note */}
             <div className="mt-4 text-center">
               <span className="text-xs text-muted block">written by</span>
               <p className="text-base text-ink font-bold mt-0.5">
@@ -61,10 +57,8 @@ export function NotebookTemplate({
             </div>
           </div>
 
-          {/* Body */}
           <div className="md:col-span-8 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
-              {/* Genre & status */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded border border-rule text-ink uppercase tracking-wider">
                   {book?.genre || 'Memoir / Literary'}
@@ -79,12 +73,10 @@ export function NotebookTemplate({
                 )}
               </div>
 
-              {/* Title */}
               <h1 className="font-calligraphy text-4xl sm:text-5xl lg:text-6xl font-normal text-ink leading-tight">
                 {book?.title || 'Untitled Manuscript'}
               </h1>
 
-              {/* Stats */}
               <div className="flex flex-wrap items-center gap-4 py-3 border-y border-rule text-xs text-muted">
                 <div className="flex items-center gap-1.5">
                   <Eye className="w-4 h-4 text-muted" />
@@ -112,7 +104,6 @@ export function NotebookTemplate({
                 </div>
               </div>
 
-              {/* Synopsis Section */}
               <div className="pt-2">
                 <h2 className="text-xs font-bold text-muted uppercase tracking-wider mb-2">
                   Notes &amp; Synopsis
@@ -131,7 +122,6 @@ export function NotebookTemplate({
                 )}
               </div>
 
-              {/* Tags */}
               {book?.tags && book.tags.length > 0 && (
                 <div className="pt-2">
                   <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-2">
@@ -150,13 +140,11 @@ export function NotebookTemplate({
                 </div>
               )}
 
-              {/* Action Buttons */}
               <div className="pt-4">
                 {renderActionButtons()}
               </div>
             </div>
 
-            {/* Footer */}
             <div className="pt-4 border-t border-rule text-xs text-muted flex justify-between">
               <span>Dated: {updatedDate}</span>
               <span>Lang: {book?.language?.toUpperCase() || 'EN'}</span>
@@ -165,10 +153,8 @@ export function NotebookTemplate({
         </div>
       </section>
 
-      {/* Tabs */}
       {renderTabsSection()}
 
-      {/* Related Books */}
       {renderRelatedBooks()}
     </div>
   );

@@ -2,14 +2,6 @@ import sceneRepository from '../repositories/scene.repository.js';
 import { NotFoundError } from '../utilities/custom-errors.js';
 import { SceneDto } from '../dtos/scene.dto.js';
 
-/**
- * Return all scenes for a document, ordered by sceneNumber, with optional pagination.
- *
- * @param {string} documentId
- * @param {number} [page]
- * @param {number} [limit]
- * @returns {Promise<{ results: SceneDto[], pagination?: object }>}
- */
 const getScenesForDocument = async (documentId, page, limit) => {
   if (page !== undefined && limit !== undefined) {
     const skip = (page - 1) * limit;
@@ -34,12 +26,6 @@ const getScenesForDocument = async (documentId, page, limit) => {
   return { results: SceneDto.toResponseList(scenes) };
 };
 
-/**
- * Return a single scene by its ID.
- *
- * @param {string} sceneId
- * @returns {Promise<SceneDto>}
- */
 const getSceneById = async (sceneId) => {
   const scene = await sceneRepository.findById(sceneId);
   if (!scene) throw new NotFoundError('Scene not found.');

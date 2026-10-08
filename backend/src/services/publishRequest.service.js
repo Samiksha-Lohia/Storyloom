@@ -20,13 +20,9 @@ import {
 } from '../utilities/custom-errors.js';
 import logger from '../utilities/logger.js';
 
-/**
- * Create a new publish request (approved publisher only).
- */
 export const createPublishRequest = async (publisherUser, data) => {
   const publisherId = publisherUser.id || publisherUser._id;
 
-  // 1. Role and approval check from database record
   const publisher = await User.findById(publisherId);
   if (
     !publisher ||
@@ -40,7 +36,6 @@ export const createPublishRequest = async (publisherUser, data) => {
     );
   }
 
-  // 2. Validate Book
   const book = await Book.findById(data.bookId);
   if (!book) {
     throw new NotFoundError('Book not found.');
@@ -52,18 +47,15 @@ export const createPublishRequest = async (publisherUser, data) => {
 
   const writerId = book.writerId;
 
-  // 3. Prevent self-requests (if publisher is also writer)
   if (writerId.toString() === publisherId.toString()) {
     throw new BadRequestError('You cannot send a publishing request to yourself.');
   }
 
-  // 4. Check if writer has blocked this publisher
   const isBlocked = await Block.findOne({ blockerId: writerId, blockedId: publisherId });
   if (isBlocked) {
     throw new ForbiddenError('You are blocked from contacting this author.');
   }
 
-  // 5. Check for active cooldown from previous declined request
   const recentDeclined = await PublishRequest.findOne({
     publisherId,
     bookId: book._id,
@@ -79,7 +71,6 @@ export const createPublishRequest = async (publisherUser, data) => {
     );
   }
 
-  // 6. Check for existing active request (pending or accepted)
   const existingActive = await PublishRequest.findOne({
     publisherId,
     bookId: book._id,
@@ -93,7 +84,6 @@ export const createPublishRequest = async (publisherUser, data) => {
     );
   }
 
-  // 7. Create request record
   const request = await PublishRequest.create({
     bookId: book._id,
     publisherId,
@@ -107,7 +97,6 @@ export const createPublishRequest = async (publisherUser, data) => {
     status: PUBLISH_REQUEST_STATUSES.PENDING,
   });
 
-  // 8. Notify the writer
   try {
     await createNotification({
       recipientId: writerId,
@@ -127,9 +116,6 @@ export const createPublishRequest = async (publisherUser, data) => {
   return request;
 };
 
-/**
- * List publish requests scoped to the caller's role.
- */
 export const listPublishRequests = async (user, { status, page = 1, limit = 20 } = {}) => {
   const userId = user.id || user._id;
   const filter = {};
@@ -139,7 +125,6 @@ export const listPublishRequests = async (user, { status, page = 1, limit = 20 }
   } else if (user.role === USER_ROLES.WRITER) {
     filter.writerId = userId;
   } else if (user.role === USER_ROLES.ADMIN) {
-    // Admin can see all
   } else {
     return { results: [], pagination: { total: 0, page: 1, limit, totalPages: 1 } };
   }
@@ -175,9 +160,6 @@ export const listPublishRequests = async (user, { status, page = 1, limit = 20 }
   };
 };
 
-/**
- * Get request by ID with participant/admin authorization.
- */
 export const getPublishRequestById = async (user, requestId) => {
   const userId = (user.id || user._id).toString();
 
@@ -202,9 +184,6 @@ export const getPublishRequestById = async (user, requestId) => {
   return request;
 };
 
-/**
- * Update publish request status (accept, decline, withdraw, close).
- */
 export const updatePublishRequestStatus = async (user, requestId, { action, note = '' }) => {
   const userId = (user.id || user._id).toString();
 
@@ -222,7 +201,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
 
   switch (action) {
     case 'accept': {
-      // Writer only
       if (!isWriter && !isAdmin) {
         throw new ForbiddenError('Only the book author can accept a publishing request.');
       }
@@ -233,7 +211,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
       request.status = PUBLISH_REQUEST_STATUSES.ACCEPTED;
       if (note) request.note = note;
 
-      // Create conversation
       let conversation = await Conversation.findOne({ requestId: request._id });
       if (!conversation) {
         conversation = await Conversation.create({
@@ -248,7 +225,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
       request.conversationId = conversation._id;
       await request.save();
 
-      // Notify publisher
       try {
         await createNotification({
           recipientId: request.publisherId,
@@ -269,7 +245,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
     }
 
     case 'decline': {
-      // Writer only
       if (!isWriter && !isAdmin) {
         throw new ForbiddenError('Only the book author can decline a publishing request.');
       }
@@ -282,7 +257,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
       if (note) request.note = note;
       await request.save();
 
-      // Notify publisher
       try {
         await createNotification({
           recipientId: request.publisherId,
@@ -303,7 +277,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
     }
 
     case 'withdraw': {
-      // Publisher only
       if (!isPublisher && !isAdmin) {
         throw new ForbiddenError('Only the requesting publisher can withdraw this request.');
       }
@@ -315,7 +288,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
       if (note) request.note = note;
       await request.save();
 
-      // Notify writer
       try {
         await createNotification({
           recipientId: request.writerId,
@@ -335,7 +307,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
     }
 
     case 'close': {
-      // Either participant or admin
       if (!isPublisher && !isWriter && !isAdmin) {
         throw new ForbiddenError('Only participants or admins can close an accepted request.');
       }
@@ -347,14 +318,12 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
       if (note) request.note = note;
       await request.save();
 
-      // Also close associated conversation if open
       if (request.conversationId) {
         await Conversation.findByIdAndUpdate(request.conversationId, {
           status: CONVERSATION_STATUSES.CLOSED,
         });
       }
 
-      // Notify other participant
       const otherParticipantId = isPublisher ? request.writerId : request.publisherId;
       try {
         await createNotification({
@@ -379,9 +348,6 @@ export const updatePublishRequestStatus = async (user, requestId, { action, note
   }
 };
 
-/**
- * Block a publisher from sending future requests to this writer.
- */
 export const blockPublisher = async (writerId, publisherId, reason = '') => {
   const publisher = await User.findById(publisherId);
   if (!publisher || publisher.role !== USER_ROLES.PUBLISHER) {
@@ -397,9 +363,6 @@ export const blockPublisher = async (writerId, publisherId, reason = '') => {
   return block;
 };
 
-/**
- * Unblock a publisher.
- */
 export const unblockPublisher = async (writerId, publisherId) => {
   const result = await Block.findOneAndDelete({
     blockerId: writerId,
@@ -408,9 +371,6 @@ export const unblockPublisher = async (writerId, publisherId) => {
   return !!result;
 };
 
-/**
- * List blocked publishers for a writer.
- */
 export const listBlockedPublishers = async (writerId) => {
   const blocks = await Block.find({ blockerId: writerId })
     .populate('blockedId', 'name username avatarUrl publisherProfile')

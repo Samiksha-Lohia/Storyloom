@@ -58,7 +58,6 @@ const searchQuerySchema = {
   }),
 };
 
-/** PATCH /api/documents/:documentId — update title */
 const updateDocumentBodySchema = {
   body: Joi.object({
     title: Joi.string().trim().min(1).max(200).required().messages({
@@ -69,7 +68,6 @@ const updateDocumentBodySchema = {
   }),
 };
 
-/** PATCH /continuity/:id/status — :documentId + :id params */
 const continuityIssueIdParamSchema = {
   params: Joi.object({
     documentId: Joi.string().pattern(objectIdPattern).required(),
@@ -79,7 +77,6 @@ const continuityIssueIdParamSchema = {
   }),
 };
 
-/** PATCH /continuity/:id/status — request body */
 const updateContinuityStatusSchema = {
   body: Joi.object({
     status: Joi.string()

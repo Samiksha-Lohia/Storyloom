@@ -51,7 +51,6 @@ const characterSchema = new mongoose.Schema(
   }
 );
 
-// Compound text index for entity resolution & fuzzy deduplication
 characterSchema.index({ name: 'text', aliases: 'text' }, { default_language: 'english', language_override: 'none' });
 
 const Character = mongoose.model('Character', characterSchema);

@@ -2,14 +2,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// Layouts
 import PublicLayout from './layouts/PublicLayout';
 import SidebarLayout from './layouts/SidebarLayout';
 
-// Common
 import RoleRoute from './components/common/RoleRoute';
 
-// Pages
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
@@ -51,7 +48,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Dedicated Reader Route (Immersive full screen with custom top bar & scrubber) */}
           <Route
             path="/read/:bookId"
             element={
@@ -61,7 +57,6 @@ function App() {
             }
           />
 
-          {/* Public Routes with Top Bar & Footer */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/browse" element={<CataloguePage />} />
@@ -100,7 +95,6 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
-          {/* Dedicated Auth Pages (Split collage layout) */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -108,7 +102,6 @@ function App() {
           <Route path="/p/apply" element={<PendingApprovalPage />} />
           <Route path="/p/apply-status" element={<PendingApprovalPage />} />
 
-          {/* Writer Protected Area */}
           <Route
             path="/w"
             element={
@@ -136,7 +129,6 @@ function App() {
             />
           </Route>
 
-          {/* Publisher Protected Area */}
           <Route
             path="/p"
             element={
@@ -161,7 +153,6 @@ function App() {
             />
           </Route>
 
-          {/* Admin Protected Area */}
           <Route
             path="/a"
             element={
@@ -185,7 +176,6 @@ function App() {
             />
           </Route>
 
-          {/* Dev Workspace (Preserves Legacy Story Analysis UI) */}
           <Route
             path="/dev/workspace/:documentId"
             element={

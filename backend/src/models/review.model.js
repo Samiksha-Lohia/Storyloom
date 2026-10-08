@@ -42,9 +42,7 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-// One review per reader per book
 reviewSchema.index({ readerId: 1, bookId: 1 }, { unique: true });
-// Compound index for fast catalogue & sorting queries
 reviewSchema.index({ bookId: 1, status: 1, createdAt: -1 });
 reviewSchema.index({ bookId: 1, status: 1, rating: -1 });
 

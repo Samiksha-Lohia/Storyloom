@@ -22,12 +22,10 @@ export const PUBLIC_ROUTES = [
 
 const router = Router({ mergeParams: true });
 
-// Middleware stack for all book analysis routes
 router.use(authenticateOptional);
 router.use(resolveBook);
 router.use(requireMatureAck);
 
-// Feature analysis endpoints
 router.post('/process', AnalysisController.triggerProcessing);
 router.get('/pipeline-status', AnalysisController.getPipelineStatus);
 router.get('/scenes', AnalysisController.getScenes);

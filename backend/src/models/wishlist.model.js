@@ -26,7 +26,6 @@ const wishlistSchema = new mongoose.Schema(
   }
 );
 
-// Unique compound index: each publisher can wishlist a book at most once
 wishlistSchema.index({ publisherId: 1, bookId: 1 }, { unique: true });
 wishlistSchema.index({ publisherId: 1, createdAt: -1 });
 

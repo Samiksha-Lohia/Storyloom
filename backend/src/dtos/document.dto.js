@@ -10,7 +10,6 @@ export class DocumentDto {
     this.totalScenes = doc.totalScenes || 0;
     this.uploadedAt = doc.uploadedAt;
 
-    // Secure Storage URL: route-relative for local storage, direct for cloud/S3
     if (doc.storageUrl && !doc.storageUrl.startsWith('http')) {
       this.storageUrl = `/api/documents/${this.id}/download`;
     } else {

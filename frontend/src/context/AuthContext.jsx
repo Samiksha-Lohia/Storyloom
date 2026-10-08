@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
       return freshUser;
     } catch (err) {
       console.warn('Failed to refresh user profile:', err.message);
-      // If 401, user is logged out automatically
       setUser(null);
       return null;
     } finally {
@@ -42,7 +41,6 @@ export const AuthProvider = ({ children }) => {
     setUser(data.user);
     return data;
   };
-
 
   const logout = async () => {
     await api.auth.logout();

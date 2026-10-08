@@ -7,7 +7,7 @@ export default function StarWishlistButton({
   bookId,
   initialWishlisted = false,
   inTalks = false,
-  size = 'md', // 'sm', 'md', 'lg'
+  size = 'md',
   showLabel = false,
   onToggle = null,
   className = '',
@@ -20,7 +20,6 @@ export default function StarWishlistButton({
     setWishlisted(initialWishlisted);
   }, [initialWishlisted]);
 
-  // Only approved publishers can wishlist books
   const isApprovedPublisher = role === 'publisher' && status === 'active';
 
   const handleToggle = async (e) => {
@@ -44,7 +43,6 @@ export default function StarWishlistButton({
       if (onToggle) onToggle(nextState);
     } catch (err) {
       console.error('Failed to toggle wishlist:', err);
-      // Revert on error
       setWishlisted(!nextState);
     } finally {
       setLoading(false);

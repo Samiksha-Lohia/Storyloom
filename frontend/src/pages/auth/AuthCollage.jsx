@@ -55,10 +55,8 @@ export default function AuthCollage({ heading = 'A home for your stories.' }) {
 
   return (
     <div className="w-full h-full min-h-[320px] md:min-h-[560px] bg-paper p-5 sm:p-6 md:p-8 flex flex-col justify-between rounded border border-rule select-none relative overflow-hidden">
-      {/* Subtle background ambient gradient */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
-      {/* Top Header & Tagline */}
       <div className="relative z-10">
         <div className="flex items-center mb-3">
           <Logo size="default" />
@@ -67,13 +65,11 @@ export default function AuthCollage({ heading = 'A home for your stories.' }) {
           Where immersive serial fiction, writer discovery, and publishing converge.
         </p>
 
-        {/* Heading */}
         <h3 className="hidden md:block text-base font-bold text-ink leading-snug mt-6">
           {heading}
         </h3>
       </div>
 
-      {/* Feature Highlights (Desktop & tablet) */}
       <div className="hidden md:flex flex-col gap-4 my-6 relative z-10">
         {HIGHLIGHTS.map((item, idx) => {
           const Icon = item.icon;
@@ -96,10 +92,8 @@ export default function AuthCollage({ heading = 'A home for your stories.' }) {
         })}
       </div>
 
-      {/* Decorative Floating Book Preview Cards (Responds to prefers-reduced-motion) */}
       <div className="hidden md:block relative z-10 pt-2 border-t border-rule/50">
         <div className="relative h-28 flex items-center justify-center">
-          {/* Back card */}
           <motion.div
             variants={secondaryCardVariants}
             initial="initial"
@@ -110,7 +104,6 @@ export default function AuthCollage({ heading = 'A home for your stories.' }) {
             <div className="h-1 w-24 bg-muted/20 rounded" />
           </motion.div>
 
-          {/* Front card */}
           <motion.div
             variants={cardVariants}
             initial="initial"

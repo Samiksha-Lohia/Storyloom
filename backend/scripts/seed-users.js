@@ -90,7 +90,7 @@ export async function seedUsers() {
         logger.info(`Created demo user: ${userData.email} (${userData.role})`);
       } else {
         user.name = userData.name;
-        user.passwordHash = userData.password; // pre-save will re-hash
+        user.passwordHash = userData.password;
         user.role = userData.role;
         user.status = userData.status;
         user.username = userData.username;

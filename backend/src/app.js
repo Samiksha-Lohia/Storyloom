@@ -17,7 +17,6 @@ const createApp = () => {
 
   app.set('trust proxy', 1);
 
-  // ─── Security Headers (C5) ────────────────────────────────────────────────
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -43,7 +42,6 @@ const createApp = () => {
     })
   );
 
-  // ─── CORS ──────────────────────────────────────────────────────────────────
   const allowedOrigins = config.corsAllowedOrigins;
   const isProduction = config.env === 'production';
   const frontendUrl = config.frontendUrl;
@@ -51,22 +49,18 @@ const createApp = () => {
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, postman)
         if (!origin) return callback(null, true);
 
         const normalizedOrigin = origin.replace(/\/+$/, '');
 
-        // In production, strictly lock to exact matches in frontendUrl or allowedOrigins
         if (frontendUrl && normalizedOrigin === frontendUrl.replace(/\/+$/, '')) {
           return callback(null, true);
         }
 
-        // If config specifies '*', allow all origins in non-production
         if (allowedOrigins === '*' && !isProduction) {
           return callback(null, true);
         }
 
-        // If allowedOrigins is an array, check if origin is in the list
         if (Array.isArray(allowedOrigins)) {
           const normalizedAllowed = allowedOrigins.map((o) => o.replace(/\/+$/, ''));
           if (normalizedAllowed.includes(normalizedOrigin)) {
@@ -74,7 +68,6 @@ const createApp = () => {
           }
         }
 
-        // Dynamically allow any vercel.app subdomain or localhost ONLY in dev/staging (non-production)
         if (!isProduction) {
           const isVercel = /\.vercel\.app$/.test(origin);
           const isLocalhost =
@@ -91,7 +84,6 @@ const createApp = () => {
     })
   );
 
-  // ─── HTTP Request Logging ──────────────────────────────────────────────────
   if (config.env !== 'test') {
     app.use(
       morgan('combined', {
@@ -100,12 +92,9 @@ const createApp = () => {
     );
   }
 
-  // ─── Body Parsers ──────────────────────────────────────────────────────────
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // ─── Tiered Rate Limiters (C5) ─────────────────────────────────────────────
-  // 1. Lenient Read / Search Limiter (300 per minute)
   const readLenientLimiter = rateLimit({
     windowMs: 60 * 1000,
     limit: config.env === 'test' ? 5000 : 300,
@@ -120,7 +109,6 @@ const createApp = () => {
   });
   app.use(['/api/books', '/api/search'], readLenientLimiter);
 
-  // 2. Standard API Limiter (120 per minute)
   const apiStandardLimiter = rateLimit({
     windowMs: 60 * 1000,
     limit: config.env === 'test' ? 5000 : 120,
@@ -131,18 +119,15 @@ const createApp = () => {
       sendCommand: (...args) => redis.call(...args),
     }),
     skip: (req) => {
-      // Bypass for auth endpoints so /api/auth/* calls are not counted here
       if (req.originalUrl && req.originalUrl.startsWith('/api/auth/')) {
         return true;
       }
-      // Bypass for document jobs status checking GET endpoint
       return req.method === 'GET' && req.originalUrl && /\/api\/documents\/[^/]+\/jobs(\?|$)/.test(req.originalUrl);
     },
     message: { success: false, message: 'Too many requests, please try again later.' },
   });
   app.use('/api', apiStandardLimiter);
 
-  // ─── Health Check ──────────────────────────────────────────────────────────
   app.get('/', (_req, res) => {
     res.status(200).json({
       success: true,
@@ -191,13 +176,10 @@ const createApp = () => {
     }
   });
 
-  // ─── API Routes ────────────────────────────────────────────────────────────
   app.use('/api', router);
 
-  // ─── 404 Handler ──────────────────────────────────────────────────────────
   app.use(notFoundHandler);
 
-  // ─── Global Error Handler ─────────────────────────────────────────────────
   app.use(errorHandler);
 
   return app;

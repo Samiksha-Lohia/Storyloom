@@ -8,7 +8,7 @@ export default function BookRow({
   subtitle,
   books = [],
   loading = false,
-  mode = 'row', // 'row' | 'grid'
+  mode = 'row',
   showRank = false,
   emptyMessage = 'No items yet.',
   actions = null,

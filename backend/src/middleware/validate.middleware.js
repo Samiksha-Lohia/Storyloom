@@ -1,12 +1,5 @@
 import { BadRequestError } from '../utilities/custom-errors.js';
 
-/**
- * Factory that returns an Express middleware validating req against a Joi schema.
- *
- * @param {Object} schema - Object with optional keys: body, params, query
- *                          each holding a Joi schema.
- * @returns Express middleware
- */
 const validate = (schema) => (req, _res, next) => {
   const parts = ['body', 'params', 'query'];
   const fieldErrors = [];
@@ -27,7 +20,7 @@ const validate = (schema) => (req, _res, next) => {
         errorMessages.push(d.message);
       });
     } else {
-      req[part] = value; // replace with sanitised/defaulted values
+      req[part] = value;
     }
   }
 

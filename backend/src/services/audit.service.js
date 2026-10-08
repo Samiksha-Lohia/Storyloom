@@ -16,7 +16,6 @@ export const logAction = async ({ actor, action, targetType, targetId, meta = {}
     return entry;
   } catch (err) {
     logger.error(`[AuditLog] Failed to record audit log: ${err.message}`);
-    // Non-fatal but logged
     return null;
   }
 };

@@ -27,7 +27,6 @@ export function CataloguePage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Sync route param with genre state
   useEffect(() => {
     if (routeGenre) {
       setSelectedGenre(routeGenre);
@@ -36,12 +35,10 @@ export function CataloguePage() {
     }
   }, [routeGenre]);
 
-  // Sync search param
   useEffect(() => {
     setSearchTerm(queryParam);
   }, [queryParam]);
 
-  // Fetch books
   useEffect(() => {
     let isMounted = true;
 
@@ -81,7 +78,6 @@ export function CataloguePage() {
     };
   }, [selectedGenre, sortBy, searchTerm]);
 
-  // Load more pagination
   const handleLoadMore = async () => {
     if (pagination.page >= pagination.pages || loadingMore) return;
     try {
@@ -115,7 +111,6 @@ export function CataloguePage() {
 
   return (
     <div className="space-y-8 pb-16">
-      {/* Header */}
       <div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-rule">
           <div>
@@ -140,7 +135,6 @@ export function CataloguePage() {
             </p>
           </div>
 
-          {/* Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
             <label htmlFor="catalogue-sort" className="text-xs font-bold text-muted uppercase tracking-wider">
               Sort by:
@@ -160,7 +154,6 @@ export function CataloguePage() {
           </div>
         </div>
 
-        {/* Genre Pill Filter row */}
         <div className="flex items-center gap-2 overflow-x-auto py-3">
           <button
             type="button"
@@ -193,7 +186,6 @@ export function CataloguePage() {
         </div>
       </div>
 
-      {/* Book Grid: 6 columns desktop, 4 tablet, 3 mobile */}
       {loading ? (
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -223,7 +215,6 @@ export function CataloguePage() {
             ))}
           </div>
 
-          {/* Load More Button */}
           {pagination.page < pagination.pages && (
             <div className="pt-8 text-center">
               <Button

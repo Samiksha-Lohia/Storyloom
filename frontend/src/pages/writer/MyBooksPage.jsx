@@ -119,7 +119,6 @@ export function MyBooksPage() {
 
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-8 text-left">
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
@@ -141,7 +140,6 @@ export function MyBooksPage() {
         </Link>
       </div>
 
-      {/* Error state */}
       {error && (
         <div className="p-4 rounded bg-paper border border-rule text-danger text-xs flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0" />
@@ -156,13 +154,11 @@ export function MyBooksPage() {
         </div>
       )}
 
-      {/* Loading state */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
         </div>
       ) : books.length === 0 ? (
-        /* Empty State */
         <div className="bg-paper rounded border border-rule p-12 text-center space-y-4">
           <div className="w-12 h-12 rounded border border-rule text-accent flex items-center justify-center mx-auto">
             <BookOpen className="w-6 h-6" />
@@ -180,7 +176,6 @@ export function MyBooksPage() {
           </div>
         </div>
       ) : (
-        /* Books List */
         <div className="space-y-4">
           {books.map((book) => {
             const bookId = book.id || book._id;
@@ -194,7 +189,6 @@ export function MyBooksPage() {
                 key={bookId}
                 className="bg-paper rounded border border-rule p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
               >
-                {/* Book Info */}
                 <div className="flex items-start gap-5 w-full md:w-auto">
                   <div className="w-20 sm:w-24 aspect-[2/3] shrink-0 rounded overflow-hidden border border-rule">
                     <CoverImage
@@ -235,9 +229,7 @@ export function MyBooksPage() {
                   </div>
                 </div>
 
-                {/* Actions Row */}
                 <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end border-t md:border-t-0 pt-4 md:pt-0 border-rule">
-                  {/* Reader Preview */}
                   <Link to={`/read/${bookId}`}>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1.5" title="Read in Reader">
                       <Eye className="w-3.5 h-3.5" />
@@ -245,7 +237,6 @@ export function MyBooksPage() {
                     </Button>
                   </Link>
 
-                  {/* Edit Presentation & Metadata */}
                   <Link to={`/w/books/${bookId}/edit`}>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1.5" title="Edit presentation and details">
                       <Edit3 className="w-3.5 h-3.5" />
@@ -253,9 +244,6 @@ export function MyBooksPage() {
                     </Button>
                   </Link>
 
-
-
-                  {/* Publish / Unpublish */}
                   {isPublished ? (
                     <Button
                       variant="secondary"
@@ -286,7 +274,6 @@ export function MyBooksPage() {
                     </div>
                   )}
 
-                  {/* Delete Button */}
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(book)}
@@ -303,7 +290,6 @@ export function MyBooksPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-paper rounded max-w-md w-full p-6 sm:p-8 space-y-4 border border-rule">

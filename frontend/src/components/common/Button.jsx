@@ -3,8 +3,8 @@ import React from 'react';
 export default function Button({
   children,
   type = 'button',
-  variant = 'primary', // 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'
-  size = 'default', // 'sm' | 'default' | 'lg'
+  variant = 'primary',
+  size = 'default',
   disabled = false,
   loading = false,
   onClick,
@@ -57,5 +57,4 @@ export default function Button({
 }
 
 export { Button };
-
 

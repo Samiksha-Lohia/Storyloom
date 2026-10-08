@@ -109,7 +109,6 @@ export default function ScenesTab({
         </div>
       </div>
 
-      {/* Scenes List */}
       <div className="space-y-4">
         {scenes.map((scene) => {
           const sceneId = scene._id || scene.id;
@@ -122,7 +121,6 @@ export default function ScenesTab({
               key={sceneId}
               className="bg-paper border border-rule rounded overflow-hidden text-left"
             >
-              {/* Card Header clickable to expand */}
               <div 
                 onClick={() => setExpandedSceneId(isExpanded ? null : sceneId)}
                 className="p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 cursor-pointer hover:bg-rule/10"
@@ -148,7 +146,6 @@ export default function ScenesTab({
                   <h3 className="text-base font-bold text-ink">{scene.title}</h3>
                   <p className="text-sm text-ink leading-relaxed">{scene.summary}</p>
                   
-                  {/* Cast presence list */}
                   {scene.characterIds && scene.characterIds.length > 0 && (
                     <div className="flex items-center gap-2 pt-1.5 flex-wrap">
                       <Users className="w-3.5 h-3.5 text-muted" />
@@ -176,7 +173,6 @@ export default function ScenesTab({
                 </button>
               </div>
 
-              {/* Expanded details containing Dialogue Summaries */}
               {isExpanded && (
                 <div className="bg-paper border-t border-rule p-5 space-y-4">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
@@ -202,7 +198,6 @@ export default function ScenesTab({
                             </div>
                             <p className="text-xs text-ink italic">&ldquo;{d.summaryText}&rdquo;</p>
                             
-                            {/* Key Quotes if present */}
                             {d.keyQuotes && d.keyQuotes.length > 0 && (
                               <div className="border-l-2 border-rule pl-3 mt-2 space-y-1">
                                 {d.keyQuotes.map((quote, qidx) => (
@@ -224,7 +219,6 @@ export default function ScenesTab({
         })}
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-4">
           <button

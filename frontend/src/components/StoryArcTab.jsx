@@ -23,18 +23,15 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(!initialData && Boolean(resolvedSource?.id));
 
-  // Overlay toggles
   const [showThreeAct, setShowThreeAct] = useState(false);
   const [showHeroJourney, setShowHeroJourney] = useState(false);
 
-  // Sync initialData if supplied
   useEffect(() => {
     if (!initialData) return;
     setArc(initialData);
     setLoading(false);
   }, [initialData]);
 
-  // Network fetch if no initialData
   useEffect(() => {
     if (initialData) return;
     if (!resolvedSource?.id) {
@@ -74,7 +71,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
     };
   }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialData)]);
 
-  // Build chart dataset including overlays
   const chartData = useMemo(() => {
     if (!arc || !arc.arcPoints) return [];
     
@@ -225,7 +221,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
           <p className="text-xs text-muted mt-0.5">Plot scene-by-scene narrative tension to review pacing structure.</p>
         </div>
 
-        {/* Structure overlays buttons */}
         <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-bold">
           <span className="text-muted">Overlays:</span>
           <button
@@ -251,7 +246,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
         </div>
       </div>
 
-      {/* Main Chart Container */}
       <div className="bg-paper border border-rule rounded p-4">
         <div className="h-96 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -275,7 +269,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
                 }}
               />
               
-              {/* Primary Story Tension Curve */}
               <Area 
                 type="monotone" 
                 dataKey="tension" 
@@ -286,7 +279,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
                 isAnimationActive={false}
               />
               
-              {/* Three Act Reference Line */}
               {showThreeAct && (
                 <Line
                   type="monotone"
@@ -299,7 +291,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
                 />
               )}
 
-              {/* Hero Journey Reference Line */}
               {showHeroJourney && (
                 <Line
                   type="monotone"
@@ -312,7 +303,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
                 />
               )}
 
-              {/* Peak Climax Marker */}
               {climaxPoint && (
                 <ReferenceDot
                   x={climaxPoint.name}
@@ -329,7 +319,6 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
         </div>
       </div>
 
-      {/* Climax Scene Details Card */}
       {climaxPoint && scenes[climaxPoint.sceneId] && (
         <div className="bg-paper border border-rule rounded p-4 space-y-1 text-left">
           <span className="px-1.5 py-0.5 bg-paper border border-rule rounded text-[10px] font-bold uppercase tracking-wider text-muted">

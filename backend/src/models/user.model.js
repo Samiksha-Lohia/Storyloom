@@ -135,8 +135,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-
-// Pre-validate hook to ensure username exists
 userSchema.pre('validate', function (next) {
   if (!this.username) {
     this.username = generateUsername(this.name);
@@ -144,7 +142,6 @@ userSchema.pre('validate', function (next) {
   next();
 });
 
-// Pre-save hook to hash password if modified
 userSchema.pre('save', async function (next) {
   const user = this;
   if (!user.username) {
@@ -157,7 +154,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Helper method to compare passwords
 userSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.passwordHash);
 };

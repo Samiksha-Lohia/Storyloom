@@ -24,7 +24,7 @@ export default function TimelineTab({
       ? initialLoading
       : (!initialEvents?.length && Boolean(resolvedSource?.id))
   );
-  const [orderMode, setOrderMode] = useState('narrative'); // 'narrative' | 'chronological'
+  const [orderMode, setOrderMode] = useState('narrative');
 
   useEffect(() => {
     if (initialEvents && initialEvents.length > 0) {
@@ -74,7 +74,6 @@ export default function TimelineTab({
     };
   }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(initialEvents?.length)]);
 
-  // Sort events based on selected mode
   const sortedEvents = [...timelineEvents].sort((a, b) => {
     if (orderMode === 'chronological') {
       return (a.chronologicalOrder || 0) - (b.chronologicalOrder || 0);
@@ -107,14 +106,12 @@ export default function TimelineTab({
 
   return (
     <div className="space-y-6 text-left">
-      {/* Header controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-4">
         <div>
           <h2 className="text-xl font-bold text-ink">Story Timeline</h2>
           <p className="text-xs text-muted mt-0.5">Scrub through plot events. Chronological mode highlights flashbacks.</p>
         </div>
 
-        {/* Toggle Mode */}
         <div className="flex items-center gap-2 self-start sm:self-auto border border-rule p-1 rounded">
           <button
             onClick={() => setOrderMode('narrative')}
@@ -141,7 +138,6 @@ export default function TimelineTab({
         </div>
       </div>
 
-      {/* Horizontal Scrollable timeline lane */}
       <div className="w-full overflow-x-auto flex gap-6 pb-6 pt-4 px-2 select-none snap-x">
         {sortedEvents.map((evt, idx) => {
           const rawScene = (typeof evt.sceneId === 'object' && evt.sceneId !== null)
@@ -159,12 +155,10 @@ export default function TimelineTab({
               key={evt._id || evt.id} 
               className="w-72 shrink-0 flex flex-col relative snap-start"
             >
-              {/* Connector line */}
               {idx < sortedEvents.length - 1 && (
                 <div className="absolute top-[38px] left-[260px] w-20 h-px bg-rule z-0 hidden sm:block" />
               )}
 
-              {/* Time node marker dot */}
               <div className="flex items-center gap-2 mb-3 z-10">
                 <div className={`w-8 h-8 rounded border flex items-center justify-center font-bold text-xs ${
                   evt.isFlashback 
@@ -182,7 +176,6 @@ export default function TimelineTab({
                 )}
               </div>
 
-              {/* Card info */}
               <div className={`flex-1 bg-paper border p-4 rounded flex flex-col justify-between ${
                 evt.isFlashback 
                   ? 'border-accent' 

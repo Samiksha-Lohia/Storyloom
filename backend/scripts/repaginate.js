@@ -29,7 +29,6 @@ Caelen stepped into the dim light of the gas lantern. The silver insignia of the
 
 Silence settled between them, heavy and suffocating. The distance between the city gates and the northern ridge suddenly felt impossibly far.
 
-
 CHAPTER 2: ECHOES IN THE SHADOWS
 
 Elena turned to face him directly, her pulse drumming a quiet rhythm against her collarbone. She had anticipated suspicion, perhaps even a covert inquiry by dawn. But two hours? Someone within the inner circle had talked, and that meant the perimeter around the valley was already closing.
@@ -47,7 +46,6 @@ Elena stared at the key. In all the years they had trained together, Caelen had 
 "Why are you doing this?" she whispered.
 
 Caelen met her gaze, his gray eyes steady despite the tremor in his fingers. "Because you're right about what is coming. And if you perish in the dungeons, no one else will be left to speak the truth."
-
 
 CHAPTER 3: THE DEEP REACHES
 
@@ -98,7 +96,6 @@ async function repaginateBooks() {
 
       let text = doc.parsedText;
       if (!text || text.trim().length === 0) {
-        // Populate sample text for stub documents
         text = generateSampleManuscript(book);
         doc.parsedText = text;
         doc.wordCount = text.trim().split(/\s+/).length;
@@ -112,11 +109,9 @@ async function repaginateBooks() {
       book.pageCount = count;
       await book.save();
 
-      // Invalidate Redis cache
       try {
         await redis.del(`book:${book._id}:pages:text`);
       } catch (cacheErr) {
-        // Redis optional in standalone script
       }
 
       results.push({

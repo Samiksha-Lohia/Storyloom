@@ -37,7 +37,6 @@ export function InsightsDrawer({
   const [isProcessing, setIsProcessing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Determine user role relative to this book
   const isWriterOwner = Boolean(
     user && book && (book.writerId?._id || book.writerId)?.toString() === (user.id || user._id)?.toString()
   );
@@ -48,14 +47,12 @@ export function InsightsDrawer({
   const bookId = (book?._id || book?.id)?.toString();
   const source = useMemo(() => ({ kind: 'book', id: bookId }), [bookId]);
 
-  // Page cutoff for spoilers: furthest read page, or currentPage
   const displayPage = Math.max(1, furthestPage || currentPage || 1);
   const options = useMemo(() => ({
     upto: displayPage,
     showAll: showAll,
   }), [displayPage, showAll]);
 
-  // Monitor pipeline status and automatically poll while jobs are running/queued
   useEffect(() => {
     if (!bookId || !isOpen) return;
 
@@ -74,19 +71,16 @@ export function InsightsDrawer({
 
         if (hasPendingJobs) {
           setIsProcessing(true);
-          // Poll every 3.5 seconds until background jobs finish
           pollTimeout = setTimeout(checkPipelineStatus, 3500);
         } else {
           setIsProcessing((wasRunning) => {
             if (wasRunning) {
-              // Background jobs just finished! Auto-refresh tab data
               setRefreshKey((k) => k + 1);
             }
             return false;
           });
         }
       } catch (_err) {
-        // Fallback: trigger if pending
         api.analysis.triggerProcessing({ kind: 'book', id: bookId }).catch(() => {});
       }
     };
@@ -119,7 +113,6 @@ export function InsightsDrawer({
         inline ? 'rounded border border-rule' : ''
       }`}
     >
-      {/* Header */}
       <div className="p-4 border-b border-rule flex items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-base leading-tight text-ink">
@@ -130,7 +123,6 @@ export function InsightsDrawer({
           </p>
         </div>
 
-        {/* Close button if drawer */}
         {!inline && onClose && (
           <button
             type="button"
@@ -143,7 +135,6 @@ export function InsightsDrawer({
         )}
       </div>
 
-      {/* Spoilers & Access Control Bar */}
       <div className="px-4 py-2 border-b border-rule flex flex-wrap items-center justify-between gap-3 text-xs bg-paper">
         <div className="flex items-center gap-2">
           {isReader ? (
@@ -176,7 +167,6 @@ export function InsightsDrawer({
           )}
         </div>
 
-        {/* Reader Show All Toggle */}
         {isReader && (
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <span className="text-[11px] font-bold text-ink">Show everything</span>
@@ -190,7 +180,6 @@ export function InsightsDrawer({
         )}
       </div>
 
-      {/* Narrative Processing Active Indicator */}
       {isProcessing && (
         <div className="px-4 py-2 bg-accent/10 border-b border-rule flex items-center justify-between gap-2 text-xs text-ink">
           <div className="flex items-center gap-2">
@@ -212,7 +201,6 @@ export function InsightsDrawer({
         </div>
       )}
 
-      {/* Tabs Navigation Bar */}
       <div className="px-4 py-2 border-b border-rule flex items-center gap-1.5 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -235,7 +223,6 @@ export function InsightsDrawer({
         })}
       </div>
 
-      {/* Tab Panel Body */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-paper">
         {!bookId ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-muted">

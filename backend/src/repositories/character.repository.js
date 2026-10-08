@@ -11,7 +11,6 @@ class CharacterRepository extends BaseRepository {
   }
 
   async findByNameOrAlias(documentId, nameQuery, options = {}) {
-    // Exact match or matches in alias array
     return this.findOne({
       documentId,
       $or: [
@@ -22,7 +21,6 @@ class CharacterRepository extends BaseRepository {
   }
 
   async searchCharacters(documentId, searchQuery, options = {}) {
-    // Leverage the text index for fuzzy matching names & aliases
     return this.find({
       documentId,
       $text: { $search: searchQuery }

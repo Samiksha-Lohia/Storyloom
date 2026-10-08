@@ -32,7 +32,6 @@ export function usePipelineProgress(documentId, options = {}) {
   const pollTimerRef = useRef(null);
   const isMountedRef = useRef(true);
 
-  // Poll fallback to query DB state
   const fetchStatus = useCallback(async (docId) => {
     if (!docId) return;
     try {
@@ -52,7 +51,6 @@ export function usePipelineProgress(documentId, options = {}) {
         if (job.status === 'failed') failed = job;
       });
 
-      // Parsing completed check
       const parsingJob = jobList.find((j) => j.stage === 'parsing');
       if (parsingJob && parsingJob.status === 'completed') {
         setIsPaginated(true);
@@ -100,15 +98,12 @@ export function usePipelineProgress(documentId, options = {}) {
     isMountedRef.current = true;
     if (!documentId) return;
 
-    // 1. Initial status fetch
     fetchStatus(documentId);
 
-    // 2. Setup polling fallback (every 3 seconds)
     pollTimerRef.current = setInterval(() => {
       fetchStatus(documentId);
     }, 3000);
 
-    // 3. Setup WebSocket connection via socketClient singleton
     const room = `document:${documentId}`;
     socketClient.joinRoom(room);
 

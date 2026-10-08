@@ -7,7 +7,6 @@ import { buildTextEmbedding, cosineSimilarity } from '../analysis/local-analyzer
 import { Embedding } from '../models/embedding.model.js';
 import MoodAnalysis from '../models/mood-analysis.model.js';
 
-// Import DTOs for response standardization
 import { SceneDto } from '../dtos/scene.dto.js';
 import { CharacterDto } from '../dtos/character.dto.js';
 import { DialogueSummaryDto } from '../dtos/dialogue-summary.dto.js';
@@ -32,7 +31,6 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
     source = await sceneRepository.findById(embedding.sourceId);
     if (!source) return null;
 
-    // Apply filters
     if (hasVisibleScenes && !visibleSceneIds.has(source._id.toString())) return null;
     if (hasRange && !rangeSceneIds.has(source._id.toString())) return null;
     if (hasMood && !moodSceneIds.has(source._id.toString())) return null;
@@ -54,7 +52,6 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
       if (!inVisible) return null;
     }
 
-    // Apply filters
     if (hasChar) {
       if (!matchedCharacter || source._id.toString() !== matchedCharacter._id.toString()) return null;
     }
@@ -78,7 +75,6 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
     source = await dialogueSummaryRepository.findById(embedding.sourceId);
     if (!source) return null;
 
-    // Apply filters
     if (hasVisibleScenes && !visibleSceneIds.has(source.sceneId.toString())) return null;
     if (hasRange && !rangeSceneIds.has(source.sceneId.toString())) return null;
     if (hasMood && !moodSceneIds.has(source.sceneId.toString())) return null;
@@ -98,10 +94,8 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
 };
 
 const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
-  // Compute query vector
   const queryVector = buildTextEmbedding(query);
 
-  // Setup filter helpers
   const filterHelpers = {
     matchedCharacter: null,
     rangeSceneIds: new Set(),
@@ -147,17 +141,15 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
     filterHelpers.rangeSceneIds = new Set(scenesInRange.map(s => s._id.toString()));
   }
 
-  // Attempt indexed vector search using aggregation, fallback if offline or not supported
   let ranked = [];
   const isOffline = process.env.OFFLINE_VECTOR_SEARCH === 'true';
 
   if (!isOffline) {
     try {
-      // Indexed vector search using $vectorSearch
       ranked = await Embedding.aggregate([
         {
           $vectorSearch: {
-            index: "vector_index", // default Atlas search index name
+            index: "vector_index",
             path: "vector",
             queryVector,
             numCandidates: 100,
@@ -176,12 +168,10 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
         }
       ]);
     } catch (err) {
-      // Catch and fall back to brute-force
       ranked = [];
     }
   }
 
-  // Fallback brute-force cosine similarity if aggregate returned nothing or was skipped
   if (!ranked || ranked.length === 0) {
     const allEmbeddings = await embeddingRepository.findByDocumentId(documentId);
     ranked = allEmbeddings
@@ -197,12 +187,10 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
       .slice(0, limit);
   }
 
-  // Hydrate results and filter them
   const hydrated = await Promise.all(
     ranked.map((item) => hydrateAndFilterResult(item, item.score, filterHelpers))
   );
 
-  // Filter out any skipped null results
   return hydrated.filter((item) => item !== null);
 };
 

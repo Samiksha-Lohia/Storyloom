@@ -6,8 +6,6 @@ class BaseRepository {
   }
 
   async create(data, options = {}) {
-    // Note: Model.create returns an array if data is an array, else single doc.
-    // If options.session is provided, wrap in array and return first element.
     if (options.session) {
       const docs = await this.model.create(Array.isArray(data) ? data : [data], { session: options.session });
       return Array.isArray(data) ? docs : docs[0];
@@ -67,10 +65,6 @@ class BaseRepository {
     return this.model.countDocuments(filter, options);
   }
 
-  /**
-   * Helper to run operations within a Mongoose transaction.
-   * @param {Function} fn - Async callback to run inside transaction, receives session.
-   */
   static async runTransaction(fn) {
     const session = await mongoose.startSession();
     session.startTransaction();

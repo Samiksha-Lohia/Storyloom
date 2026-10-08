@@ -4,9 +4,6 @@ import { pageForOffset } from './paginator.service.js';
 import { NotFoundError, BadRequestError } from '../utilities/custom-errors.js';
 
 export class LibraryService {
-  /**
-   * Retrieves all books in a reader's library with reading status and calculated pages.
-   */
   static async getLibrary(readerId, { page = 1, limit = 20, status } = {}) {
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
@@ -94,9 +91,6 @@ export class LibraryService {
     };
   }
 
-  /**
-   * Retrieves a single book's library entry for a reader.
-   */
   static async getLibraryEntry(readerId, bookId) {
     const entry = await ReadingList.findOne({ readerId, bookId })
       .populate('bookId', 'title pageCount pageOffsets mature status stats')
@@ -126,9 +120,6 @@ export class LibraryService {
     };
   }
 
-  /**
-   * Removes a book from a reader's library.
-   */
   static async deleteLibraryEntry(readerId, bookId) {
     const res = await ReadingList.findOneAndDelete({ readerId, bookId });
     if (!res) {
@@ -137,9 +128,6 @@ export class LibraryService {
     return true;
   }
 
-  /**
-   * Updates or creates a reader's reading progress and bookmarks for a book.
-   */
   static async updateLibraryEntry(readerId, bookId, data = {}) {
     const book = await Book.findById(bookId);
     if (!book) {
@@ -160,14 +148,12 @@ export class LibraryService {
         bookmarks: [],
       });
 
-      // Task 9: Increment stats.reads the first time a reader progress entry is created
       book.stats.reads = (book.stats?.reads || 0) + 1;
       await book.save();
     }
 
     const pageOffsets = book.pageOffsets || [];
 
-    // Calculate new offset from currentPage or currentOffset
     let newOffset = null;
     if (typeof data.currentPage === 'number') {
       const pageIndex = Math.max(1, Math.min(data.currentPage, book.pageCount || 1)) - 1;
@@ -178,11 +164,9 @@ export class LibraryService {
 
     if (newOffset !== null) {
       entry.currentOffset = newOffset;
-      // Monotonic progression: furthestOffset can NEVER decrease
       entry.furthestOffset = Math.max(entry.furthestOffset || 0, newOffset);
     }
 
-    // Auto-set status = 'finished' if reached last page
     if (book.pageCount > 0 && pageOffsets.length > 0) {
       const lastPageStart = pageOffsets[book.pageCount - 1] ?? 0;
       if (entry.currentOffset >= lastPageStart || entry.furthestOffset >= lastPageStart) {
@@ -190,12 +174,10 @@ export class LibraryService {
       }
     }
 
-    // Explicit status update if provided and not overridden
     if (data.status && entry.status !== 'finished') {
       entry.status = data.status;
     }
 
-    // Bookmark additions
     if (data.addBookmark && typeof data.addBookmark.offset === 'number') {
       const bOffset = Math.max(0, data.addBookmark.offset);
       const exists = entry.bookmarks.some((b) => Math.abs(b.offset - bOffset) < 5);
@@ -204,7 +186,6 @@ export class LibraryService {
       }
     }
 
-    // Bookmark removals
     if (data.removeBookmark && typeof data.removeBookmark.offset === 'number') {
       const rOffset = data.removeBookmark.offset;
       entry.bookmarks = entry.bookmarks.filter((b) => Math.abs(b.offset - rOffset) >= 5);
@@ -230,9 +211,6 @@ export class LibraryService {
     };
   }
 
-  /**
-   * Helper called during page reads: auto-creates library entry and tracks progression.
-   */
   static async recordPageRead(readerId, book, { from, to }) {
     if (!readerId || !book) return;
 
@@ -250,7 +228,6 @@ export class LibraryService {
           bookmarks: [],
         });
 
-        // First page fetch creates entry -> increment reads
         book.stats.reads = (book.stats?.reads || 0) + 1;
         await book.save();
       }
@@ -269,7 +246,6 @@ export class LibraryService {
 
       await entry.save();
     } catch (err) {
-      // Non-blocking for page delivery
       console.warn('Failed to record page read progress:', err.message);
     }
   }

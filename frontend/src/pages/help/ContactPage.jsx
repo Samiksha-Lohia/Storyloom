@@ -31,7 +31,6 @@ export function ContactPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 sm:py-12 space-y-10 pb-20">
-      {/* Header */}
       <div className="text-center space-y-3 max-w-xl mx-auto">
         <h1 className="font-calligraphy text-3xl sm:text-4xl font-normal text-ink">
           Contact the {APP_NAME} Team
@@ -42,7 +41,6 @@ export function ContactPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        {/* Contact Info Sidebar */}
         <div className="md:col-span-5 space-y-6">
           <div className="bg-paper border border-rule rounded p-6 space-y-6">
             <h2 className="font-bold text-sm text-ink uppercase tracking-wider">Direct Channels</h2>
@@ -90,7 +88,6 @@ export function ContactPage() {
             </div>
           </div>
 
-          {/* Quick Links Card */}
           <div className="bg-paper border border-rule rounded p-6 space-y-3 text-xs text-muted">
             <h3 className="font-bold text-ink text-sm uppercase tracking-wider">Helpful Resources</h3>
             <ul className="space-y-2">
@@ -118,7 +115,6 @@ export function ContactPage() {
           </div>
         </div>
 
-        {/* Contact Form */}
         <div className="md:col-span-7 bg-paper border border-rule rounded p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="font-bold text-base text-ink border-b border-rule pb-3">

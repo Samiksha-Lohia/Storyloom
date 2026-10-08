@@ -12,7 +12,7 @@ const timelineEventSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Scene',
       required: true,
-      unique: true, // One timeline event per scene
+      unique: true,
     },
     chronologicalOrder: {
       type: Number,
@@ -33,7 +33,6 @@ const timelineEventSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for retrieval in chronological order
 timelineEventSchema.index({ documentId: 1, chronologicalOrder: 1 }, { unique: true });
 
 const TimelineEvent = mongoose.model('TimelineEvent', timelineEventSchema);

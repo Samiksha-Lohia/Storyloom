@@ -117,7 +117,6 @@ export const getPagesQuerySchema = {
   }),
 };
 
-
 export default {
   createBookSchema,
   updateBookSchema,

@@ -11,11 +11,6 @@ const STAGES = {
   EMBEDDINGS: 'embeddings',
 };
 
-/**
- * Single source of truth for pipeline stage dependencies.
- * Each key lists the stages that must be COMPLETED before it can start.
- * This is the stricter definition: DIALOGUE depends on both SCENES and CHARACTERS.
- */
 export const STAGE_DEPENDENCIES = {
   [STAGES.PARSING]:       [],
   [STAGES.SCENES]:        [STAGES.PARSING],

@@ -18,8 +18,7 @@ export function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
-  // Moderation Dialog State
-  const [activeModal, setActiveModal] = useState(null); // { type: 'role'|'suspend'|'ban'|'restore', user }
+  const [activeModal, setActiveModal] = useState(null);
   const [newRole, setNewRole] = useState('reader');
   const [suspensionDays, setSuspensionDays] = useState(7);
   const [actionNote, setActionNote] = useState('');
@@ -129,7 +128,6 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -151,7 +149,6 @@ export function AdminUsersPage() {
         </span>
       </div>
 
-      {/* Search & Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -169,7 +166,6 @@ export function AdminUsersPage() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto">
-          {/* Role selector */}
           <select
             value={roleFilter}
             onChange={(e) => {
@@ -186,7 +182,6 @@ export function AdminUsersPage() {
             ))}
           </select>
 
-          {/* Status selector */}
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -205,7 +200,6 @@ export function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Users Table */}
       <div className="bg-paper border border-rule rounded overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -240,7 +234,6 @@ export function AdminUsersPage() {
 
                   return (
                     <tr key={u.id || u._id} className="hover:bg-rule/10">
-                      {/* Name & Email */}
                       <td className="p-3">
                         <div className="font-semibold text-ink">{u.name}</div>
                         <div className="text-[11px] text-muted font-mono">
@@ -248,10 +241,8 @@ export function AdminUsersPage() {
                         </div>
                       </td>
 
-                      {/* Role */}
                       <td className="p-3">{getRoleBadge(u.role)}</td>
 
-                      {/* Status */}
                       <td className="p-3">
                         <div className="space-y-0.5">
                           {getStatusBadge(u.status)}
@@ -263,12 +254,10 @@ export function AdminUsersPage() {
                         </div>
                       </td>
 
-                      {/* Books count */}
                       <td className="p-3 font-mono font-semibold text-ink">
                         {u.booksCount || 0}
                       </td>
 
-                      {/* Reports count */}
                       <td className="p-3">
                         {u.reportsCount > 0 ? (
                           <span className="px-1.5 py-0.5 border border-danger text-danger font-bold rounded text-[10px]">
@@ -279,15 +268,12 @@ export function AdminUsersPage() {
                         )}
                       </td>
 
-                      {/* Joined date */}
                       <td className="p-3 text-muted font-mono text-[11px]">
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
 
-                      {/* Action buttons */}
                       <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Change Role */}
                           <button
                             onClick={() => {
                               setActiveModal({ type: 'role', user: u });
@@ -299,7 +285,6 @@ export function AdminUsersPage() {
                             Role
                           </button>
 
-                          {/* Suspend or Ban */}
                           {!isSuspended && !isBanned && (
                             <>
                               <button
@@ -324,7 +309,6 @@ export function AdminUsersPage() {
                             </>
                           )}
 
-                          {/* Restore */}
                           {(isSuspended || isBanned) && (
                             <button
                               onClick={() => {
@@ -346,7 +330,6 @@ export function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="p-3 border-t border-rule flex justify-between items-center text-xs">
             <span className="text-muted">
@@ -372,7 +355,6 @@ export function AdminUsersPage() {
         )}
       </div>
 
-      {/* Action Dialog Modal */}
       {activeModal && (
         <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
           <div

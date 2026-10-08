@@ -95,7 +95,6 @@ export function WriterDashboardPage() {
 
   return (
     <div className="space-y-8 pb-16 text-left">
-      {/* ─── Top Bar: Welcome & Filters ────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-paper p-6 rounded border border-rule">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
@@ -110,7 +109,6 @@ export function WriterDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Per-book filter */}
           {hasBooks && (
             <div className="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded border border-rule">
               <Filter className="w-3.5 h-3.5 text-muted" />
@@ -130,7 +128,6 @@ export function WriterDashboardPage() {
             </div>
           )}
 
-          {/* Range toggle */}
           <div className="flex items-center bg-paper p-1 rounded border border-rule">
             <button
               onClick={() => setRange(30)}
@@ -156,7 +153,6 @@ export function WriterDashboardPage() {
         </div>
       </div>
 
-      {/* ─── Empty state if writer has no books yet ────────────────────────── */}
       {!hasBooks ? (
         <EmptyState
           icon={BookOpen}
@@ -167,9 +163,7 @@ export function WriterDashboardPage() {
         />
       ) : (
         <>
-          {/* ─── KPI Cards Row ──────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-            {/* Total Reads */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Total Reads</span>
@@ -185,7 +179,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Profile Views */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Profile Views</span>
@@ -201,7 +194,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Average Rating */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Avg Rating</span>
@@ -217,7 +209,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* New Reviews */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">New Reviews</span>
@@ -233,7 +224,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Reading List Adds */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Library Adds</span>
@@ -249,7 +239,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Publisher Wishlists */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Wishlisted</span>
@@ -265,7 +254,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Open Requests */}
             <div className="bg-paper p-5 rounded border border-rule flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Requests</span>
@@ -282,9 +270,7 @@ export function WriterDashboardPage() {
             </div>
           </div>
 
-          {/* ─── Charts Row ─────────────────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Reads & Views Over Time Line Chart */}
             <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -311,7 +297,6 @@ export function WriterDashboardPage() {
               <ReadsOverTimeChart data={readsOverTime} />
             </div>
 
-            {/* "Where Readers Stop" Drop-off Bar Chart */}
             <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -332,9 +317,7 @@ export function WriterDashboardPage() {
             </div>
           </div>
 
-          {/* ─── Per-Book Comparison & Rating Distribution Row ─────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Per-Book Comparison Table (2 cols) */}
             <div className="lg:col-span-2 bg-paper p-6 rounded border border-rule space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -409,7 +392,6 @@ export function WriterDashboardPage() {
               </div>
             </div>
 
-            {/* Rating Distribution Histogram (1 col) */}
             <div className="bg-paper p-6 rounded border border-rule space-y-4">
               <div>
                 <h2 className="font-bold text-base text-ink flex items-center gap-1.5">
@@ -425,7 +407,6 @@ export function WriterDashboardPage() {
             </div>
           </div>
 
-          {/* ─── Recent Reviews Section ─────────────────────────────────────── */}
           <div className="bg-paper p-6 sm:p-8 rounded border border-rule space-y-4">
             <div className="flex items-center justify-between">
               <div>

@@ -11,13 +11,6 @@ import * as searchService from './search.service.js';
 import { generateJSON } from './ai-provider.service.js';
 import { getAnalysisLanguageInstruction } from '../utilities/language.helper.js';
 
-/**
- * Resolves the effective role of a user for a given book.
- * - 'admin' if user is admin
- * - 'writer' if user is the book's writer/owner
- * - 'publisher' if user has publisher role
- * - 'reader' for readers, guests, or writers viewing other writers' books
- */
 export function getEffectiveRole(user, book) {
   if (!user) {
     return USER_ROLES.READER;
@@ -38,20 +31,6 @@ export function getEffectiveRole(user, book) {
   return USER_ROLES.READER;
 }
 
-/**
- * Filter analysis data according to role, book, furthestOffset, and showAll opt-out.
- * Single source of truth for spoiler and role-mode filtering.
- *
- * @param {object} options
- * @param {string} options.feature - One of FEATURES (scenes, characters, relationships, timeline, mood, arc, continuity, pitch)
- * @param {any} options.data - Raw data returned from domain service
- * @param {string} options.role - Effective role ('writer', 'reader', 'publisher', 'admin')
- * @param {object} options.book - Book document (with documentId, pageOffsets, etc.)
- * @param {number} [options.furthestOffset=0] - Viewer's furthest read character offset
- * @param {boolean} [options.showAll=false] - Show all opt-out (readers only)
- * @param {boolean} [options.single=false] - Whether data is a single item (e.g. single character)
- * @returns {Promise<any>} Filtered data
- */
 export async function filterAnalysis({
   feature,
   data,
@@ -63,7 +42,6 @@ export async function filterAnalysis({
 }) {
   const mode = getFeatureAccessMode(feature, role);
 
-  // 1. HIDDEN Mode: 403 Forbidden
   if (mode === FEATURE_ACCESS_MODES.HIDDEN) {
     throw new ForbiddenError(
       `Access to '${feature}' analysis is not permitted for your role.`,
@@ -71,17 +49,14 @@ export async function filterAnalysis({
     );
   }
 
-  // 2. FULL Mode (Writer owner or Admin)
   if (mode === FEATURE_ACCESS_MODES.FULL) {
     return data;
   }
 
-  // 3. SPOILERS_ALLOWED Mode (Publisher on Arc)
   if (mode === FEATURE_ACCESS_MODES.SPOILERS_ALLOWED) {
     return data;
   }
 
-  // 4. MAIN_CAST Mode (Publisher on Characters)
   if (mode === FEATURE_ACCESS_MODES.MAIN_CAST) {
     const isMainCast = (char) =>
       char && (char.role === 'protagonist' || char.role === 'antagonist');
@@ -109,7 +84,6 @@ export async function filterAnalysis({
     return data;
   }
 
-  // 5. SUMMARY Mode (Publisher on Mood)
   if (mode === FEATURE_ACCESS_MODES.SUMMARY) {
     const records = Array.isArray(data) ? data : data?.results || [];
     const moodCounts = {};
@@ -153,12 +127,9 @@ export async function filterAnalysis({
     };
   }
 
-  // 6. FILTERED Mode (Reader)
-  // Readers may opt out via showAll=true
   const isReaderOptedOut = role === USER_ROLES.READER && showAll === true;
 
   if (isReaderOptedOut) {
-    // Show all data, but still enforce reader privacy rules: omit arcSummary
     if (feature === FEATURES.CHARACTERS) {
       const stripArc = (c) => {
         const copy = typeof c.toObject === 'function' ? c.toObject() : { ...c };
@@ -182,8 +153,6 @@ export async function filterAnalysis({
     return data;
   }
 
-  // Normal spoiler filtering for readers:
-  // Retrieve all scenes for the document to compute the visible cutoff
   const documentId = book.documentId?._id || book.documentId;
   const allScenes = await Scene.find({ documentId })
     .sort({ sceneNumber: 1 })
@@ -197,7 +166,6 @@ export async function filterAnalysis({
   }
   const visibleSceneIdSet = new Set(visibleScenes.map((s) => s._id.toString()));
 
-  // Apply per-feature spoiler filtering
   switch (feature) {
     case FEATURES.SCENES: {
       const isVisible = (s) =>
@@ -233,7 +201,7 @@ export async function filterAnalysis({
         copy.sceneIds = rawIds.filter((id) =>
           visibleSceneIdSet.has((id._id || id).toString())
         );
-        delete copy.arcSummary; // Omit arcSummary for readers
+        delete copy.arcSummary;
         return copy;
       };
 
@@ -268,7 +236,6 @@ export async function filterAnalysis({
     }
 
     case FEATURES.RELATIONSHIPS: {
-      // Find all characters visible up to furthestOffset
       const allChars = await Character.find({ documentId }).lean();
       const visibleCharIdSet = new Set(
         allChars
@@ -286,12 +253,10 @@ export async function filterAnalysis({
         const charA = (copy.characterAId?._id || copy.characterAId)?.toString();
         const charB = (copy.characterBId?._id || copy.characterBId)?.toString();
 
-        // Both characters visible
         if (!visibleCharIdSet.has(charA) || !visibleCharIdSet.has(charB)) {
           return null;
         }
 
-        // At least one visible scene
         const rawSceneIds = copy.sceneIds || [];
         const visibleIds = rawSceneIds.filter((id) =>
           visibleSceneIdSet.has((id._id || id).toString())
@@ -302,7 +267,6 @@ export async function filterAnalysis({
 
         copy.sceneIds = visibleIds;
 
-        // Trim sentimentBySceneId
         if (copy.sentimentBySceneId) {
           if (copy.sentimentBySceneId instanceof Map) {
             const trimmed = new Map();
@@ -377,12 +341,10 @@ export async function filterAnalysis({
       const copy =
         typeof data.toObject === 'function' ? data.toObject() : { ...data };
 
-      // Keep points for visible scenes
       copy.arcPoints = (copy.arcPoints || []).filter((pt) =>
         visibleSceneIdSet.has((pt.sceneId?._id || pt.sceneId)?.toString())
       );
 
-      // Null climaxSceneId if not visible
       const climaxId = (
         copy.climaxSceneId?._id || copy.climaxSceneId
       )?.toString();
@@ -398,9 +360,6 @@ export async function filterAnalysis({
   }
 }
 
-/**
- * Semantic search with role-gated spoiler protection.
- */
 export async function searchWithSpoilerProtection({
   documentId,
   book,
@@ -442,7 +401,6 @@ export async function searchWithSpoilerProtection({
     limit
   );
 
-  // Strip arcSummary from character results if reader
   if (role === USER_ROLES.READER) {
     results.forEach((item) => {
       if (item.sourceType === 'character' && item.source) {
@@ -454,9 +412,6 @@ export async function searchWithSpoilerProtection({
   return results;
 }
 
-/**
- * Ask Questions (Q&A) with role-gated spoiler protection and LLM context boundary.
- */
 export async function askWithSpoilerProtection({
   documentId,
   book,
@@ -496,7 +451,6 @@ export async function askWithSpoilerProtection({
     }
   }
 
-  // 1. Search top 5 matches strictly within visible scenes
   const results = await searchService.semanticSearch(
     documentId,
     question,
@@ -504,7 +458,6 @@ export async function askWithSpoilerProtection({
     5
   );
 
-  // 2. Hydrate context text
   const context = results
     .map((item) => {
       if (item.sourceType === 'scene') {
@@ -521,7 +474,6 @@ export async function askWithSpoilerProtection({
     .filter(Boolean)
     .join('\n\n---\n\n');
 
-  // Guard against leaking plot past the cutoff
   const boundaryInstruction =
     maxVisibleSceneNumber !== null
       ? `CRITICAL SPOILER CONSTRAINT: The reader has only read up to Scene ${maxVisibleSceneNumber}. You MUST NOT reveal, mention, or hint at any events, twists, character deaths, or plot developments beyond Scene ${maxVisibleSceneNumber}. If the question asks about events not yet reached, explain that this happens later in the story and is hidden to protect spoilers.`

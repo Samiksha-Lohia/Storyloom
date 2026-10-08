@@ -39,7 +39,6 @@ const dialogueSummarySchema = new mongoose.Schema(
   }
 );
 
-// Compound index to quickly fetch dialogue for a character in a specific scene
 dialogueSummarySchema.index({ sceneId: 1, characterId: 1 }, { unique: true });
 dialogueSummarySchema.index({ documentId: 1, characterId: 1 });
 

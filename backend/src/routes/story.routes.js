@@ -16,7 +16,6 @@ import * as storyArcService from '../services/storyArc.service.js';
 import * as continuityService from '../services/continuity.service.js';
 import { sendSuccess } from '../utilities/response.js';
 
-// Import DTOs for response standardization
 import { RelationshipDto } from '../dtos/relationship.dto.js';
 import { TimelineEventDto } from '../dtos/timeline-event.dto.js';
 import { DialogueSummaryDto } from '../dtos/dialogue-summary.dto.js';
@@ -85,11 +84,6 @@ router.get('/continuity', async (req, res, next) => {
   }
 });
 
-/**
- * PATCH /api/documents/:documentId/story/continuity/:id/status
- * Updates the status of a single continuity issue (reviewed | dismissed | resolved).
- * Ownership is already enforced by the router-level requireDocumentOwnership middleware.
- */
 router.patch(
   '/continuity/:id/status',
   validate(continuityIssueIdParamSchema),

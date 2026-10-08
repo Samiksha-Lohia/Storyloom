@@ -26,7 +26,6 @@ export function ReaderPage() {
   const { bookId } = useParams();
   const { user, updateUser } = useAuth();
 
-  // Book & Manuscript state
   const [book, setBook] = useState(null);
   const [pageCount, setPageCount] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,14 +34,11 @@ export function ReaderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Sliced pages cache: Map<pageNumber, pageText>
   const [pagesCache, setPagesCache] = useState({});
 
-  // Library & Reading progress state
   const [libraryEntry, setLibraryEntry] = useState(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Reader Settings State (initialized from user.readerSettings or defaults)
   const [settings, setSettings] = useState({
     fontSize: user?.readerSettings?.fontSize || 18,
     lineHeight: user?.readerSettings?.lineHeight || 1.6,
@@ -50,7 +46,6 @@ export function ReaderPage() {
     theme: user?.readerSettings?.theme || 'light',
   });
 
-  // UI state
   const [showSettings, setShowSettings] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
@@ -60,11 +55,9 @@ export function ReaderPage() {
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
   );
 
-  // Swipe gesture refs
   const touchStartRef = useRef({ x: 0, y: 0 });
   const saveTimeoutRef = useRef(null);
 
-  // Monitor window resize for two-page spread capability
   useEffect(() => {
     const handleResize = () => {
       const wide = window.innerWidth >= 1024;
@@ -75,7 +68,6 @@ export function ReaderPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Sync settings if user changes
   useEffect(() => {
     if (user?.readerSettings) {
       setSettings((prev) => ({
@@ -85,7 +77,6 @@ export function ReaderPage() {
     }
   }, [user]);
 
-  // Load Book, Scene Markers, Library Progress
   useEffect(() => {
     let isMounted = true;
 
@@ -94,21 +85,18 @@ export function ReaderPage() {
         setLoading(true);
         setError('');
 
-        // 1. Fetch Book details
         const bookData = await api.books.getById(bookId);
         if (!isMounted) return;
         setBook(bookData);
         const count = bookData.pageCount || 1;
         setPageCount(count);
 
-        // 2. Mature check
         const isOwner = user && (bookData.writerId?._id || bookData.writerId) === user.id;
         const isAdmin = user?.role === 'admin';
         if (bookData.mature && !user?.matureAckAt && !isOwner && !isAdmin) {
           setShowMatureGate(true);
         }
 
-        // 3. Fetch Scene Markers
         try {
           const markers = await api.books.getSceneMarkers(bookId);
           if (isMounted) setSceneMarkers(markers);
@@ -116,7 +104,6 @@ export function ReaderPage() {
           console.warn('Scene markers unavailable:', scErr);
         }
 
-        // 4. Fetch User Library Progress and handle URL ?page query parameter (Resume point)
         const queryParams = new URLSearchParams(window.location.search);
         const urlPage = parseInt(queryParams.get('page'), 10);
         let targetStartPage = 1;
@@ -132,7 +119,6 @@ export function ReaderPage() {
               }
             }
           } catch {
-            // First page fetch will auto-create entry on server
           }
         }
 
@@ -165,13 +151,11 @@ export function ReaderPage() {
     };
   }, [bookId, user]);
 
-  // Windowed Page Fetching: Fetch current page + prefetch (max 5 pages window)
   const fetchPageWindow = useCallback(
     async (targetPage) => {
       if (!bookId) return;
 
       const from = Math.max(1, targetPage - 1);
-      // Window cap: at most 5 pages
       const to = Math.min(pageCount, from + 4);
 
       try {
@@ -196,14 +180,12 @@ export function ReaderPage() {
     [bookId, pageCount]
   );
 
-  // Trigger page prefetch when currentPage changes
   useEffect(() => {
     if (pageCount > 0) {
       fetchPageWindow(currentPage);
     }
   }, [currentPage, pageCount, fetchPageWindow]);
 
-  // Check if current page is bookmarked
   useEffect(() => {
     if (!libraryEntry?.bookmarks || !book?.pageOffsets) {
       setIsBookmarked(false);
@@ -218,7 +200,6 @@ export function ReaderPage() {
     setIsBookmarked(matched);
   }, [currentPage, libraryEntry, book]);
 
-  // Debounced progress saving (~1s after page turn)
   const saveProgress = useCallback(
     (page) => {
       if (!user) return;
@@ -248,14 +229,12 @@ export function ReaderPage() {
     [book, bookId, user]
   );
 
-  // Ensure reading progress saves when page changes or book loads
   useEffect(() => {
     if (user && book && currentPage > 0) {
       saveProgress(currentPage);
     }
   }, [book, user, currentPage, saveProgress]);
 
-  // Turn Page
   const goToPage = useCallback(
     (targetPage) => {
       const bounded = Math.max(1, Math.min(pageCount, targetPage));
@@ -273,7 +252,6 @@ export function ReaderPage() {
     if (currentPage < pageCount) {
       goToPage(currentPage + step);
     } else if (currentPage === pageCount) {
-      // Reached past last page -> show finish card
       setCurrentPage(pageCount + 1);
     }
   }, [currentPage, pageCount, goToPage, twoPageSpread]);
@@ -285,10 +263,8 @@ export function ReaderPage() {
     }
   }, [currentPage, goToPage, twoPageSpread]);
 
-  // Keyboard navigation (ArrowLeft, ArrowRight, Spacebar)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if user is typing in an input
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
@@ -304,7 +280,6 @@ export function ReaderPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextPage, prevPage]);
 
-  // Touch swipe handling
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       touchStartRef.current = {
@@ -319,19 +294,16 @@ export function ReaderPage() {
     const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
     const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
 
-    // Minimum swipe threshold 50px, mostly horizontal
     if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       if (deltaX < 0) {
-        nextPage(); // swipe left -> go next
+        nextPage();
       } else {
-        prevPage(); // swipe right -> go prev
+        prevPage();
       }
     }
   };
 
-  // Edge click handling (left 12% -> prev, right 12% -> next)
   const handleContainerClick = (e) => {
-    // If click is on interactive elements, ignore
     if (e.target.closest('button, a, input, select, [role="button"]')) return;
 
     const width = window.innerWidth;
@@ -344,7 +316,6 @@ export function ReaderPage() {
     }
   };
 
-  // Settings update handler (instant UI + background PATCH)
   const handleUpdateSettings = async (newAttrs) => {
     const updated = { ...settings, ...newAttrs };
     setSettings(updated);
@@ -360,7 +331,6 @@ export function ReaderPage() {
     }
   };
 
-  // Bookmark Toggle
   const handleToggleBookmark = async () => {
     if (!user || !book?.pageOffsets) return;
     const currentOffset = book.pageOffsets[currentPage - 1] || 0;
@@ -384,7 +354,6 @@ export function ReaderPage() {
     }
   };
 
-  // Theme styling helpers (Ensures contrast >= 4.5:1 across themes)
   const getThemeStyles = () => {
     switch (settings.theme) {
       case 'dark':
@@ -443,11 +412,9 @@ export function ReaderPage() {
       onTouchEnd={handleTouchEnd}
       onClick={handleContainerClick}
     >
-      {/* ─── Reader Top Bar ─────────────────────────────────────────────────── */}
       <header
         className={`sticky top-0 inset-x-0 z-40 border-b px-4 sm:px-8 py-3 flex items-center justify-between ${themeStyles.topBarBg}`}
       >
-        {/* Left: Back Link & Story Title */}
         <div className="flex items-center gap-3">
           <Link
             to={`/book/${bookId}`}
@@ -467,9 +434,7 @@ export function ReaderPage() {
           </div>
         </div>
 
-        {/* Right: Actions (Insights, Bookmarks, Two-Page Spread, Settings) */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Insights Button */}
           <button
             type="button"
             onClick={() => setShowInsights(true)}
@@ -480,7 +445,6 @@ export function ReaderPage() {
             <span className="text-xs">Insights</span>
           </button>
 
-          {/* Bookmark Button */}
           <button
             type="button"
             onClick={handleToggleBookmark}
@@ -495,7 +459,6 @@ export function ReaderPage() {
             {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           </button>
 
-          {/* Bookmarks Drawer Toggle */}
           <button
             type="button"
             onClick={() => setShowBookmarks(true)}
@@ -506,7 +469,6 @@ export function ReaderPage() {
             <BookOpen className="w-4 h-4" />
           </button>
 
-          {/* Two-Page Spread Toggle (Desktop >= 1024px) */}
           {isWideScreen && (
             <button
               type="button"
@@ -523,7 +485,6 @@ export function ReaderPage() {
             </button>
           )}
 
-          {/* Reader Settings Popover Toggle */}
           <button
             type="button"
             onClick={() => setShowSettings(true)}
@@ -536,9 +497,7 @@ export function ReaderPage() {
         </div>
       </header>
 
-      {/* ─── Main Content Canvas ─────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col justify-center items-center py-6 pb-24 relative overflow-hidden">
-        {/* Floating Side Arrow Buttons */}
         <button
           type="button"
           onClick={prevPage}
@@ -561,7 +520,6 @@ export function ReaderPage() {
           <ChevronRight className="w-4 h-4" />
         </button>
 
-        {/* Page Text or Finish Card */}
         {isAtFinishCard ? (
           <FinishCard
             book={book}
@@ -583,7 +541,6 @@ export function ReaderPage() {
         )}
       </main>
 
-      {/* ─── Bottom Scrubber ─────────────────────────────────────────────────── */}
       <Scrubber
         currentPage={Math.min(currentPage, pageCount)}
         pageCount={pageCount}
@@ -592,7 +549,6 @@ export function ReaderPage() {
         onPageChange={goToPage}
       />
 
-      {/* ─── Settings Popover ────────────────────────────────────────────────── */}
       {showSettings && (
         <ReaderSettingsPopover
           settings={settings}
@@ -601,7 +557,6 @@ export function ReaderPage() {
         />
       )}
 
-      {/* ─── Bookmarks Side Drawer ───────────────────────────────────────────── */}
       <BookmarksDrawer
         isOpen={showBookmarks}
         onClose={() => setShowBookmarks(false)}
@@ -621,7 +576,6 @@ export function ReaderPage() {
         }}
       />
 
-      {/* ─── Insights Side Drawer (Phase 4 Preview) ─────────────────────────── */}
       <InsightsDrawer
         isOpen={showInsights}
         onClose={() => setShowInsights(false)}
@@ -631,7 +585,6 @@ export function ReaderPage() {
         theme={settings.theme}
       />
 
-      {/* ─── Mature Gate Modal ──────────────────────────────────────────────── */}
       <MatureGateModal
         isOpen={showMatureGate}
         onAcknowledge={() => {

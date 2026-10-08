@@ -6,7 +6,6 @@ import { USER_ROLES } from '../constants/user-roles.js';
 
 const router = Router();
 
-// List conversations: publisher, writer, admin
 router.get(
   '/',
   authenticate,
@@ -15,7 +14,6 @@ router.get(
   conversationController.list
 );
 
-// Get single conversation details
 router.get(
   '/:id',
   authenticate,
@@ -24,7 +22,6 @@ router.get(
   conversationController.getById
 );
 
-// Get messages for conversation (cursor pagination)
 router.get(
   '/:id/messages',
   authenticate,
@@ -33,7 +30,6 @@ router.get(
   conversationController.getMessages
 );
 
-// Send message (REST fallback)
 router.post(
   '/:id/messages',
   authenticate,
@@ -42,7 +38,6 @@ router.post(
   conversationController.sendMessage
 );
 
-// Update conversation (close or toggle contact sharing)
 router.patch(
   '/:id',
   authenticate,

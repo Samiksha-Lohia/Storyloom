@@ -25,13 +25,10 @@ export function ClassicTemplate({
       className="book-template-classic space-y-8 pb-16 font-body text-ink"
       style={{ '--accent': accent }}
     >
-      {/* 18+ Warning */}
       {renderMatureWarning()}
 
-      {/* Main Classic Header (Cover Left, Details Right) */}
       <section className="bg-paper rounded border border-rule p-6 sm:p-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
-          {/* Cover Column */}
           <div className="md:col-span-4 lg:col-span-3 flex flex-col items-center">
             <div className="w-48 sm:w-56 md:w-full max-w-[240px] aspect-[2/3] rounded overflow-hidden border border-rule bg-paper flex items-center justify-center">
               {coverUrl ? (
@@ -51,7 +48,6 @@ export function ClassicTemplate({
               )}
             </div>
 
-            {/* Author Credit */}
             <div className="mt-3 text-center">
               <span className="text-xs text-muted block">Written by</span>
               <span className="font-bold text-ink text-sm">
@@ -63,10 +59,8 @@ export function ClassicTemplate({
             </div>
           </div>
 
-          {/* Details Column */}
           <div className="md:col-span-8 lg:col-span-9 flex flex-col justify-between space-y-5">
             <div className="space-y-4">
-              {/* Category & Status Badges */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold px-2 py-0.5 rounded border border-rule text-ink bg-paper">
                   {book?.genre || 'General Fiction'}
@@ -81,12 +75,10 @@ export function ClassicTemplate({
                 )}
               </div>
 
-              {/* Title: Petit Formal Script >= 28px, normal letter spacing, never bold */}
               <h1 className="font-calligraphy text-3xl sm:text-4xl lg:text-5xl font-normal text-ink leading-tight">
                 {book?.title || 'Untitled Story'}
               </h1>
 
-              {/* Stats Row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 border-y border-rule text-xs">
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-ink shrink-0" />
@@ -131,12 +123,10 @@ export function ClassicTemplate({
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="pt-1">
                 {renderActionButtons()}
               </div>
 
-              {/* Tags */}
               {book?.tags && book.tags.length > 0 && (
                 <div className="pt-1">
                   <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-1.5">
@@ -155,7 +145,6 @@ export function ClassicTemplate({
                 </div>
               )}
 
-              {/* Synopsis */}
               <div className="pt-1">
                 <h2 className="text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Synopsis
@@ -175,7 +164,6 @@ export function ClassicTemplate({
               </div>
             </div>
 
-            {/* Footer metadata */}
             <div className="pt-3 border-t border-rule flex flex-wrap items-center justify-between text-xs text-muted gap-2">
               <span>Updated on {updatedDate}</span>
               <span>Language: {book?.language?.toUpperCase() || 'EN'}</span>
@@ -184,10 +172,8 @@ export function ClassicTemplate({
         </div>
       </section>
 
-      {/* Tabs */}
       {renderTabsSection()}
 
-      {/* Related Books */}
       {renderRelatedBooks()}
     </div>
   );

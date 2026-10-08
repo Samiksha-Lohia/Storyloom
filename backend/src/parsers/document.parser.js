@@ -123,7 +123,6 @@ const parsePdfFallback = (buffer) => {
     
     const dictText = text.slice(dictStart, dictEnd + 2);
     
-    // Skip non-content streams (images, metadata, fonts, XRef, C2PA claims)
     if (
       dictText.includes('/Type /Metadata') ||
       dictText.includes('/Type/Metadata') ||
@@ -185,7 +184,6 @@ const parsePdfFallback = (buffer) => {
         extractedText += streamText + '\n';
       }
     } catch (err) {
-      // Ignore decode errors for non-content streams
     }
     
     streamIdx = streamStart + length;

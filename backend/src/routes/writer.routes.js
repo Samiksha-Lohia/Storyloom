@@ -8,16 +8,8 @@ export const PUBLIC_ROUTES = ['GET /profile/:id', 'GET /:username'];
 
 const router = Router();
 
-/**
- * GET /api/writer/profile/:id
- * Public writer profile. Records profile_view.
- */
 router.get('/profile/:id', authenticateOptional, writerController.getProfile);
 
-/**
- * GET /api/writer/analytics
- * Writer dashboard metrics, series, drop-off, and book comparison.
- */
 router.get(
   '/analytics',
   authenticate,
@@ -26,10 +18,6 @@ router.get(
   writerController.getAnalytics
 );
 
-/**
- * GET /api/writer/analytics/explain
- * Explain execution plan for the drop-off aggregation.
- */
 router.get(
   '/analytics/explain',
   authenticate,
@@ -38,10 +26,6 @@ router.get(
   writerController.getDropOffExplain
 );
 
-/**
- * GET /api/writer/reviews
- * Filtered reviews across writer's books for /w/reviews.
- */
 router.get(
   '/reviews',
   authenticate,
@@ -50,10 +34,6 @@ router.get(
   writerController.getReviews
 );
 
-/**
- * PUT /api/writers/:username/follow
- * Follow a writer
- */
 router.put(
   '/:username/follow',
   authenticate,
@@ -61,10 +41,6 @@ router.put(
   writerController.followWriter
 );
 
-/**
- * DELETE /api/writers/:username/follow
- * Unfollow a writer
- */
 router.delete(
   '/:username/follow',
   authenticate,
@@ -72,10 +48,6 @@ router.delete(
   writerController.unfollowWriter
 );
 
-/**
- * GET /api/writers/:username
- * Public writer profile by username. Records profile_view.
- */
 router.get(
   '/:username',
   authenticateOptional,

@@ -152,24 +152,20 @@ async function refreshDemoBooks() {
 
     console.log(`\n📚 Updating Manuscript & Analysis for: "${title}"...`);
     
-    // 1. Update Document parsedText
     if (book.documentId) {
       await Document.findByIdAndUpdate(book.documentId, {
         parsedText: data.text,
         wordCount: data.text.split(/\\s+/).length,
       });
 
-      // 2. Clear old cached pitchCard
       await Book.findByIdAndUpdate(book._id, {
         pitchCardCleared: false,
         $unset: { pitchCard: 1 },
       });
 
-      // 3. Run full story analysis pipeline (scenes, characters, relationships, arc, mood)
       console.log(`   ⚙️ Running pipeline analysis for document ${book.documentId}...`);
       await processDocumentDirectly(book.documentId);
 
-      // 4. Generate dynamic pitch card for the book
       console.log(`   ✨ Generating dynamic pitch card for "${title}"...`);
       await generatePitchCard(book._id, true);
     }

@@ -1,11 +1,6 @@
 import { ForbiddenError, UnauthorizedError } from '../utilities/custom-errors.js';
 import { USER_STATUSES } from '../constants/user-roles.js';
 
-/**
- * Middleware factory to authorize users by role.
- * Usage: router.get('/path', authenticate, authorize('admin', 'writer'), handler)
- * @param  {...string} roles
- */
 export const authorize = (...roles) => {
   return (req, _res, next) => {
     if (!req.user) {
@@ -20,10 +15,6 @@ export const authorize = (...roles) => {
   };
 };
 
-/**
- * Middleware to ensure the authenticated user has an active status (not banned or suspended).
- * Usage: router.post('/path', authenticate, requireActive, handler)
- */
 export const requireActive = (req, _res, next) => {
   if (!req.user) {
     return next(new UnauthorizedError('Authentication required.'));
@@ -36,10 +27,6 @@ export const requireActive = (req, _res, next) => {
   next();
 };
 
-/**
- * Middleware to ensure the publisher is approved.
- * If publisher status is pending, returns 403 with error code 'PUBLISHER_PENDING'.
- */
 export const requireApprovedPublisher = (req, _res, next) => {
   if (!req.user) {
     return next(new UnauthorizedError('Authentication required.'));

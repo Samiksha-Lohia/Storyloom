@@ -38,7 +38,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
       setLoading(true);
     }
     try {
-      // Load source info
       let sourceData = null;
       if (resolvedSource.kind === 'book') {
         sourceData = await api.books.getById(resolvedSource.id).catch(() => null);
@@ -47,15 +46,12 @@ export default function OverviewTab({ documentId, source, options = {} }) {
       }
       setDoc(sourceData);
 
-      // Load characters to get count
       const charsRes = await api.analysis.getCharacters(resolvedSource, stableOptions).catch(() => []);
       const chars = charsRes?.data !== undefined ? (Array.isArray(charsRes.data) ? charsRes.data : charsRes.data?.results || []) : (Array.isArray(charsRes) ? charsRes : charsRes?.results || []);
 
-      // Load scenes to get count
       const scenesRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
       const scenes = scenesRes?.data?.results || scenesRes?.results || scenesRes?.data || scenesRes || [];
 
-      // Load pipeline status jobs
       let jobsList = [];
       try {
         const jobsRes = await api.analysis.getPipelineStatus(resolvedSource.id, stableOptions);
@@ -66,7 +62,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
       setJobs(jobsList);
       jobsRef.current = jobsList;
 
-      // Estimate word count
       let words = 0;
       if (sourceData?.manuscriptText) {
         words = sourceData.manuscriptText.trim().split(/\s+/).length;
@@ -94,7 +89,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
 
   useEffect(() => {
     loadData(false);
-    // Poll for job updates if any job is queued or running
     const interval = setInterval(() => {
       if (jobsRef.current.some(j => j.status === 'running' || j.status === 'queued')) {
         loadData(true);
@@ -129,7 +123,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
 
   return (
     <div className="space-y-6">
-      {/* Overview Banner */}
       <div className="bg-paper border border-rule rounded p-6">
         <div className="space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Analysis Summary</span>
@@ -140,9 +133,7 @@ export default function OverviewTab({ documentId, source, options = {} }) {
         </div>
       </div>
 
-      {/* Grid of Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Word Count */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-rule flex items-center justify-center text-muted">
             <FileText className="w-4 h-4" />
@@ -153,7 +144,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Scenes */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-rule flex items-center justify-center text-muted">
             <BookOpen className="w-4 h-4" />
@@ -164,7 +154,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Characters */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-rule flex items-center justify-center text-muted">
             <Users className="w-4 h-4" />
@@ -175,7 +164,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Dominant Mood */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-rule flex items-center justify-center text-muted">
             <Smile className="w-4 h-4" />
@@ -187,7 +175,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
         </div>
       </div>
 
-      {/* Analysis Pipeline Status */}
       <div className="bg-paper border border-rule rounded p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-rule pb-3">
           <div>
@@ -202,7 +189,6 @@ export default function OverviewTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Pipeline stage cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {jobs.map((job) => {
             const statusConfig = {

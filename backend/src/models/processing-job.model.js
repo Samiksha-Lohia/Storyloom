@@ -48,9 +48,8 @@ const processingJobSchema = new mongoose.Schema(
   }
 );
 
-// Compound index on documentId and status to power the progress UI
 processingJobSchema.index({ documentId: 1, status: 1 });
-processingJobSchema.index({ documentId: 1, stage: 1 }, { unique: true }); // A document can only have one job record per stage
+processingJobSchema.index({ documentId: 1, stage: 1 }, { unique: true });
 
 const ProcessingJob = mongoose.model('ProcessingJob', processingJobSchema);
 

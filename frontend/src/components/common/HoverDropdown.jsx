@@ -37,7 +37,6 @@ export default function HoverDropdown({
     setIsOpen((prev) => !prev);
   };
 
-  // Close on outside click and Escape key
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {

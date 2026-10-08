@@ -58,7 +58,6 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
-  // Initialize settings from user object
   useEffect(() => {
     if (user?.readerSettings) {
       setFontSize(user.readerSettings.fontSize || 16);
@@ -81,7 +80,6 @@ export function SettingsPage() {
       };
       const updated = await api.me.updateSettings(payload);
 
-      // Refresh local auth context if loginUser or me is available
       if (typeof loginUser === 'function' && updated) {
         loginUser({
           ...user,
@@ -104,7 +102,6 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 space-y-8 pb-20">
-      {/* Header */}
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF0E8] text-[#FF500A] text-xs font-bold uppercase tracking-wider mb-2">
           <Sliders className="w-3.5 h-3.5" />
@@ -131,7 +128,6 @@ export function SettingsPage() {
         </div>
       )}
 
-      {/* Account Info Overview */}
       <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-[#FF500A]/10 text-[#FF500A] flex items-center justify-center font-bold text-lg font-heading">
@@ -154,17 +150,14 @@ export function SettingsPage() {
         )}
       </div>
 
-      {/* Settings Form */}
       <form onSubmit={handleSave} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Controls Column */}
           <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-7 space-y-6 shadow-xs">
             <h2 className="font-heading font-bold text-lg text-stone-900 border-b border-stone-100 pb-3 flex items-center gap-2">
               <Type className="w-5 h-5 text-[#FF500A]" />
               Typography & Theme
             </h2>
 
-            {/* Reading Theme */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
                 Theme Palette
@@ -193,7 +186,6 @@ export function SettingsPage() {
               </div>
             </div>
 
-            {/* Font Family */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
                 Font Family
@@ -227,7 +219,6 @@ export function SettingsPage() {
               </div>
             </div>
 
-            {/* Font Size */}
             <div className="space-y-2">
               <label htmlFor="settings-font-size" className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
                 Font Size: {fontSize}px
@@ -246,7 +237,6 @@ export function SettingsPage() {
               </select>
             </div>
 
-            {/* Line Height */}
             <div className="space-y-2">
               <label htmlFor="settings-line-height" className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
                 Line Spacing: {lineHeight}
@@ -278,7 +268,6 @@ export function SettingsPage() {
             </div>
           </div>
 
-          {/* Live Preview Column */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">

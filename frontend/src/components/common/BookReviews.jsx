@@ -13,7 +13,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
   const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);
 
-  // Form states
   const [isEditing, setIsEditing] = useState(false);
   const [ratingInput, setRatingInput] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -32,7 +31,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
     try {
       setLoading(true);
       const res = await api.reviews.getReviews(effectiveBookId, { page, limit: 10, sort: sortOption });
-      // api.reviews.list already normalizes the response (reviews, stats, pagination, userReview)
       setReviews(res.reviews || []);
       if (res.stats) setStats(res.stats);
       if (res.pagination) setPagination(res.pagination);
@@ -121,10 +119,8 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
 
   return (
     <div className="space-y-6">
-      {/* Rating & Review Header Summary */}
       <div className="bg-paper border border-rule rounded p-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          {/* Average Rating Big Display */}
           <div className="md:col-span-4 text-center md:border-r md:border-rule md:pr-6">
             <div className="text-4xl font-bold text-ink">
               {stats.ratingAvg ? stats.ratingAvg.toFixed(1) : '0.0'}
@@ -146,7 +142,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
             </p>
           </div>
 
-          {/* Histogram Bars */}
           <div className="md:col-span-8 space-y-1.5">
             {[5, 4, 3, 2, 1].map((stars) => {
               const count = stats.histogram?.[stars] || 0;
@@ -174,7 +169,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
         </div>
       </div>
 
-      {/* User Review Action Area */}
       <div className="border border-rule rounded p-6 bg-paper">
         {currentUser ? (
           isBookAuthor ? (
@@ -182,7 +176,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
               As the author of this book, you cannot write reviews for it.
             </div>
           ) : isEditing ? (
-            /* Write / Edit Form */
             <form onSubmit={handleSubmitReview} className="space-y-4">
               <h3 className="text-base font-bold text-ink">
                 {userReview ? 'Edit Your Review' : 'Write a Review'}
@@ -194,7 +187,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                 </div>
               )}
 
-              {/* Star Rating Selector */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                   Rating
@@ -227,7 +219,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                 </div>
               </div>
 
-              {/* Review Text */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                   Your Review
@@ -265,7 +256,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
               </div>
             </form>
           ) : userReview ? (
-            /* Current User Review Card */
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -315,7 +305,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
               )}
             </div>
           ) : (
-            /* Write button for active reader */
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h4 className="font-bold text-ink text-sm">
@@ -336,7 +325,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
             </div>
           )
         ) : (
-          /* Guest prompt */
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
             <div>
               <h4 className="font-bold text-ink text-sm">
@@ -361,7 +349,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
         </div>
       )}
 
-      {/* Community Reviews List & Filter Bar */}
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-rule">
           <h3 className="font-bold text-base text-ink flex items-center gap-2">
@@ -371,7 +358,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
             </span>
           </h3>
 
-          {/* Sort Selector */}
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted">Sort by:</span>
             <select
@@ -386,7 +372,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
           </div>
         </div>
 
-        {/* Reviews List */}
         {loading ? (
           <div className="py-8 text-center text-xs text-muted font-bold">
             Loading…
@@ -407,7 +392,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                 <div key={rev._id} className="py-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      {/* Avatar */}
                       <div className="w-8 h-8 rounded border border-rule bg-paper text-ink flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
                         {reader.avatarUrl ? (
                           <img
@@ -437,7 +421,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                           )}
                         </div>
 
-                        {/* Star Rating & Date */}
                         <div className="flex items-center gap-2 mt-0.5">
                           <div className="flex items-center gap-0.5 text-ink">
                             {[1, 2, 3, 4, 5].map((s) => (
@@ -462,7 +445,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
                       </div>
                     </div>
 
-                    {/* Report Review Button */}
                     {!isCurrentUser && (
                       <ReportButton
                         targetType="review"
@@ -483,7 +465,6 @@ export default function BookReviews({ bookId, bookTitle, writerId }) {
           </div>
         )}
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="pt-4 flex items-center justify-center gap-2">
             <Button

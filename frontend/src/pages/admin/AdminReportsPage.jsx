@@ -12,12 +12,11 @@ import { Button } from '../../components/common/Button';
 export function AdminReportsPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | 'closed' | 'all'
+  const [statusFilter, setStatusFilter] = useState('open');
   const [targetTypeFilter, setTargetTypeFilter] = useState('');
   const [reasonFilter, setReasonFilter] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 20, totalPages: 1, total: 0 });
 
-  // Modal State
   const [selectedReport, setSelectedReport] = useState(null);
   const [actionType, setActionType] = useState('dismiss');
   const [adminNotes, setAdminNotes] = useState('');
@@ -131,7 +130,6 @@ export function AdminReportsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-calligraphy text-2xl sm:text-3xl font-normal text-ink flex items-center gap-2">
@@ -160,9 +158,7 @@ export function AdminReportsPage() {
         </div>
       )}
 
-      {/* Filter Bar */}
       <div className="bg-paper border border-rule rounded p-3 flex flex-wrap items-center gap-3">
-        {/* Status Tabs */}
         <div className="flex items-center border border-rule p-0.5 rounded text-xs font-semibold text-muted">
           {['open', 'closed', 'all'].map((st) => (
             <button
@@ -180,7 +176,6 @@ export function AdminReportsPage() {
           ))}
         </div>
 
-        {/* Target Type Filter */}
         <select
           value={targetTypeFilter}
           onChange={(e) => setTargetTypeFilter(e.target.value)}
@@ -192,7 +187,6 @@ export function AdminReportsPage() {
           <option value="user">Users</option>
         </select>
 
-        {/* Reason Filter */}
         <select
           value={reasonFilter}
           onChange={(e) => setReasonFilter(e.target.value)}
@@ -207,7 +201,6 @@ export function AdminReportsPage() {
         </select>
       </div>
 
-      {/* Reports Table */}
       <div className="bg-paper border border-rule rounded overflow-hidden">
         {loading && reports.length === 0 ? (
           <div className="py-16 text-center text-xs text-muted">
@@ -321,7 +314,6 @@ export function AdminReportsPage() {
         )}
       </div>
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           <Button
@@ -346,7 +338,6 @@ export function AdminReportsPage() {
         </div>
       )}
 
-      {/* Action / Review Modal */}
       {selectedReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
           <div className="bg-paper rounded max-w-xl w-full p-6 border border-rule relative max-h-[90vh] overflow-y-auto">
@@ -377,7 +368,6 @@ export function AdminReportsPage() {
               </div>
             )}
 
-            {/* Report Context Card */}
             <div className="p-4 bg-paper border border-rule rounded space-y-3 mb-6 text-xs text-ink">
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -444,7 +434,6 @@ export function AdminReportsPage() {
                 </div>
               </div>
             ) : (
-              /* Action Form */
               <form onSubmit={handleApplyAction} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">

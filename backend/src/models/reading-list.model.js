@@ -51,9 +51,7 @@ const readingListSchema = new mongoose.Schema(
   }
 );
 
-// Unique compound index: a reader has at most one entry per book
 readingListSchema.index({ readerId: 1, bookId: 1 }, { unique: true });
-// Index for drop-off aggregation and reader progress queries
 readingListSchema.index({ bookId: 1, furthestOffset: 1 });
 
 const ReadingList = mongoose.model('ReadingList', readingListSchema);

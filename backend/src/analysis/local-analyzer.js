@@ -133,14 +133,12 @@ const extractCandidateNames = (text = '', language = 'en') => {
   const counts = new Map();
   const isHindi = language === 'hi' || /[\u0900-\u097F]/.test(text);
 
-  // 1. ASCII names
   for (const match of text.matchAll(NAME_PATTERN)) {
     const name = match[0].trim();
     if (STOP_NAMES.has(name) || /^\d/.test(name)) continue;
     counts.set(name, (counts.get(name) || 0) + 1);
   }
 
-  // 2. Devanagari names if Hindi or contains Devanagari
   if (isHindi) {
     for (const match of text.matchAll(HINDI_NAME_PATTERN)) {
       const name = match[0].trim();
@@ -196,7 +194,6 @@ const moodForScene = (text = '', language = 'en') => {
   let primaryMood = 'neutral';
   if (isHindi) {
     if (winner.score > 0) {
-      // Check for compound mood e.g. "उदास और तनावपूर्ण"
       if (
         runnerUp &&
         runnerUp.score > 0 &&

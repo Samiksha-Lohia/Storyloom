@@ -124,7 +124,6 @@ export function HelpPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 sm:py-12 space-y-12 pb-20">
-      {/* Hero Header */}
       <div className="text-center space-y-4 max-w-2xl mx-auto">
         <h1 className="font-calligraphy text-3xl sm:text-5xl font-normal text-ink">
           How can we help you today?
@@ -133,7 +132,6 @@ export function HelpPage() {
           Find answers to common questions about reading, publishing, structural analysis, and publisher acquisitions.
         </p>
 
-        {/* Search Bar */}
         <div className="pt-2 relative max-w-xl mx-auto">
           <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
@@ -146,7 +144,6 @@ export function HelpPage() {
         </div>
       </div>
 
-      {/* Quick Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           to="/browse"
@@ -209,7 +206,6 @@ export function HelpPage() {
         </Link>
       </div>
 
-      {/* FAQ Sections */}
       <div className="space-y-6">
         <div className="border-b border-rule pb-3">
           <h2 className="text-lg font-bold text-ink">
@@ -279,7 +275,6 @@ export function HelpPage() {
         )}
       </div>
 
-      {/* Still need help CTA */}
       <div className="bg-paper border border-rule rounded p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="space-y-1 text-center sm:text-left">
           <h2 className="text-base font-bold text-ink">Still have questions?</h2>

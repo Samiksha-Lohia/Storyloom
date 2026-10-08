@@ -22,7 +22,6 @@ describe('C4. Route Audit & Access Control Enforcement', () => {
     const unauthenticatedNonPublic = [];
 
     routes.forEach((r) => {
-      // Check if matches public allowlist
       const isPublic = PUBLIC_ROUTES.some(
         (p) => p.method === r.method && (p.path === r.path || (p.path !== '/' && r.path === p.path))
       );

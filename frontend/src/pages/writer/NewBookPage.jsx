@@ -33,10 +33,8 @@ export function NewBookPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Wizard Step State
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Form State
   const [manuscriptFile, setManuscriptFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
@@ -52,13 +50,11 @@ export function NewBookPage() {
   const [acceptedRights, setAcceptedRights] = useState(false);
   const [acceptedAi, setAcceptedAi] = useState(false);
 
-  // Submission & Progress State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [targetAction, setTargetAction] = useState('publish');
   const [submitError, setSubmitError] = useState('');
   const [createdBook, setCreatedBook] = useState(null);
 
-  // Manuscript Validation (Max 15 MB, .txt/.pdf/.docx)
   const validateManuscript = (file) => {
     if (!file) return 'Please select a manuscript file.';
     const validExtensions = ['.txt', '.pdf', '.docx'];
@@ -90,7 +86,6 @@ export function NewBookPage() {
       } else {
         setManuscriptFile(file);
         if (!title) {
-          // Auto-fill title from filename
           const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
           setTitle(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
         }
@@ -113,17 +108,15 @@ export function NewBookPage() {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  // Step Validation
   const canProceed = () => {
     if (currentStep === 0) return !!manuscriptFile;
-    if (currentStep === 1) return true; // Cover is optional, fallback tint generated
+    if (currentStep === 1) return true;
     if (currentStep === 2) return title.trim().length > 0 && blurb.trim().length > 0;
     if (currentStep === 3) return true;
     if (currentStep === 4) return acceptedRights && acceptedAi;
     return true;
   };
 
-  // Submission handler
   const handleSubmit = async (targetStatus = 'draft') => {
     if (!manuscriptFile || !title.trim() || !acceptedRights || !acceptedAi) {
       setSubmitError('Please complete all required fields and accept both agreements.');
@@ -166,7 +159,6 @@ export function NewBookPage() {
         return;
       }
 
-      // Directly published — navigate immediately to story page without hallucinating/waiting for insights
       navigate(bookId ? `/book/${bookId}` : '/w/books', {
         state: { message: `"${title.trim()}" published successfully!` },
       });
@@ -177,7 +169,6 @@ export function NewBookPage() {
     }
   };
 
-  // If book is submitted and createdBook is explicitly set (fallback)
   if (createdBook) {
     return (
       <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
@@ -186,7 +177,6 @@ export function NewBookPage() {
           documentId={createdBook.documentId}
           autoPublish={targetAction === 'publish'}
           onPublished={() => {
-            // Callback when published
           }}
         />
       </div>
@@ -195,7 +185,6 @@ export function NewBookPage() {
 
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 text-left">
-      {/* Header */}
       <div>
         <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
           Writer Studio
@@ -208,7 +197,6 @@ export function NewBookPage() {
         </p>
       </div>
 
-      {/* Steps Indicator */}
       <div className="bg-paper rounded border border-rule p-3 sm:p-4">
         <div className="flex items-center justify-between overflow-x-auto gap-2">
           {STEPS.map((step, idx) => {
@@ -238,7 +226,6 @@ export function NewBookPage() {
         </div>
       </div>
 
-      {/* Error alert */}
       {submitError && (
         <div className="p-4 rounded bg-paper border border-rule text-danger text-xs flex items-center gap-3">
           <AlertCircle className="w-5 h-5 shrink-0" />
@@ -246,9 +233,7 @@ export function NewBookPage() {
         </div>
       )}
 
-      {/* Wizard Content Panels */}
       <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
-        {/* ─── Step 1: Manuscript ────────────────────────────────────────── */}
         {currentStep === 0 && (
           <div className="space-y-6">
             <div>
@@ -336,7 +321,6 @@ export function NewBookPage() {
           </div>
         )}
 
-        {/* ─── Step 2: Cover with 2:3 Canvas Cropper ──────────────────────── */}
         {currentStep === 1 && (
           <div className="space-y-6">
             <div>
@@ -356,7 +340,6 @@ export function NewBookPage() {
           </div>
         )}
 
-        {/* ─── Step 3: Metadata ─────────────────────────────────────────── */}
         {currentStep === 2 && (
           <div className="space-y-6">
             <div>
@@ -432,7 +415,6 @@ export function NewBookPage() {
                 </div>
               </div>
 
-              {/* Tags Input */}
               <div>
                 <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1.5">
                   Tags (up to 10)
@@ -465,7 +447,6 @@ export function NewBookPage() {
                 </div>
               </div>
 
-              {/* Maturity Rating */}
               <div className="p-4 rounded border border-rule bg-paper flex items-center justify-between">
                 <div>
                   <span className="font-bold text-xs text-ink block">Mature Content (18+)</span>
@@ -486,7 +467,6 @@ export function NewBookPage() {
           </div>
         )}
 
-        {/* ─── Step 4: Template & Accent Selection with Live Preview ── */}
         {currentStep === 3 && (
           <div className="space-y-6">
             <div>
@@ -515,7 +495,6 @@ export function NewBookPage() {
           </div>
         )}
 
-        {/* ─── Step 5: Rights & AI Disclosure ──────────────────────────── */}
         {currentStep === 4 && (
           <div className="space-y-6">
             <div>
@@ -526,7 +505,6 @@ export function NewBookPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Rights Checkbox */}
               <label className="p-4 rounded border border-rule bg-paper hover:border-ink flex items-start gap-3.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -546,7 +524,6 @@ export function NewBookPage() {
                 </div>
               </label>
 
-              {/* AI Disclosure Checkbox */}
               <label className="p-4 rounded border border-rule bg-paper hover:border-ink flex items-start gap-3.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -569,7 +546,6 @@ export function NewBookPage() {
           </div>
         )}
 
-        {/* Wizard Controls */}
         <div className="flex items-center justify-between pt-6 border-t border-rule mt-6">
           <Button
             type="button"

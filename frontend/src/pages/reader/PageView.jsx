@@ -16,7 +16,6 @@ export default function PageView({
       ? 'var(--font-body), "Nunito Sans", -apple-system, sans-serif'
       : 'var(--font-reading), "Lora", Georgia, serif';
 
-  // Format page content into paragraphs
   const renderFormattedText = (text) => {
     if (!text || text.trim().length === 0) {
       return (
@@ -52,9 +51,7 @@ export default function PageView({
       }}
     >
       {twoPageSpread && nextPageText !== null ? (
-        /* Two-Page Spread (Desktop >= 1024px) */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:divide-x lg:divide-rule">
-          {/* Left Page */}
           <div className="flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(pageText)}</div>
             <div className="pt-8 text-center text-xs text-muted select-none">
@@ -62,7 +59,6 @@ export default function PageView({
             </div>
           </div>
 
-          {/* Right Page */}
           <div className="lg:pl-12 flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(nextPageText)}</div>
             <div className="pt-8 text-center text-xs text-muted select-none">
@@ -71,7 +67,6 @@ export default function PageView({
           </div>
         </div>
       ) : (
-        /* Single Page View */
         <div className="max-w-2xl mx-auto flex flex-col justify-between min-h-[65vh]">
           <div className="space-y-1">{renderFormattedText(pageText)}</div>
           <div className="pt-8 text-center text-xs text-muted select-none">

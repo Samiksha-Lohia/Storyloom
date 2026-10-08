@@ -39,10 +39,8 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink font-body">
-      {/* ─── Sticky Top Bar with 1px Rule Border ─────────────────────── */}
       <header className="sticky top-0 z-40 bg-paper border-b border-rule">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Logo & Primary Nav */}
           <div className="flex items-center gap-6 md:gap-8">
             <Logo />
 
@@ -105,7 +103,6 @@ export default function PublicLayout() {
             </nav>
           </div>
 
-          {/* Search Box */}
           <form
             onSubmit={handleSearch}
             className="flex-1 max-w-xs sm:max-w-sm hidden sm:flex items-center relative"
@@ -120,7 +117,6 @@ export default function PublicLayout() {
             />
           </form>
 
-          {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated && user && <NotificationBell />}
 
@@ -147,7 +143,6 @@ export default function PublicLayout() {
                         <p className="text-[11px] text-muted capitalize">{role}</p>
                       </div>
 
-                      {/* Reader role has NO dashboard! */}
                       {role !== 'reader' && (
                         <Link
                           to={getDashboardLink()}
@@ -205,7 +200,6 @@ export default function PublicLayout() {
               </div>
             )}
 
-            {/* Mobile Menu Toggle Button */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -217,7 +211,6 @@ export default function PublicLayout() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-rule bg-paper px-4 py-3 space-y-2">
             <div className="flex flex-col gap-1 pb-2 border-b border-rule">
@@ -255,12 +248,10 @@ export default function PublicLayout() {
         )}
       </header>
 
-      {/* ─── Main Page Content ───────────────────────────────────────────── */}
       <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-6 md:py-8">
         <Outlet />
       </main>
 
-      {/* ─── Footer with Spec Links ───────────────────────────────────────── */}
       <footer className="mt-auto bg-paper text-ink border-t border-rule">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-rule">
@@ -273,7 +264,6 @@ export default function PublicLayout() {
               </p>
             </div>
 
-            {/* Link Rows */}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
               <Link to="/terms" className="hover:text-ink hover:underline">
                 Terms of Service

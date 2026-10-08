@@ -6,7 +6,6 @@ import createApp from '../src/app.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Explicit Public Routes Allowlist
 export const PUBLIC_ROUTES = [
   { method: 'GET', path: '/' },
   { method: 'GET', path: '/health' },
@@ -42,9 +41,6 @@ export const PUBLIC_ROUTES = [
   { method: 'POST', path: '/api/reports/public-notice' },
 ];
 
-/**
- * Normalizes an express regex to a path string
- */
 export function cleanRegexPath(layer) {
   if (!layer || !layer.regexp) return '';
   let str = layer.regexp.source || '';
@@ -61,9 +57,6 @@ export function cleanRegexPath(layer) {
   return str.replace(/\/+/g, '/');
 }
 
-/**
- * Recursively walk Express router stack to collect routes
- */
 export function extractRoutes(app) {
   const routes = [];
 

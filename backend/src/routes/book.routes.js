@@ -26,12 +26,8 @@ import { recordBookView } from '../services/event.service.js';
 
 export const PUBLIC_ROUTES = ['GET /', 'GET /:bookId'];
 
-
-
-
 const router = Router();
 
-// Rate limiter for book creation: 20 books per hour per user/IP
 const bookCreateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 20,
@@ -47,11 +43,6 @@ const bookCreateLimiter = rateLimit({
   },
 });
 
-/**
- * POST /api/books
- * Roles: writer, admin (must be active)
- * Creates a book and manuscript document; triggers parsing pipeline.
- */
 router.post(
   '/',
   authenticate,
@@ -70,11 +61,6 @@ router.post(
   }
 );
 
-/**
- * GET /api/books
- * Roles: public
- * Returns published catalogue with search, filter, and pagination.
- */
 router.get('/', authenticateOptional, validate(queryCatalogueSchema), async (req, res, next) => {
   try {
     const { results, pagination } = await bookService.getCatalogue(req.query, req.user);
@@ -84,11 +70,6 @@ router.get('/', authenticateOptional, validate(queryCatalogueSchema), async (req
   }
 });
 
-/**
- * GET /api/books/writer/mine
- * Roles: writer, admin
- * Returns all books for the authenticated writer across all statuses.
- */
 router.get(
   '/writer/mine',
   authenticate,
@@ -104,10 +85,6 @@ router.get(
   }
 );
 
-/**
- * GET /api/books/:bookId
- * Roles: public if published; owner/admin otherwise (returns 404 to others).
- */
 router.get(
   '/:bookId',
   validate(bookIdParamSchema),
@@ -125,11 +102,6 @@ router.get(
   }
 );
 
-/**
- * GET /api/books/:bookId/pages
- * Roles: reader, publisher, writer, admin (published only for non-owners)
- * Window capped at 5 pages.
- */
 router.get(
   '/:bookId/pages',
   authenticate,
@@ -156,11 +128,6 @@ router.get(
   }
 );
 
-/**
- * GET /api/books/:bookId/scene-markers
- * Roles: reader, publisher, writer, admin
- * Returns page numbers where scenes begin for reader scrubber (spoiler-free).
- */
 router.get(
   '/:bookId/scene-markers',
   authenticate,
@@ -186,22 +153,10 @@ router.get(
   }
 );
 
-/**
- * /api/books/:bookId/analysis
- * Role-gated, spoiler-protected analysis endpoints
- */
 router.use('/:bookId/analysis', bookAnalysisRoutes);
 
-/**
- * /api/books/:bookId/reviews
- * Reviews, ratings, and histogram endpoints
- */
 router.use('/:bookId/reviews', reviewRoutes);
 
-/**
- * POST /api/books/:bookId/accept-terms
- * Writers / Admins re-accept terms for an existing book
- */
 router.post(
   '/:bookId/accept-terms',
   authenticate,
@@ -218,11 +173,6 @@ router.post(
   }
 );
 
-/**
- * GET /api/books/:bookId/pitch
- * Roles: approved publisher, book owner, admin
- * Returns comprehensive pitch panel payload
- */
 router.get(
   '/:bookId/pitch',
   authenticate,
@@ -237,11 +187,6 @@ router.get(
   }
 );
 
-/**
- * POST /api/books/:bookId/pitch/regenerate
- * Roles: owner, admin
- * Regenerates the AI pitch card (limit 3 per day)
- */
 router.post(
   '/:bookId/pitch/regenerate',
   authenticate,
@@ -258,11 +203,6 @@ router.post(
   }
 );
 
-/**
- * DELETE /api/books/:bookId/pitch
- * Roles: owner, admin
- * Clears the AI pitch card
- */
 router.delete(
   '/:bookId/pitch',
   authenticate,
@@ -279,13 +219,6 @@ router.delete(
   }
 );
 
-
-
-/**
- * PATCH /api/books/:bookId
- * Roles: owner, admin (must be active)
- * Updates metadata, template, accent, status, or replaces cover.
- */
 router.patch(
   '/:bookId',
   authenticate,
@@ -311,11 +244,6 @@ router.patch(
   }
 );
 
-/**
- * DELETE /api/books/:bookId
- * Roles: owner, admin (must be active)
- * Cascades to document, analysis records, and cover asset.
- */
 router.delete(
   '/:bookId',
   authenticate,

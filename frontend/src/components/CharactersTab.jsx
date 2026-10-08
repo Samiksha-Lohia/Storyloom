@@ -98,7 +98,6 @@ export default function CharactersTab({
         </div>
       </div>
 
-      {/* Characters Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {characters.map((char) => {
           const charId = char._id || char.id;
@@ -108,7 +107,6 @@ export default function CharactersTab({
               className="bg-paper border border-rule rounded p-6 text-left flex flex-col justify-between space-y-4"
             >
               <div className="space-y-3">
-                {/* Header: Name & Role */}
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-ink">{char.name}</h3>
@@ -127,7 +125,6 @@ export default function CharactersTab({
                   )}
                 </div>
 
-                {/* Traits tags */}
                 {char.traits && char.traits.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {char.traits.map((trait, tIdx) => (
@@ -142,7 +139,6 @@ export default function CharactersTab({
                   </div>
                 )}
 
-                {/* Biography Description */}
                 {char.description && (
                   <div className="space-y-1">
                     <span className="block text-[10px] font-bold uppercase tracking-widest text-muted">Description</span>
@@ -150,7 +146,6 @@ export default function CharactersTab({
                   </div>
                 )}
 
-                {/* Character Arc Summary */}
                 {char.arcSummary && (
                   <div className="space-y-1 bg-paper border border-rule rounded p-3 mt-2">
                     <span className="block text-[10px] font-bold uppercase tracking-widest text-muted flex items-center gap-1">
@@ -162,7 +157,6 @@ export default function CharactersTab({
                 )}
               </div>
 
-              {/* Appearances Timeline */}
               {char.sceneIds && char.sceneIds.length > 0 && (
                 <div className="pt-3 border-t border-rule">
                   <span className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5 flex items-center gap-1">

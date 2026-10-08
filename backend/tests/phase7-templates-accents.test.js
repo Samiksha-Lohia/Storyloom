@@ -29,7 +29,6 @@ const req = async (method, path, body, token, headers = {}) => {
   return { status: res.status, body: json };
 };
 
-// Helper: WCAG 2.1 relative luminance and contrast ratio algorithms
 function getRelativeLuminance(r, g, b) {
   const [sR, sG, sB] = [r, g, b].map((val) => {
     const s = val / 255;
@@ -107,27 +106,21 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
     it('audits original Phase 1 presets and flags #FF500A as failing 4.5:1 contrast', () => {
       const white = '#FFFFFF';
 
-      // Audit Deep Blue
       const blueRatio = getContrastRatio('#1E3A8A', white);
       assert.ok(blueRatio >= 4.5, `Deep Blue ratio ${blueRatio} must meet 4.5:1`);
 
-      // Audit Emerald Green
       const greenRatio = getContrastRatio('#047857', white);
       assert.ok(greenRatio >= 4.5, `Emerald Green ratio ${greenRatio} must meet 4.5:1`);
 
-      // Audit Purple
       const purpleRatio = getContrastRatio('#7C3AED', white);
       assert.ok(purpleRatio >= 4.5, `Purple ratio ${purpleRatio} must meet 4.5:1`);
 
-      // Audit Crimson Red
       const redRatio = getContrastRatio('#B91C1C', white);
       assert.ok(redRatio >= 4.5, `Crimson Red ratio ${redRatio} must meet 4.5:1`);
 
-      // Audit Deep Teal
       const tealRatio = getContrastRatio('#0F766E', white);
       assert.ok(tealRatio >= 4.5, `Deep Teal ratio ${tealRatio} must meet 4.5:1`);
 
-      // Audit Original Orange: Fails 4.5:1 (approx 3.28:1)
       const orangeRatio = getContrastRatio('#FF500A', white);
       assert.ok(
         orangeRatio < 4.5,
@@ -137,9 +130,8 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
 
     it('proves proposed darker variant #C2410C meets 4.5:1 for text on white and white text on button', () => {
       const white = '#FFFFFF';
-      const proposedDarkerOrange = ACCESSIBLE_ORANGE; // #C2410C
+      const proposedDarkerOrange = ACCESSIBLE_ORANGE;
 
-      // Text on white background
       const textOnWhite = getContrastRatio(proposedDarkerOrange, white);
       assert.ok(
         textOnWhite >= 4.5,
@@ -150,16 +142,14 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
         `Proposed darker orange achieves ${textOnWhite.toFixed(2)}:1 contrast`
       );
 
-      // White text on button background
       const whiteOnButton = getContrastRatio(white, proposedDarkerOrange);
       assert.ok(
         whiteOnButton >= 4.5,
         `White text on ${proposedDarkerOrange} button must meet >= 4.5:1`
       );
 
-      // Verify all 6 active production presets meet 4.5:1
       const activePresets = [
-        ACCESSIBLE_ORANGE, // #C2410C
+        ACCESSIBLE_ORANGE,
         '#1E3A8A',
         '#047857',
         '#7C3AED',
@@ -182,7 +172,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       const { user, token } = await createUser('writer', 'tpl1');
       const { book } = await createTestBook(user, { title: 'Story 1' });
 
-      // Send invalid template
       const res = await req(
         'PATCH',
         `/books/${book._id}`,
@@ -201,7 +190,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       const { user, token } = await createUser('writer', 'tpl2');
       const { book } = await createTestBook(user, { title: 'Story 2' });
 
-      // Send invalid accent hex not in allowed presets
       const res = await req(
         'PATCH',
         `/books/${book._id}`,
@@ -220,7 +208,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       const { user, token } = await createUser('writer', 'tpl3');
       const { book, doc } = await createTestBook(user, { title: 'Story 3' });
 
-      // 1. Update to showcase template and deep teal accent
       const res1 = await req(
         'PATCH',
         `/books/${book._id}`,
@@ -231,7 +218,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       assert.equal(res1.body.data.template, 'showcase');
       assert.equal(res1.body.data.accent, '#0F766E');
 
-      // 2. Update to notebook template
       const res2 = await req(
         'PATCH',
         `/books/${book._id}`,
@@ -242,12 +228,10 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       assert.equal(res2.body.data.template, 'notebook');
       assert.equal(res2.body.data.accent, ACCESSIBLE_ORANGE);
 
-      // Verify the book in DB updated properly
       const updatedInDb = await Book.findById(book._id);
       assert.equal(updatedInDb.template, 'notebook');
       assert.equal(updatedInDb.accent, ACCESSIBLE_ORANGE);
 
-      // Verify documentId remains untouched
       assert.equal(updatedInDb.documentId.toString(), doc._id.toString());
     });
   });
@@ -262,7 +246,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       book.coverUrl = 'https://cloudinary.com/demo/image/upload/covers/old_cover_12345.jpg';
       await book.save();
 
-      // Ensure Cloudinary config exists for test
       const prevCloudName = config.cloudinary.cloudName;
       const prevApiKey = config.cloudinary.apiKey;
       const prevApiSecret = config.cloudinary.apiSecret;
@@ -270,7 +253,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       config.cloudinary.apiKey = 'test_key';
       config.cloudinary.apiSecret = 'test_secret';
 
-      // Track deleted images and mock Cloudinary uploader
       const deletedIds = [];
       const origDestroy = cloudinary.uploader.destroy;
       const origUploadStream = cloudinary.uploader.upload_stream;
@@ -312,7 +294,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
         assert.equal(res.status, 200, `Expected 200 but got ${res.status}: ${JSON.stringify(data)}`);
         assert.equal(data.data.coverUrl, 'https://cloudinary.com/demo/image/upload/covers/new_cover_67890.jpg');
 
-        // Confirm old image was destroyed
         assert.ok(
           deletedIds.includes(oldPublicId),
           `Expected old publicId ${oldPublicId} to be destroyed on Cloudinary`
@@ -331,7 +312,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
     it('allows writer to set defaultTemplate via PATCH /api/me/profile and rejects invalid templates', async () => {
       const { user, token } = await createUser('writer', 'default');
 
-      // 1. Update default template to 'showcase'
       const res1 = await req(
         'PATCH',
         '/me/profile',
@@ -341,12 +321,10 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       assert.equal(res1.status, 200);
       assert.equal(res1.body.data.defaultTemplate, 'showcase');
 
-      // 2. GET /auth/me reflects updated default template
       const meRes = await req('GET', '/auth/me', null, token);
       assert.equal(meRes.status, 200);
       assert.equal(meRes.body.data.defaultTemplate, 'showcase');
 
-      // 3. Update to 'notebook'
       const res2 = await req(
         'PATCH',
         '/me/profile',
@@ -356,7 +334,6 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       assert.equal(res2.status, 200);
       assert.equal(res2.body.data.defaultTemplate, 'notebook');
 
-      // 4. Rejects invalid template enum with 400
       const resBad = await req(
         'PATCH',
         '/me/profile',

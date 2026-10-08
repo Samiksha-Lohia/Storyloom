@@ -17,26 +17,23 @@ describe('Paginator Service', () => {
   });
 
   it('breaks at paragraph boundaries when available', () => {
-    const p1 = 'Paragraph one with some text. '.repeat(20); // ~600 chars
+    const p1 = 'Paragraph one with some text. '.repeat(20);
     const p2 = 'Paragraph two with more details. '.repeat(20);
     const p3 = 'Paragraph three to finish the chapter. '.repeat(20);
     const fullText = `${p1}\n\n${p2}\n\n${p3}`;
 
     const offsets = paginate(fullText, 700);
 
-    // Property check: strictly increasing
     for (let i = 0; i < offsets.length - 1; i++) {
       assert(offsets[i] < offsets[i + 1], `Offset ${i} must be < offset ${i + 1}`);
     }
 
-    // Property check: concatenated pages equal original text identically
     let reconstructed = '';
     for (let p = 1; p <= offsets.length; p++) {
       reconstructed += sliceForPage(fullText, offsets, p);
     }
     assert.equal(reconstructed, fullText);
 
-    // The break should be right after \n\n (start of paragraph 2 and 3)
     assert.equal(fullText.slice(offsets[1], offsets[1] + 13), 'Paragraph two');
   });
 
@@ -58,7 +55,7 @@ describe('Paginator Service', () => {
 
   it('handles one huge paragraph without paragraph breaks (falls back to sentence/whitespace)', () => {
     const sentence = 'This is a continuous narrative sentence that flows across multiple pages without breaks. ';
-    const hugeParagraph = sentence.repeat(60); // ~5300 chars, no \n\n
+    const hugeParagraph = sentence.repeat(60);
 
     const offsets = paginate(hugeParagraph, 1000);
     assert(offsets.length >= 4);
@@ -67,7 +64,6 @@ describe('Paginator Service', () => {
     for (let p = 1; p <= offsets.length; p++) {
       const slice = sliceForPage(hugeParagraph, offsets, p);
       reconstructed += slice;
-      // Never break mid-word: page start should not be in the middle of a word
       if (p > 1) {
         assert(slice.startsWith('This is a continuous') || !/^[a-z]/i.test(slice[0]) || slice.startsWith(' '));
       }
@@ -127,7 +123,6 @@ describe('Paginator Service', () => {
   it('property-style check: strictly increasing offsets and exact text reconstruction across multiple random lengths', () => {
     const sampleWords = ['The', 'quick', 'brown', 'fox', 'jumped', 'over', 'the', 'lazy', 'dog.', 'It', 'was', 'autumn.', 'Leaves', 'drifted.\n\n', 'Cold', 'winds', 'howled!', 'Why?'];
     
-    // Generate 5 distinct synthetic texts
     for (let run = 0; run < 5; run++) {
       let doc = '';
       const totalWords = 400 + run * 300;
@@ -137,22 +132,18 @@ describe('Paginator Service', () => {
 
       const offsets = paginate(doc, 800 + run * 200);
 
-      // 1. First offset is 0
       assert.equal(offsets[0], 0);
 
-      // 2. Strictly increasing
       for (let i = 0; i < offsets.length - 1; i++) {
         assert(offsets[i] < offsets[i + 1]);
       }
 
-      // 3. Concatenation invariant
       let reconstructed = '';
       for (let p = 1; p <= offsets.length; p++) {
         reconstructed += sliceForPage(doc, offsets, p);
       }
       assert.equal(reconstructed, doc);
 
-      // 4. pageForOffset consistency
       for (let i = 0; i < offsets.length; i++) {
         const expectedPage = i + 1;
         assert.equal(pageForOffset(offsets, offsets[i]), expectedPage);

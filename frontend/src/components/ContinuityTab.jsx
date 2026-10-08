@@ -13,8 +13,7 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
   const [scenes, setScenes] = useState({});
   const [loading, setLoading] = useState(true);
   
-  // Filters
-  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | 'reviewed' | 'resolved' | 'dismissed' | 'all'
+  const [statusFilter, setStatusFilter] = useState('open');
   const [severityFilter, setSeverityFilter] = useState('all');
 
   const loadData = useCallback(async () => {
@@ -24,7 +23,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     }
     setLoading(true);
     try {
-      // 1. Fetch scenes to resolve names in the log
       const sceneRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
       const sceneRaw = sceneRes?.data !== undefined ? sceneRes.data : sceneRes;
       const scenesList = Array.isArray(sceneRaw) ? sceneRaw : sceneRaw?.results || [];
@@ -34,7 +32,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
       });
       setScenes(scenesMap);
 
-      // 2. Fetch continuity issues
       const res = await api.analysis.getContinuity(resolvedSource, stableOptions).catch(() => []);
       const raw = res?.data !== undefined ? res.data : res;
       setIssues(Array.isArray(raw) ? raw : []);
@@ -54,7 +51,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     try {
       const updated = await api.analysis.updateContinuityStatus(resolvedSource, issueId, newStatus);
       
-      // Update local state
       setIssues(prev => prev.map(issue => {
         const id = issue._id || issue.id;
         if (id === issueId) {
@@ -67,16 +63,13 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
     }
   };
 
-  // Filter logic
   const filteredIssues = issues.filter(issue => {
-    // Status filter
     if (statusFilter !== 'all') {
       if (statusFilter === 'open' && issue.status !== 'open') return false;
       if (statusFilter === 'reviewed' && issue.status !== 'reviewed') return false;
       if (statusFilter === 'resolved' && issue.status !== 'resolved') return false;
       if (statusFilter === 'dismissed' && issue.status !== 'dismissed') return false;
     }
-    // Severity filter
     if (severityFilter !== 'all' && issue.severity !== severityFilter) return false;
     return true;
   });
@@ -115,7 +108,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
           <p className="text-xs text-slate-500 mt-0.5">Flags inconsistencies in character traits, timeline events, or narrative gaps.</p>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400">Status:</span>
@@ -148,7 +140,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
         </div>
       </div>
 
-      {/* Continuity Issues log */}
       {filteredIssues.length === 0 ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl p-8">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
@@ -166,7 +157,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                 className="bg-paper border border-rule rounded p-6 flex flex-col md:flex-row md:items-start justify-between gap-6"
               >
                 <div className="space-y-3 max-w-[75%]">
-                  {/* Tags row */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`px-2 py-0.5 border border-rule rounded text-[9px] font-bold uppercase tracking-wider ${getSeverityBadge(issue.severity)}`}>
                       {issue.severity} severity
@@ -176,12 +166,10 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                     </span>
                   </div>
 
-                  {/* Conflict description */}
                   <p className="text-sm text-ink leading-relaxed font-body">
                     {issue.description}
                   </p>
 
-                  {/* Scenes involved */}
                   {issue.sceneIds && issue.sceneIds.length > 0 && (
                     <div className="space-y-1.5 pt-1">
                       <span className="block text-[9px] font-bold uppercase tracking-widest text-muted flex items-center gap-1">
@@ -206,7 +194,6 @@ export default function ContinuityTab({ documentId, source, options = {} }) {
                   )}
                 </div>
 
-                {/* Issue Actions panel */}
                 <div className="flex items-center gap-2 self-end md:self-start bg-paper p-2 rounded border border-rule flex-shrink-0">
                   {issue.status === 'open' && (
                     <>

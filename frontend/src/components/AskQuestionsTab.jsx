@@ -19,7 +19,6 @@ export default function AskQuestionsTab({ documentId, source, options = {} }) {
     setError(null);
     setLoading(true);
 
-    // Append user question to history
     setHistory((prev) => [...prev, { role: 'user', content: currentQuestion }]);
 
     try {
@@ -54,7 +53,6 @@ export default function AskQuestionsTab({ documentId, source, options = {} }) {
       </div>
 
       <div className="bg-paper border border-rule rounded flex flex-col h-[500px]">
-        {/* Chat History Panel */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {history.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-muted space-y-2">
@@ -97,7 +95,6 @@ export default function AskQuestionsTab({ documentId, source, options = {} }) {
           )}
         </div>
 
-        {/* Input Form */}
         <form onSubmit={handleSubmit} className="border-t border-rule p-4 bg-paper rounded-b">
           {error && (
             <div className="mb-3 p-3 bg-paper border border-danger text-danger rounded text-xs flex items-center gap-2">

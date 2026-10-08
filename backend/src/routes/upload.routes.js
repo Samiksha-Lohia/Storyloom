@@ -15,7 +15,6 @@ export const PUBLIC_ROUTES = [];
 
 const router = Router();
 
-// Rate limiter for avatar uploads: 15 uploads per 15 minutes per user/IP
 const avatarUploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 15,
@@ -31,11 +30,6 @@ const avatarUploadLimiter = rateLimit({
   },
 });
 
-/**
- * POST /api/uploads/avatar
- * Roles: any logged-in user (active status required)
- * Uploads user avatar to Cloudinary, replaces existing avatar, updates user profile.
- */
 router.post(
   '/avatar',
   authenticate,
@@ -56,18 +50,15 @@ router.post(
 
       const oldPublicId = user.avatarPublicId;
 
-      // Upload new avatar to Cloudinary
       const result = await imageService.saveImage(req.file.buffer, {
         folder: 'platform/avatars',
         mimetype: req.file.mimetype,
       });
 
-      // Destroy old avatar if exists
       if (oldPublicId) {
         await imageService.deleteImage(oldPublicId);
       }
 
-      // Update user
       user.avatarPublicId = result.publicId;
       user.avatarUrl = result.url;
       await user.save();

@@ -12,14 +12,13 @@ const moodAnalysisSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Scene',
       required: true,
-      unique: true, // One mood analysis per scene
+      unique: true,
     },
     primaryMood: {
       type: String,
       required: true,
       trim: true,
     },
-    // Map storing scores per emotion category, e.g., { joy: 0.1, tension: 0.8 }
     emotionScores: {
       type: Map,
       of: Number,

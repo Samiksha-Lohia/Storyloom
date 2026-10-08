@@ -56,7 +56,6 @@ const sceneSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for chronological/ordered scene retrieval
 sceneSchema.index({ documentId: 1, sceneNumber: 1 }, { unique: true });
 
 const Scene = mongoose.model('Scene', sceneSchema);

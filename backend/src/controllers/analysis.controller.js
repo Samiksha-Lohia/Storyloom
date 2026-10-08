@@ -28,9 +28,6 @@ const FEATURE_TO_STAGE = {
   [FEATURES.PITCH]: STAGES.ARC,
 };
 
-/**
- * Returns analysis job status for a given stage/feature.
- */
 async function getAnalysisStatusForFeature(documentId, feature) {
   const stage = FEATURE_TO_STAGE[feature] || feature;
   try {
@@ -59,9 +56,6 @@ async function getAnalysisStatusForFeature(documentId, feature) {
   }
 }
 
-/**
- * Resolve request context: role, furthestOffset, and showAll opt-out.
- */
 async function resolveRequestContext(req) {
   const user = req.user;
   const book = req.book;
@@ -70,7 +64,6 @@ async function resolveRequestContext(req) {
 
   let furthestOffset = 0;
 
-  // 1. Check viewer's stored reading progress
   if (user) {
     const readingEntry = await ReadingList.findOne({
       readerId: user.id,
@@ -81,7 +74,6 @@ async function resolveRequestContext(req) {
     }
   }
 
-  // 2. Check ?upto=page query parameter
   if (req.query.upto) {
     const pageNum = parseInt(req.query.upto, 10);
     if (pageNum > 0 && Array.isArray(book.pageOffsets)) {
@@ -93,14 +85,12 @@ async function resolveRequestContext(req) {
     }
   }
 
-  // 3. Check explicit ?offset= query parameter
   if (req.query.offset !== undefined) {
     furthestOffset = parseInt(req.query.offset, 10) || 0;
   }
 
   const documentId = book.documentId?._id || book.documentId;
 
-  // Automatically start processing narrative insights on-demand if pending
   if (documentId) {
     triggerAnalysisIfPending(documentId).catch((err) => {
       logger.warn(`Failed to auto-trigger analysis on request for ${documentId}: ${err.message}`);

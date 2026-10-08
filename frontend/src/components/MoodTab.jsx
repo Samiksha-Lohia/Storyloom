@@ -25,7 +25,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
     try {
       setLoading(true);
 
-      // 1. Fetch Source metadata
       let sourceData = null;
       if (resolvedSource.kind === 'book') {
         sourceData = await api.books.getById(resolvedSource.id).catch(() => null);
@@ -34,7 +33,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
       }
       setDoc(sourceData);
 
-      // 2. Fetch Mood Analysis
       const moodRes = await api.analysis.getMood(resolvedSource, stableOptions).catch(() => null);
       let rawMoods = [];
       let summary = null;
@@ -59,7 +57,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
       setMoodRecords(rawMoods);
       setSummaryData(summary);
 
-      // 3. Fetch Scenes for scene-by-scene mood flow
       const scenesRes = await api.analysis.getScenes(resolvedSource, stableOptions).catch(() => []);
       const sceneList = scenesRes?.data?.results || scenesRes?.results || scenesRes?.data || (Array.isArray(scenesRes) ? scenesRes : []);
       setScenes(Array.isArray(sceneList) ? sceneList : []);
@@ -75,7 +72,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
     loadData();
   }, [loadData]);
 
-  // Aggregate mood insights strictly
   const moodAnalysis = useMemo(() => {
     const list = Array.isArray(moodRecords) ? moodRecords : [];
 
@@ -109,7 +105,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
     const computedMin = list.length > 0 ? Math.round(minIntensity * 100) : 40;
     const computedMax = list.length > 0 ? Math.round(maxIntensity * 100) : 90;
 
-    // Frequencies sorted
     const sortedFrequencies = Object.entries(emotionFrequency)
       .sort((a, b) => b[1] - a[1])
       .map(([emotion, count]) => ({
@@ -118,7 +113,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
         percentage: Math.round((count / totalCount) * 100),
       }));
 
-    // Top emotion scores averaged
     const averagedScores = Object.entries(emotionScoresAccum)
       .map(([emo, sum]) => ({
         emotion: emo,
@@ -143,7 +137,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
     };
   }, [moodRecords, summaryData, doc]);
 
-  // Map scenes to mood records
   const sceneMoodList = useMemo(() => {
     return scenes.map((scene, idx) => {
       const sceneId = (scene._id || scene.id)?.toString();
@@ -203,7 +196,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
 
   return (
     <div className="space-y-6">
-      {/* Mood Header Banner */}
       <div className="bg-paper border border-rule rounded p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -227,9 +219,7 @@ export default function MoodTab({ documentId, source, options = {} }) {
         </div>
       </div>
 
-      {/* Grid of Mood Stats Cards - ONLY MOOD METRICS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Dominant Mood Card */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-9 h-9 rounded border border-rule flex items-center justify-center text-ink shrink-0 bg-paper">
             <Smile className="w-4 h-4" />
@@ -242,7 +232,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Emotional Intensity Card */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-9 h-9 rounded border border-rule flex items-center justify-center text-ink shrink-0 bg-paper">
             <Flame className="w-4 h-4" />
@@ -255,7 +244,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Intensity Range Card */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-9 h-9 rounded border border-rule flex items-center justify-center text-ink shrink-0 bg-paper">
             <Activity className="w-4 h-4" />
@@ -268,7 +256,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
           </div>
         </div>
 
-        {/* Emotion Spectrum Card */}
         <div className="bg-paper border border-rule p-4 rounded flex items-center gap-3">
           <div className="w-9 h-9 rounded border border-rule flex items-center justify-center text-ink shrink-0 bg-paper">
             <Sparkles className="w-4 h-4" />
@@ -282,7 +269,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
         </div>
       </div>
 
-      {/* Emotional Landscape / Frequency Distribution */}
       <div className="bg-paper border border-rule rounded p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-rule pb-3">
           <div>
@@ -321,7 +307,6 @@ export default function MoodTab({ documentId, source, options = {} }) {
         )}
       </div>
 
-      {/* Scene-by-Scene Mood Progression */}
       {sceneMoodList.length > 0 && (
         <div className="bg-paper border border-rule rounded p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-3">

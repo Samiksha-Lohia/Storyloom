@@ -12,9 +12,6 @@ import { logAction } from './audit.service.js';
 import { createNotification } from './notification.service.js';
 import { invalidateCatalogueCache } from './book.service.js';
 
-/**
- * C1. Comprehensive platform statistics for Admin Dashboard.
- */
 export const getAdminStats = async () => {
   const now = new Date();
   const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -35,31 +32,22 @@ export const getAdminStats = async () => {
     openReportsCount,
     topBooks,
   ] = await Promise.all([
-    // Users by role
     User.aggregate([
       { $group: { _id: '$role', count: { $sum: 1 } } },
     ]),
-    // Signups
     User.countDocuments({ createdAt: { $gte: d7 } }),
     User.countDocuments({ createdAt: { $gte: d30 } }),
     User.countDocuments(),
-    // Active users (DAU / WAU from ViewEvent distinct viewers, with fallback to lastActiveAt)
     ViewEvent.distinct('viewerKey', { createdAt: { $gte: d1 } }),
     ViewEvent.distinct('viewerKey', { createdAt: { $gte: d7 } }),
-    // Published books
     Book.countDocuments({ status: BOOK_STATUSES.PUBLISHED }),
-    // Reads aggregate
     Book.aggregate([
       { $match: { status: BOOK_STATUSES.PUBLISHED } },
       { $group: { _id: null, totalReads: { $sum: '$stats.reads' } } },
     ]),
-    // Reviews
     Review.countDocuments(),
-    // Pending publishers
     User.countDocuments({ 'publisherProfile.reviewStatus': 'pending' }),
-    // Open reports
     Report.countDocuments({ status: 'pending' }),
-    // Top 5 books by reads
     Book.find({ status: BOOK_STATUSES.PUBLISHED })
       .sort({ 'stats.reads': -1, 'stats.ratingAvg': -1 })
       .limit(5)
@@ -68,7 +56,6 @@ export const getAdminStats = async () => {
       .lean(),
   ]);
 
-  // Map roles into a friendly object
   const usersByRole = {
     reader: 0,
     writer: 0,
@@ -81,7 +68,6 @@ export const getAdminStats = async () => {
     }
   });
 
-  // Calculate top writers by published book count or total reads
   const topWritersAgg = await Book.aggregate([
     { $match: { status: BOOK_STATUSES.PUBLISHED } },
     {
@@ -112,7 +98,6 @@ export const getAdminStats = async () => {
     };
   });
 
-  // Calculate manuscript lifecycle status distribution
   const statusDistributionAgg = await Book.aggregate([
     {
       $group: {
@@ -158,9 +143,6 @@ export const getAdminStats = async () => {
   };
 };
 
-/**
- * List publisher applicants with optional reviewStatus filter.
- */
 export const getPublishers = async ({ status = 'pending', page = 1, limit = 20 } = {}) => {
   const query = {};
 
@@ -197,9 +179,6 @@ export const getPublishers = async ({ status = 'pending', page = 1, limit = 20 }
   };
 };
 
-/**
- * Approve or reject a publisher application.
- */
 export const reviewPublisher = async (userId, { action, reason, adminUser }) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -290,9 +269,6 @@ export const reviewPublisher = async (userId, { action, reason, adminUser }) => 
   throw new BadRequestError('Invalid action. Must be "approve" or "reject".');
 };
 
-/**
- * C2. Get Users with search, filter, pagination, booksCount and reportsCount.
- */
 export const getUsers = async ({
   search = '',
   role = 'all',
@@ -329,7 +305,6 @@ export const getUsers = async ({
     User.countDocuments(query),
   ]);
 
-  // Aggregate books count and reports count for each returned user
   const userIds = users.map((u) => u._id);
 
   const [bookCounts, reportCounts] = await Promise.all([
@@ -368,9 +343,6 @@ export const getUsers = async ({
   };
 };
 
-/**
- * C2. Update User (role change, ban/unban, suspend with automatic book hiding).
- */
 export const updateUser = async (userId, { role, status, suspensionDays, suspensionEndsAt, note, adminUser }) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -395,14 +367,12 @@ export const updateUser = async (userId, { role, status, suspensionDays, suspens
         user.suspensionEndsAt = new Date(suspensionEndsAt);
       }
 
-      // Immediately hide all their published books
       await Book.updateMany(
         { writerId: user._id, status: BOOK_STATUSES.PUBLISHED },
         { status: BOOK_STATUSES.SUSPENDED }
       );
     } else if (status === USER_STATUSES.BANNED) {
       user.suspensionEndsAt = null;
-      // Immediately hide all their books
       await Book.updateMany(
         { writerId: user._id },
         { status: BOOK_STATUSES.REMOVED }
@@ -414,7 +384,6 @@ export const updateUser = async (userId, { role, status, suspensionDays, suspens
 
   await user.save();
 
-  // Audit log
   await logAction({
     actor: adminId,
     action: 'admin_user_updated',
@@ -430,7 +399,6 @@ export const updateUser = async (userId, { role, status, suspensionDays, suspens
     },
   });
 
-  // In-app notification
   if (user.status !== previousStatus) {
     await createNotification({
       recipientId: user._id,
@@ -444,9 +412,6 @@ export const updateUser = async (userId, { role, status, suspensionDays, suspens
   return UserDto.toResponse(user);
 };
 
-/**
- * C2. Get Books for Admin oversight with search, genre, status filter, and pagination.
- */
 export const getBooks = async ({
   search = '',
   genre = '',
@@ -488,7 +453,6 @@ export const getBooks = async ({
     Book.countDocuments(query),
   ]);
 
-  // Get report counts for these books
   const bookIds = books.map((b) => b._id);
   const reportCounts = await Report.aggregate([
     { $match: { targetType: 'book', targetId: { $in: bookIds } } },
@@ -512,9 +476,6 @@ export const getBooks = async ({
   };
 };
 
-/**
- * C2. Update Book moderation action (unpublish, suspend, restore, takedown).
- */
 export const updateBook = async (bookId, { action, reason, adminUser }) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -535,7 +496,6 @@ export const updateBook = async (bookId, { action, reason, adminUser }) => {
   await book.save();
   await invalidateCatalogueCache();
 
-  // Audit log
   await logAction({
     actor: adminId,
     action: `book_${action}`,
@@ -549,7 +509,6 @@ export const updateBook = async (bookId, { action, reason, adminUser }) => {
     },
   });
 
-  // Notify writer
   await createNotification({
     recipientId: book.writerId,
     type: action === 'restore' ? 'book_restored' : 'book_removed',

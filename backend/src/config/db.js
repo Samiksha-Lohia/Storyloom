@@ -6,12 +6,11 @@ const connectDB = async () => {
   try {
     const mongoUrl = process.env.MONGO_URI || config.mongoose.url;
     const conn = await mongoose.connect(mongoUrl, {
-      autoIndex: true, // Build indexes automatically in MongoDB
+      autoIndex: true,
     });
 
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
     
-    // Ensure text index on books does not treat book.language as index stemmer override
     try {
       const booksCol = conn.connection.collection('books');
       const indexes = await booksCol.indexes();
@@ -28,7 +27,6 @@ const connectDB = async () => {
       logger.warn(`Books text index check notice: ${idxErr.message}`);
     }
 
-    // Additional listeners for ongoing connection management
     mongoose.connection.on('error', (err) => {
       logger.error(`MongoDB connection error: ${err}`);
     });

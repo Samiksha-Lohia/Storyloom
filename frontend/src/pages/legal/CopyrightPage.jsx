@@ -10,7 +10,7 @@ export function CopyrightPage() {
   const [claimantName, setClaimantName] = useState('');
   const [claimantContact, setClaimantContact] = useState('');
   const [details, setDetails] = useState('');
-  const [honeypot, setHoneypot] = useState(''); // Anti-bot honeypot field
+  const [honeypot, setHoneypot] = useState('');
   const [perjuryAck, setPerjuryAck] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -20,7 +20,6 @@ export function CopyrightPage() {
     e.preventDefault();
     setError(null);
 
-    // Extract MongoDB ObjectId if user pasted full URL (e.g. /book/6ac16...)
     let cleanId = targetId.trim();
     const match = cleanId.match(/([0-9a-fA-F]{24})/);
     if (match) {
@@ -65,7 +64,6 @@ export function CopyrightPage() {
 
   return (
     <LegalPageLayout title="Copyright & Takedown Policy" lastUpdated="October 2026">
-      {/* Draft Notice Banner */}
       <div className="bg-paper border border-rule p-4 rounded mb-8 flex items-start gap-3">
         <AlertTriangle className="w-4 h-4 text-muted shrink-0 mt-0.5" />
         <div>
@@ -107,7 +105,6 @@ export function CopyrightPage() {
         </ul>
       </section>
 
-      {/* Public Takedown Form */}
       <section className="space-y-4 pt-4">
         <div className="bg-paper border border-rule rounded p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
@@ -150,7 +147,6 @@ export function CopyrightPage() {
                 </div>
               )}
 
-              {/* Honeypot field */}
               <div className="hidden" aria-hidden="true" style={{ display: 'none' }}>
                 <label htmlFor="website-hp">Website</label>
                 <input

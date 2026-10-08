@@ -93,8 +93,6 @@ const publishRequestSchema = new mongoose.Schema(
   }
 );
 
-// One active request (pending or accepted) per publisher per book:
-// Partial unique index supported by MongoDB
 publishRequestSchema.index(
   { publisherId: 1, bookId: 1 },
   {

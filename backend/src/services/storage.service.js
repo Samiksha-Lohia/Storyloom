@@ -4,7 +4,6 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } fro
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
 
-// ─── S3 Client (only used if STORAGE_PROVIDER=s3) ─────────────────────────────
 let s3Client = null;
 if (config.storage.provider === 's3') {
   s3Client = new S3Client({
@@ -16,13 +15,6 @@ if (config.storage.provider === 's3') {
   });
 }
 
-/**
- * Upload a file buffer or disk-written file and return a stable storage URL.
- *
- * @param {Object} file       - Multer file object (req.file)
- * @param {string} storageKey - Destination key / relative path
- * @returns {Promise<string>} URL pointing to the stored file
- */
 const uploadFile = async (file, storageKey) => {
   if (config.storage.provider === 's3') {
     const command = new PutObjectCommand({
@@ -32,13 +24,9 @@ const uploadFile = async (file, storageKey) => {
       ContentType: file.mimetype,
     });
     await s3Client.send(command);
-    // Return the standard S3 object URL
     return `https://${config.storage.s3.bucketName}.s3.${config.storage.s3.region}.amazonaws.com/${storageKey}`;
   }
 
-  // ─── Local storage ────────────────────────────────────────────────────────
-  // Multer diskStorage already wrote the file; resolve its path as the URL.
-  // If memoryStorage were used locally (shouldn't be), we write it ourselves.
   if (file.path) {
     return path.resolve(file.path);
   }
@@ -49,12 +37,6 @@ const uploadFile = async (file, storageKey) => {
   return destPath;
 };
 
-/**
- * Delete a file from storage by its storage URL.
- *
- * @param {string} storageUrl - The URL returned by uploadFile()
- * @param {string} storageKey - The S3 key (only needed for S3 provider)
- */
 const deleteFile = async (storageUrl, storageKey) => {
   if (config.storage.provider === 's3' && s3Client) {
     const command = new DeleteObjectCommand({
@@ -66,7 +48,6 @@ const deleteFile = async (storageUrl, storageKey) => {
     return;
   }
 
-  // Local: delete from filesystem
   try {
     await fs.unlink(storageUrl);
     logger.debug(`Deleted local file: ${storageUrl}`);
@@ -75,12 +56,6 @@ const deleteFile = async (storageUrl, storageKey) => {
   }
 };
 
-/**
- * Download a file from S3 and return a Buffer.
- *
- * @param {string} storageKey - The S3 key of the file to download
- * @returns {Promise<Buffer>} The file content as a Buffer
- */
 const downloadFile = async (storageKey) => {
   if (config.storage.provider === 's3' && s3Client) {
     const command = new GetObjectCommand({

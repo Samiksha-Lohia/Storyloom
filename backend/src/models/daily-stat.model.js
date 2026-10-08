@@ -5,7 +5,7 @@ export const STAT_SCOPES = ['book', 'writer', 'platform'];
 const dailyStatSchema = new mongoose.Schema(
   {
     date: {
-      type: String, // 'YYYY-MM-DD'
+      type: String,
       required: true,
       index: true,
     },
@@ -52,13 +52,11 @@ const dailyStatSchema = new mongoose.Schema(
   }
 );
 
-// Compound unique index ensuring idempotency per date, scope, and target
 dailyStatSchema.index(
   { date: 1, scope: 1, targetId: 1 },
   { unique: true }
 );
 
-// Range and lookup queries
 dailyStatSchema.index({ scope: 1, targetId: 1, date: 1 });
 
 const DailyStat = mongoose.model('DailyStat', dailyStatSchema);

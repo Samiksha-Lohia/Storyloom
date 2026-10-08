@@ -39,7 +39,6 @@ export default function FinishCard({
   return (
     <div className="max-w-xl mx-auto py-8 px-4 text-center space-y-6">
       <div className={`p-8 rounded border space-y-6 ${styles.cardBg}`}>
-        {/* Title & Congratulations */}
         <div className="space-y-2">
           <span className={`px-2.5 py-0.5 rounded border text-xs font-bold uppercase tracking-wider inline-block ${styles.badgeBg}`}>
             Story Completed
@@ -52,7 +51,6 @@ export default function FinishCard({
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
           <Link to={`/book/${book.id || book._id}`}>
             <Button variant="primary" size="md">

@@ -30,7 +30,6 @@ export function BookPage() {
         if (isMounted && bookData && (bookData._id || bookData.id || bookData.title)) {
           setBook(bookData);
 
-          // Fetch related books by genre
           if (bookData.genre) {
             try {
               const relRes = await api.books.list({
@@ -39,7 +38,6 @@ export function BookPage() {
               });
               const list = relRes?.data || (Array.isArray(relRes) ? relRes : []);
               if (isMounted && Array.isArray(list)) {
-                // Filter out current book
                 setRelatedBooks(list.filter((b) => (b._id || b.id) !== id));
               }
             } catch (relErr) {

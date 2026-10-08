@@ -2,12 +2,6 @@ import Wishlist from '../models/wishlist.model.js';
 import Book from '../models/book.model.js';
 import { NotFoundError, BadRequestError } from '../utilities/custom-errors.js';
 
-/**
- * Add a book to publisher's wishlist.
- * @param {string} publisherId
- * @param {string} bookId
- * @param {string} [notes]
- */
 export const addToWishlist = async (publisherId, bookId, notes = '') => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -32,32 +26,17 @@ export const addToWishlist = async (publisherId, bookId, notes = '') => {
   return item;
 };
 
-/**
- * Remove a book from publisher's wishlist.
- * @param {string} publisherId
- * @param {string} bookId
- */
 export const removeFromWishlist = async (publisherId, bookId) => {
   const result = await Wishlist.findOneAndDelete({ publisherId, bookId });
   return !!result;
 };
 
-/**
- * Check if a book is wishlisted by a publisher.
- * @param {string} publisherId
- * @param {string} bookId
- */
 export const isWishlisted = async (publisherId, bookId) => {
   if (!publisherId || !bookId) return false;
   const count = await Wishlist.countDocuments({ publisherId, bookId });
   return count > 0;
 };
 
-/**
- * Get wishlisted books for an approved publisher.
- * @param {string} publisherId
- * @param {{ page?: number, limit?: number }} options
- */
 export const getPublisherWishlist = async (publisherId, { page = 1, limit = 20 } = {}) => {
   const numericPage = Math.max(1, parseInt(page, 10) || 1);
   const numericLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
@@ -80,7 +59,6 @@ export const getPublisherWishlist = async (publisherId, { page = 1, limit = 20 }
     Wishlist.countDocuments({ publisherId }),
   ]);
 
-  // Filter out any deleted or non-existent books
   const validItems = items.filter((item) => item.bookId);
 
   return {
@@ -94,11 +72,6 @@ export const getPublisherWishlist = async (publisherId, { page = 1, limit = 20 }
   };
 };
 
-/**
- * Get count of publishers who wishlisted a book.
- * Strictly returns count only — never reveals publisher identities.
- * @param {string} bookId
- */
 export const getWishlistCount = async (bookId) => {
   if (!bookId) return 0;
   return Wishlist.countDocuments({ bookId });

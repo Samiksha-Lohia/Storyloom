@@ -29,7 +29,6 @@
   --font-calligraphy: "Petit Formal Script", cursive;
 }
 
-/* Global: instant state changes, no animation, no transitions */
 *, ::before, ::after {
   transition: none !important;
   animation: none !important;
@@ -45,26 +44,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Page titles, hero headlines, and wordmarks */
 h1, .font-calligraphy {
   font-family: var(--font-calligraphy);
   letter-spacing: normal;
   font-weight: 400;
 }
 
-/* Section headings and UI labels use Nunito Sans bold */
 h2, h3, h4, h5, h6 {
   font-family: var(--font-body);
   font-weight: 700;
 }
 
-/* Accessible focus outline */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

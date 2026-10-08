@@ -21,9 +21,8 @@ import config from '../config/env.js';
 
 const router = Router();
 
-// Dedicated IP-only Rate Limiter for registration (10 per hour per IP by default, configurable)
 const registerIpLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   limit: config.rateLimit?.registerPerHour || 10,
   standardHeaders: true,
   legacyHeaders: false,
@@ -37,9 +36,8 @@ const registerIpLimiter = rateLimit({
   },
 });
 
-// Strict Rate Limiter: at least 10 attempts allowed per minute per IP + email identifier (configured to 30/min)
 const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
@@ -56,7 +54,6 @@ const authLimiter = rateLimit({
   },
 });
 
-// Dedicated Rate Limiter for password reset requests (15 per minute per IP + email)
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 15,
@@ -75,10 +72,6 @@ const forgotPasswordLimiter = rateLimit({
   },
 });
 
-/**
- * POST /api/auth/register
- * Body: { name, email, password, role?, company?, website?, note?, termsAccepted }
- */
 router.post('/register', registerIpLimiter, authLimiter, validate(registerSchema), async (req, res, next) => {
   try {
     const { name, email, password, role, company, website, note, termsAccepted } = req.body;
@@ -95,10 +88,6 @@ router.post('/register', registerIpLimiter, authLimiter, validate(registerSchema
   }
 });
 
-/**
- * POST /api/auth/login
- * Body: { email, password }
- */
 router.post('/login', authLimiter, validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -109,10 +98,6 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res, next)
   }
 });
 
-/**
- * POST /api/auth/refresh
- * Body: { refreshToken }
- */
 router.post('/refresh', validate(refreshSchema), async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
@@ -123,10 +108,6 @@ router.post('/refresh', validate(refreshSchema), async (req, res, next) => {
   }
 });
 
-/**
- * POST /api/auth/logout
- * Body: { refreshToken }
- */
 router.post('/logout', authenticate, validate(refreshSchema), async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
@@ -137,10 +118,6 @@ router.post('/logout', authenticate, validate(refreshSchema), async (req, res, n
   }
 });
 
-/**
- * POST /api/auth/forgot-password
- * Body: { email }
- */
 router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -151,10 +128,6 @@ router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSc
   }
 });
 
-/**
- * POST /api/auth/reset-password
- * Body: { token, password }
- */
 router.post('/reset-password', forgotPasswordLimiter, validate(resetPasswordSchema), async (req, res, next) => {
   try {
     const { token, password } = req.body;
@@ -165,10 +138,6 @@ router.post('/reset-password', forgotPasswordLimiter, validate(resetPasswordSche
   }
 });
 
-/**
- * GET /api/auth/me
- * Returns current authenticated user DTO (never the hash).
- */
 router.get('/me', authenticate, async (req, res, next) => {
   try {
     const user = await userRepository.findById(req.user.id);

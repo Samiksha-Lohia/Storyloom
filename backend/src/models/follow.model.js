@@ -20,7 +20,6 @@ const followSchema = new mongoose.Schema(
   }
 );
 
-// Compound unique index: a user can follow a writer at most once
 followSchema.index({ followerId: 1, writerId: 1 }, { unique: true });
 followSchema.index({ writerId: 1, createdAt: -1 });
 

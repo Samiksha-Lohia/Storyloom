@@ -11,11 +11,6 @@ import Follow from '../models/follow.model.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utilities/custom-errors.js';
 import { USER_ROLES } from '../constants/user-roles.js';
 
-/**
- * Builds the MongoDB aggregation pipeline for drop-off calculation.
- * @param {Array<mongoose.Types.ObjectId>} targetBookIds
- * @returns {Array<Object>}
- */
 export const buildDropOffPipeline = (targetBookIds) => {
   return [
     {
@@ -104,13 +99,6 @@ export const buildDropOffPipeline = (targetBookIds) => {
   ];
 };
 
-/**
- * Runs an explain() plan on the drop-off aggregation pipeline.
- * @param {Object} params
- * @param {string|mongoose.Types.ObjectId} params.writerId
- * @param {string|mongoose.Types.ObjectId} [params.bookId]
- * @returns {Promise<Object>}
- */
 export const explainDropOffAggregation = async ({ writerId, bookId }) => {
   let targetBookIds = [];
   if (bookId) {
@@ -125,19 +113,9 @@ export const explainDropOffAggregation = async ({ writerId, bookId }) => {
   return explainResult;
 };
 
-/**
- * Retrieves full writer analytics for dashboard.
- *
- * @param {Object} params
- * @param {string|mongoose.Types.ObjectId} params.writerId
- * @param {number} [params.range=30] 30 or 90 days
- * @param {string} [params.bookId] Optional book filter
- * @param {string} [params.userRole]
- */
 export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, userRole = null }) => {
   const rangeDays = range === 90 ? 90 : 30;
 
-  // 1. Fetch writer's books
   const writerBooks = await Book.find({ writerId }).lean();
   let filteredBooks = writerBooks;
 
@@ -158,7 +136,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
 
   const targetBookIds = filteredBooks.map((b) => b._id);
 
-  // 2. Date series generation
   const today = new Date();
   const dateList = [];
   for (let i = rangeDays - 1; i >= 0; i--) {
@@ -168,7 +145,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
   const startDateStr = dateList[0];
   const endDateStr = dateList[dateList.length - 1];
 
-  // 3. Reads over time from DailyStat
   const statsQuery = {
     date: { $gte: startDateStr, $lte: endDateStr },
   };
@@ -199,7 +175,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     };
   });
 
-  // 4. Drop-off Aggregation
   let dropOff = [
     { bucket: '0-10%', count: 0, percentage: 0 },
     { bucket: '10-20%', count: 0, percentage: 0 },
@@ -247,7 +222,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     }
   }
 
-  // 5. Per-Book Comparison
   const perBookComparison = filteredBooks.map((b) => ({
     id: b._id,
     title: b.title,
@@ -260,7 +234,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     readingListAdds: b.stats?.readingListAdds || 0,
   }));
 
-  // 6. Rating Distribution
   const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   if (targetBookIds.length > 0) {
     const reviewAgg = await Review.aggregate([
@@ -285,7 +258,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     }
   }
 
-  // 7. Latest Reviews
   let latestReviews = [];
   if (targetBookIds.length > 0) {
     latestReviews = await Review.find({
@@ -299,7 +271,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
       .lean();
   }
 
-  // 8. KPI Cards Calculation
   const totalReads = filteredBooks.reduce((sum, b) => sum + (b.stats?.reads || 0), 0);
   const totalRatingCount = filteredBooks.reduce((sum, b) => sum + (b.stats?.ratingCount || 0), 0);
   const totalRatingSum = filteredBooks.reduce(
@@ -313,7 +284,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     0
   );
 
-  // New reviews in date range
   const rangeStartDate = new Date(`${startDateStr}T00:00:00.000Z`);
   const rangeEndDate = new Date(`${endDateStr}T23:59:59.999Z`);
   const newReviewsCount = await Review.countDocuments({
@@ -322,18 +292,15 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
     createdAt: { $gte: rangeStartDate, $lte: rangeEndDate },
   });
 
-  // Profile views (writer level)
   const profileViewsCount = await ViewEvent.countDocuments({
     type: 'profile_view',
     targetId: writerId,
   });
 
-  // Publisher wishlists across writer's books
   const publisherWishlistsCount = await Wishlist.countDocuments({
     bookId: { $in: targetBookIds },
   });
 
-  // Open / active publishing requests for writer's books (pending + accepted)
   const openRequestsCount = await PublishRequest.countDocuments({
     bookId: { $in: targetBookIds },
     status: { $in: ['pending', 'accepted'] },
@@ -357,9 +324,6 @@ export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, 
   };
 };
 
-/**
- * Fetches all reviews across a writer's books with filters for /w/reviews.
- */
 export const getWriterReviews = async ({
   writerId,
   bookId = null,
@@ -419,11 +383,6 @@ export const getWriterReviews = async ({
   };
 };
 
-/**
- * Public writer profile by username or ID.
- * @param {string} identifier - username or ObjectId
- * @param {string} [currentUserId] - optional authenticated user ID to check isFollowing
- */
 export const getWriterProfile = async (identifier, currentUserId = null) => {
   let writer = null;
   const isObjectId = mongoose.Types.ObjectId.isValid(identifier) && identifier.length === 24;
@@ -476,9 +435,6 @@ export const getWriterProfile = async (identifier, currentUserId = null) => {
   };
 };
 
-/**
- * Follow a writer by username.
- */
 export const followWriter = async (followerId, username) => {
   const writer = await User.findOne({ username: username.toLowerCase().trim() });
   if (!writer) {
@@ -504,9 +460,6 @@ export const followWriter = async (followerId, username) => {
   };
 };
 
-/**
- * Unfollow a writer by username.
- */
 export const unfollowWriter = async (followerId, username) => {
   const writer = await User.findOne({ username: username.toLowerCase().trim() });
   if (!writer) {

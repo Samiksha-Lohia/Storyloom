@@ -12,14 +12,10 @@ export const pitchWorker = {
   },
 };
 
-/**
- * Initializes the repeatable nightly statsRollup job in the queue.
- */
 export const scheduleNightlyRollup = async () => {
   try {
-    const cronPattern = process.env.MAINTENANCE_CRON || '0 2 * * *'; // Default 02:00 UTC
+    const cronPattern = process.env.MAINTENANCE_CRON || '0 2 * * *';
 
-    // Schedule repeatable job
     await maintenanceQueue.add(
       'statsRollup',
       {},
@@ -37,10 +33,6 @@ export const scheduleNightlyRollup = async () => {
   }
 };
 
-/**
- * Starts the platform-maintenance BullMQ Worker.
- * @returns {Worker}
- */
 export const startMaintenanceWorker = () => {
   if (maintenanceWorker) return maintenanceWorker;
 
@@ -50,7 +42,6 @@ export const startMaintenanceWorker = () => {
       logger.info(`[PlatformMaintenance] Processing job "${job.name}" (${job.id})`);
 
       if (job.name === 'statsRollup') {
-        // If a specific date is given in job data, use it; otherwise rollup yesterday
         let targetDate = job.data?.date;
         if (!targetDate) {
           const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -94,7 +85,6 @@ export const startMaintenanceWorker = () => {
     logger.error(`[PlatformMaintenance] Job "${job?.name || 'unknown'}" (${job?.id}) failed: ${err.message}`);
   });
 
-  // Schedule repeatable job
   scheduleNightlyRollup().catch((err) => {
     logger.error(`Error in scheduleNightlyRollup: ${err.message}`);
   });

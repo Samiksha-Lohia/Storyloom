@@ -25,7 +25,6 @@ export class UserDto {
     this.createdAt = user.createdAt;
   }
 
-
   static toResponse(user) {
     if (!user) return null;
     return new UserDto(user);

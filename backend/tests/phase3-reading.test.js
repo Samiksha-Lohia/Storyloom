@@ -42,7 +42,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     await new Promise((resolve) => server.close(resolve));
   });
 
-  // Helper to create users
   const createUser = async (role = 'reader', emailSuffix = 'user', overrides = {}) => {
     const email = `${role}_${emailSuffix}@example.com`;
     const password = 'password123';
@@ -71,11 +70,9 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     return { user: userModel, token: tokens.accessToken };
   };
 
-  // Helper to create a fully paginated book with Document & Scenes
   const createTestBook = async (writerOrId, { status = BOOK_STATUSES.PUBLISHED, mature = false, pageCount = 6 } = {}) => {
     const writerId = writerOrId?._id || writerOrId?.id || writerOrId;
 
-    // Generate text of known page count (~1800 chars per page)
     let fullText = '';
     for (let p = 1; p <= pageCount; p++) {
       fullText += `Chapter ${p} Section. ` + 'The quick brown fox jumps over the lazy dog. '.repeat(35) + '\n\n';
@@ -113,7 +110,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     doc.bookId = book._id;
     await doc.save();
 
-    // Create scenes appropriately based on available pageOffsets
     const scenesToCreate = [
       {
         documentId: doc._id,
@@ -130,7 +126,7 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
         sceneNumber: 2,
         title: 'Meeting at the River',
         summary: 'Caelen delivers the forged seals.',
-        textRange: { start: pageOffsets[2] + 20, end: Math.min(pageOffsets[2] + 400, fullText.length - 1) }, // Page 3
+        textRange: { start: pageOffsets[2] + 20, end: Math.min(pageOffsets[2] + 400, fullText.length - 1) },
       });
     }
 
@@ -140,16 +136,14 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
         sceneNumber: 3,
         title: 'The Catacombs Gate',
         summary: 'The vault is breached.',
-        textRange: { start: pageOffsets[4] + 15, end: Math.min(pageOffsets[4] + 600, fullText.length - 1) }, // Page 5
+        textRange: { start: pageOffsets[4] + 15, end: Math.min(pageOffsets[4] + 600, fullText.length - 1) },
       });
     }
 
     await Scene.create(scenesToCreate);
 
-
     return { book, doc, fullText, pageOffsets };
   };
-
 
   it('GET /books/:bookId/pages — role and status access matrix', async () => {
     const { user: writer, token: writerToken } = await createUser('writer', 'auth1');
@@ -160,30 +154,24 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     const { book: pubBook } = await createTestBook(writer._id, { status: BOOK_STATUSES.PUBLISHED });
     const { book: draftBook } = await createTestBook(writer._id, { status: BOOK_STATUSES.DRAFT });
 
-    // 1. Guest -> 401
     const guestRes = await req('GET', `/books/${pubBook._id}/pages?from=1&to=2`, null, null);
     assert.equal(guestRes.status, 401);
 
-    // 2. Banned user -> 403
     const bannedRes = await req('GET', `/books/${pubBook._id}/pages?from=1&to=2`, null, bannedToken);
     assert.equal(bannedRes.status, 403);
 
-    // 3. Reader accessing published book -> 200
     const readerPubRes = await req('GET', `/books/${pubBook._id}/pages?from=1&to=2`, null, readerToken);
     assert.equal(readerPubRes.status, 200);
     assert.equal(readerPubRes.body.success, true);
     assert.equal(readerPubRes.body.data.pages.length, 2);
     assert.equal(readerPubRes.body.data.pageCount, pubBook.pageCount);
 
-    // 4. Reader accessing unpublished (draft) book -> 404 (hidden for safety)
     const readerDraftRes = await req('GET', `/books/${draftBook._id}/pages?from=1&to=2`, null, readerToken);
     assert.equal(readerDraftRes.status, 404);
 
-    // 5. Owner accessing their own unpublished book -> 200
     const ownerDraftRes = await req('GET', `/books/${draftBook._id}/pages?from=1&to=2`, null, writerToken);
     assert.equal(ownerDraftRes.status, 200);
 
-    // 6. Admin accessing unpublished book -> 200
     const adminDraftRes = await req('GET', `/books/${draftBook._id}/pages?from=1&to=2`, null, adminToken);
     assert.equal(adminDraftRes.status, 200);
   });
@@ -198,26 +186,21 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
       mature: true,
     });
 
-    // 1. Reader without acknowledgement gets 403 with MATURE_ACK_REQUIRED
     const unackRes = await req('GET', `/books/${matureBook._id}/pages?from=1&to=2`, null, readerToken);
     assert.equal(unackRes.status, 403);
     assert.equal(unackRes.body.code, 'MATURE_ACK_REQUIRED');
 
-    // 2. Owner is exempt even without matureAckAt
     const ownerRes = await req('GET', `/books/${matureBook._id}/pages?from=1&to=2`, null, writerToken);
     assert.equal(ownerRes.status, 200);
 
-    // 3. Admin is exempt
     const adminRes = await req('GET', `/books/${matureBook._id}/pages?from=1&to=2`, null, adminToken);
     assert.equal(adminRes.status, 200);
 
-    // 4. Reader acknowledges mature warning: PUT /me/mature-ack
     const ackRes = await req('PUT', '/me/mature-ack', {}, readerToken);
     assert.equal(ackRes.status, 200);
     assert.equal(ackRes.body.data.acknowledged, true);
     assert(ackRes.body.data.matureAckAt);
 
-    // 5. Reader can now access mature book pages
     const readerAfterAck = await req('GET', `/books/${matureBook._id}/pages?from=1&to=2`, null, readerToken);
     assert.equal(readerAfterAck.status, 200);
     assert.equal(readerAfterAck.body.data.pages.length, 2);
@@ -228,21 +211,17 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     const { token: readerToken } = await createUser('reader', 'win2');
     const { book } = await createTestBook(writer._id, { pageCount: 8 });
 
-    // 1. Request 5 pages -> OK
     const win5Res = await req('GET', `/books/${book._id}/pages?from=1&to=5`, null, readerToken);
     assert.equal(win5Res.status, 200);
     assert.equal(win5Res.body.data.pages.length, 5);
 
-    // 2. Request 6 pages -> 400 Bad Request
     const win6Res = await req('GET', `/books/${book._id}/pages?from=1&to=6`, null, readerToken);
     assert.equal(win6Res.status, 400);
     assert(win6Res.body.message.includes('5 pages'));
 
-    // 3. Inverted range (to < from) -> 400 Bad Request
     const invertRes = await req('GET', `/books/${book._id}/pages?from=4&to=2`, null, readerToken);
     assert.equal(invertRes.status, 400);
 
-    // 4. Content accuracy: sliced text matches original text slice
     const page2 = win5Res.body.data.pages.find((p) => p.page === 2);
     assert(page2.text.startsWith('Chapter 2') || page2.text.includes('fox jumps'));
   });
@@ -260,7 +239,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     assert(Array.isArray(markers));
     assert.equal(markers.length, 3);
 
-    // Verify: page numbers ONLY, no strings, no titles, strictly numbers
     for (const m of markers) {
       assert.equal(typeof m, 'number');
     }
@@ -274,21 +252,18 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
 
     const initialReads = book.stats.reads;
 
-    // 1. Fetching page 1 auto-creates ReadingList entry and increments stats.reads
     const fetchPageRes = await req('GET', `/books/${book._id}/pages?from=1&to=1`, null, readerToken);
     assert.equal(fetchPageRes.status, 200);
 
     const refreshedBook = await Book.findById(book._id);
     assert.equal(refreshedBook.stats.reads, initialReads + 1);
 
-    // 2. GET /me/library/:bookId retrieves progress entry
     const libRes = await req('GET', `/me/library/${book._id}`, null, readerToken);
     assert.equal(libRes.status, 200);
     assert.equal(libRes.body.data.currentPage, 1);
     assert.equal(libRes.body.data.furthestPage, 1);
     assert.equal(libRes.body.data.status, 'reading');
 
-    // 3. Advance to page 2: PUT /me/library/:bookId
     const advanceRes = await req(
       'PUT',
       `/me/library/${book._id}`,
@@ -299,8 +274,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     assert.equal(advanceRes.body.data.currentPage, 2);
     assert.equal(advanceRes.body.data.furthestPage, 2);
 
-    // 4. Monotonicity check: reader flips back to page 1
-    // furthestPage and furthestOffset MUST NOT decrease!
     const backRes = await req(
       'PUT',
       `/me/library/${book._id}`,
@@ -309,9 +282,8 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     );
     assert.equal(backRes.status, 200);
     assert.equal(backRes.body.data.currentPage, 1);
-    assert.equal(backRes.body.data.furthestPage, 2); // Still 2!
+    assert.equal(backRes.body.data.furthestPage, 2);
 
-    // 5. Bookmark addition and removal
     const addBookmarkRes = await req(
       'PUT',
       `/me/library/${book._id}`,
@@ -331,7 +303,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     assert.equal(removeBookmarkRes.status, 200);
     assert.equal(removeBookmarkRes.body.data.bookmarks.length, 0);
 
-    // 6. Auto-finish: reaching the final page transitions status to 'finished'
     const finishRes = await req(
       'PUT',
       `/me/library/${book._id}`,
@@ -349,19 +320,15 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     const { token: readerToken } = await createUser('reader', 're2');
     const { book, fullText } = await createTestBook(writer._id, { pageCount: 4 });
 
-    // Reader is reading at char offset 2100 (which was page 2 with targetChars=1800)
     const initialPage = pageForOffset(book.pageOffsets, 2100);
 
-    // Repaginate the text with a slightly different target (e.g. 1600 chars)
     const newOffsets = paginate(fullText, 1600);
     book.pageOffsets = newOffsets;
     book.pageCount = newOffsets.length;
     await book.save();
 
-    // Reader resumes: pageForOffset on stored character offset
     const resumedPage = pageForOffset(book.pageOffsets, 2100);
 
-    // Position remains within at most 1 page difference
     assert(
       Math.abs(resumedPage - initialPage) <= 1,
       `Resumed page (${resumedPage}) should be within 1 page of initial page (${initialPage})`
@@ -371,7 +338,6 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
   it('Reader settings: PATCH /me/settings and /auth/me synchronization', async () => {
     const { token } = await createUser('reader', 'set1');
 
-    // 1. Valid settings update
     const updateRes = await req(
       'PATCH',
       '/me/settings',
@@ -389,11 +355,9 @@ describe('Phase 3: Pagination, Windowed Pages, Scene Markers & Library', () => {
     assert.equal(updateRes.body.data.readerSettings.fontFamily, 'sans');
     assert.equal(updateRes.body.data.readerSettings.theme, 'sepia');
 
-    // 2. Reject out-of-range settings (e.g. fontSize < 12)
     const badRes = await req('PATCH', '/me/settings', { fontSize: 8 }, token);
     assert.equal(badRes.status, 400);
 
-    // 3. GET /auth/me reflects the updated settings
     const meRes = await req('GET', '/auth/me', null, token);
     assert.equal(meRes.status, 200);
     assert.equal(meRes.body.data.readerSettings.fontSize, 20);

@@ -6,7 +6,6 @@ import { APP_NAME } from '../../constants/app';
 export function LegalPageLayout({ title, lastUpdated, children }) {
   return (
     <div className="max-w-4xl mx-auto py-6 sm:py-10 pb-20 space-y-8">
-      {/* Draft Notice Banner */}
       <div
         role="alert"
         className="bg-paper border border-rule rounded p-4 flex items-start gap-3.5"
@@ -24,7 +23,6 @@ export function LegalPageLayout({ title, lastUpdated, children }) {
         </div>
       </div>
 
-      {/* Breadcrumb */}
       <nav className="text-xs text-muted flex items-center gap-1.5" aria-label="Breadcrumb">
         <Link to="/" className="hover:text-ink">Home</Link>
         <span>/</span>
@@ -33,7 +31,6 @@ export function LegalPageLayout({ title, lastUpdated, children }) {
         <span className="text-muted">{title}</span>
       </nav>
 
-      {/* Header */}
       <header className="border-b border-rule pb-4">
         <h1 className="font-calligraphy text-3xl sm:text-4xl font-normal text-ink">
           {title}
@@ -43,12 +40,10 @@ export function LegalPageLayout({ title, lastUpdated, children }) {
         </p>
       </header>
 
-      {/* Body Content */}
       <article className="prose max-w-none text-ink leading-relaxed text-xs sm:text-sm space-y-6">
         {children}
       </article>
 
-      {/* Footer Back link */}
       <div className="pt-6 border-t border-rule flex justify-between items-center text-xs text-muted">
         <Link to="/" className="text-accent font-bold hover:underline">
           &larr; Back to {APP_NAME} Home

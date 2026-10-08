@@ -13,15 +13,11 @@ import {
 } from 'recharts';
 import { Star } from 'lucide-react';
 
-// Design tokens
-const COLOR_PRIMARY = '#9B2D20'; // accent
-const COLOR_SECONDARY = '#1C1917'; // ink
-const COLOR_BORDER = '#D9D2C3'; // rule
-const COLOR_MUTED = '#6B6358'; // muted
+const COLOR_PRIMARY = '#9B2D20';
+const COLOR_SECONDARY = '#1C1917';
+const COLOR_BORDER = '#D9D2C3';
+const COLOR_MUTED = '#6B6358';
 
-/**
- * Custom Tooltip for Line Chart
- */
 function ReadsTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
@@ -43,9 +39,6 @@ function ReadsTooltip({ active, payload, label }) {
   return null;
 }
 
-/**
- * Custom Tooltip for Drop-off Chart
- */
 function DropOffTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -64,9 +57,6 @@ function DropOffTooltip({ active, payload }) {
   return null;
 }
 
-/**
- * Reads and Views Over Time Line Chart
- */
 export function ReadsOverTimeChart({ data = [] }) {
   if (!data || data.length === 0) {
     return (
@@ -135,9 +125,6 @@ export function ReadsOverTimeChart({ data = [] }) {
   );
 }
 
-/**
- * "Where Readers Stop" Bar Chart (Drop-off percentage buckets)
- */
 export function DropOffBarChart({ data = [] }) {
   const totalReaders = data.reduce((sum, item) => sum + (item.count || 0), 0);
 
@@ -186,9 +173,6 @@ export function DropOffBarChart({ data = [] }) {
   );
 }
 
-/**
- * Rating 1 to 5 Star Histogram
- */
 export function RatingHistogram({ distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } }) {
   const total = Object.values(distribution).reduce((sum, count) => sum + count, 0);
 

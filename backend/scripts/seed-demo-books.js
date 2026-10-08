@@ -171,7 +171,6 @@ async function seedDemoBooks() {
     logger.info('Connecting to database for demo book seeding...');
     await connectDB();
 
-    // 1. Find or create demo writer
     const writerEmail = 'writer@scenecraft.com';
     let writer = await User.findOne({ email: writerEmail });
     if (!writer) {
@@ -187,7 +186,6 @@ async function seedDemoBooks() {
       logger.info('Created demo writer Elena Vance (elena-vance).');
     }
 
-    // 2. Remove previously seeded books
     const oldBooks = await Book.find({ seeded: true });
     if (oldBooks.length > 0) {
       const docIds = oldBooks.map((b) => b.documentId);
@@ -196,7 +194,6 @@ async function seedDemoBooks() {
       logger.info(`Removed ${oldBooks.length} existing demo book(s) and documents.`);
     }
 
-    // 3. Insert demo books
     for (const data of DEMO_BOOKS_DATA) {
       const stubDocument = await Document.create({
         userId: writer._id,

@@ -10,9 +10,6 @@ const router = Router({ mergeParams: true });
 
 router.use(authenticate);
 
-/**
- * GET /api/documents/:documentId/scenes
- */
 router.get('/', validate(documentIdParamSchema), requireDocumentOwnership, async (req, res, next) => {
   try {
     const page = req.query.page ? parseInt(req.query.page, 10) : undefined;
@@ -29,9 +26,6 @@ router.get('/', validate(documentIdParamSchema), requireDocumentOwnership, async
   }
 });
 
-/**
- * GET /api/documents/:documentId/scenes/:sceneId
- */
 router.get('/:sceneId', validate(sceneIdParamSchema), requireDocumentOwnership, async (req, res, next) => {
   try {
     const scene = await sceneService.getSceneById(req.params.sceneId);

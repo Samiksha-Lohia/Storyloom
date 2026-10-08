@@ -1,16 +1,7 @@
-/**
- * Integration tests for the Document REST endpoints.
- * Spins up a real HTTP server on a random port — no mocking of Express middleware.
- * Mocks the Gemini SDK so no real AI API calls are made.
- */
-
 import { describe, it, before, after, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 
-// ─── Mock Gemini SDK before anything imports it ──────────────────────────────
-// We monkey-patch the prototype so ai-provider.service.js picks up the mock
-// when it calls  new GoogleGenerativeAI(...)  and then  .getGenerativeModel(...)
 const fakeModel = {
   generateContent: async () => ({
     response: { text: () => JSON.stringify({ scenes: [], characters: [] }) },
@@ -27,7 +18,6 @@ mock.module('@google/generative-ai', {
   },
 });
 
-// ─── Now import app & DB helpers ─────────────────────────────────────────────
 import { setupTestDB } from './helper.js';
 import createApp from '../src/app.js';
 import * as authService from '../src/services/auth.service.js';
@@ -35,7 +25,6 @@ import * as authService from '../src/services/auth.service.js';
 let server;
 let baseUrl;
 
-// Helper: issue a request to the test server
 const req = async (method, path, body, token) => {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -62,14 +51,12 @@ describe('Document API Integration Tests', () => {
     await new Promise(resolve => server.close(resolve));
   });
 
-  // ─── Auth helper ─────────────────────────────────────────────────────────
   const registerAndLogin = async (email = 'test@example.com', password = 'password123') => {
     await authService.register('Test User', email, password);
     const { tokens } = await authService.login(email, password);
     return tokens.accessToken;
   };
 
-  // ─── Tests ───────────────────────────────────────────────────────────────
   it('GET /api/documents — should return empty list for new user', async () => {
     const token = await registerAndLogin();
     const { status, body } = await req('GET', '/documents', null, token);
@@ -123,7 +110,6 @@ describe('Document API Integration Tests', () => {
   });
 
   it('POST /api/auth/logout — should revoke refresh token', async () => {
-    // Register and get tokens
     const reg = await req('POST', '/auth/register', {
       name: 'Logout Test',
       email: 'logouttest@example.com',
@@ -132,11 +118,9 @@ describe('Document API Integration Tests', () => {
     });
     const { accessToken, refreshToken } = reg.body.data.tokens;
 
-    // Logout
     const { status } = await req('POST', '/auth/logout', { refreshToken }, accessToken);
     assert.equal(status, 200);
 
-    // Refresh should now fail
     const { status: refreshStatus } = await req('POST', '/auth/refresh', { refreshToken });
     assert.equal(refreshStatus, 401);
   });

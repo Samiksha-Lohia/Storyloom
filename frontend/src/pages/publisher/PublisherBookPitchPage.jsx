@@ -59,17 +59,14 @@ export function PublisherBookPitchPage() {
       const data = await api.pitch.get(bookId);
       setPitch(data);
 
-      // Check writer follow status if writer exists
       if (data?.writerSnapshot?.username) {
         try {
           const profile = await api.writers.getProfile(data.writerSnapshot.username);
           setIsFollowing(profile.isFollowing);
         } catch {
-          // Non-blocking
         }
       }
 
-      // Check active publish request for this book
       if (user?.role === 'publisher') {
         try {
           const reqRes = await api.publishRequests.list({ limit: 50 });
@@ -79,7 +76,6 @@ export function PublisherBookPitchPage() {
           );
           setActiveRequest(found || null);
         } catch {
-          // Non-blocking
         }
       }
     } catch (err) {
@@ -192,7 +188,6 @@ export function PublisherBookPitchPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Navigation Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-4">
         <div className="flex items-center gap-3">
           <Link
@@ -212,9 +207,7 @@ export function PublisherBookPitchPage() {
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Wishlist Star Button with inTalks indicator */}
           <StarWishlistButton
             bookId={pitch.bookId}
             size="lg"
@@ -222,7 +215,6 @@ export function PublisherBookPitchPage() {
             inTalks={pitch.inTalks || activeRequest?.status === 'accepted'}
           />
 
-          {/* Publisher Acquisition Offer Button */}
           {user?.role === 'publisher' && (
             <>
               {activeRequest?.status === 'pending' ? (
@@ -260,7 +252,6 @@ export function PublisherBookPitchPage() {
             </>
           )}
 
-          {/* Full Reader CTA */}
           <Link
             to={`/read/${pitch.bookId}`}
             className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-paper rounded text-xs font-bold"
@@ -271,7 +262,6 @@ export function PublisherBookPitchPage() {
         </div>
       </div>
 
-      {/* Publish Request Modal */}
       <PublishRequestModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
@@ -283,7 +273,6 @@ export function PublisherBookPitchPage() {
         }}
       />
 
-      {/* ─── 1. AI Pitch Card ──────────────────────────────────────────────── */}
       <div className="bg-paper border border-rule rounded p-6 md:p-8 space-y-5 text-ink">
         <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -299,7 +288,6 @@ export function PublisherBookPitchPage() {
               )}
             </div>
 
-            {/* Owner or Admin Actions */}
             {isOwnerOrAdmin && (
               <div className="flex items-center gap-2">
                 <button
@@ -328,12 +316,10 @@ export function PublisherBookPitchPage() {
 
           {pitchCard ? (
             <>
-              {/* Hook / Logline */}
               <blockquote className="text-base md:text-lg italic text-ink leading-relaxed max-w-4xl border-l-2 border-accent pl-4 font-body">
                 "{pitchCard?.logline || 'A captivating journey of suspense, identity, and dramatic tension.'}"
               </blockquote>
 
-              {/* Metadata Chips */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-rule text-xs">
                 <div className="bg-paper rounded p-3 border border-rule">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-muted block mb-1">
@@ -393,7 +379,6 @@ export function PublisherBookPitchPage() {
         </div>
       </div>
 
-      {/* ─── 2. Traction Cards (Audience Metrics) ───────────────────────────── */}
       <div className="space-y-3">
         <h2 className="text-base font-bold text-ink flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-accent" />
@@ -439,7 +424,6 @@ export function PublisherBookPitchPage() {
             </span>
           </div>
 
-          {/* Wishlists - strictly count only, preserving privacy */}
           <div className="bg-paper border border-rule rounded p-4">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-muted mb-1 flex items-center gap-1">
               <Star className="w-3.5 h-3.5 text-accent" /> Wishlisted
@@ -464,9 +448,7 @@ export function PublisherBookPitchPage() {
         </div>
       </div>
 
-      {/* ─── 3. Narrative Arc & Mood Summary Grid ───────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Story Arc Chart (Reused component with summary mode) */}
         <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -491,15 +473,12 @@ export function PublisherBookPitchPage() {
           />
         </div>
 
-        {/* Mood & Emotional Landscape */}
         <div className="lg:col-span-1">
           <MoodSummaryCard moodSummary={moodSummary} className="h-full" />
         </div>
       </div>
 
-      {/* ─── 4. Main Cast & Read-only Relationship Graph ───────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cast Roster */}
         <div className="lg:col-span-1 bg-paper border border-rule rounded p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-3">
             <h3 className="font-bold text-ink text-sm flex items-center gap-2">
@@ -537,7 +516,6 @@ export function PublisherBookPitchPage() {
           </div>
         </div>
 
-        {/* Read-Only Relationships Network (Reused component with summary mode) */}
         <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -560,7 +538,6 @@ export function PublisherBookPitchPage() {
         </div>
       </div>
 
-      {/* ─── 5. Writer Snapshot & Public Profile Link ──────────────────────── */}
       {writerSnapshot && (
         <div className="bg-paper border border-rule rounded p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">

@@ -6,10 +6,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-// Define validation schema for environment variables
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),

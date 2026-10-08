@@ -11,14 +11,10 @@ import { startPipelineWorker } from './workers/pipeline.worker.js';
 import { startMaintenanceWorker } from './workers/maintenance.worker.js';
 
 const bootstrap = async () => {
-  // ─── Connect to MongoDB ───────────────────────────────────────────────────
   await connectDB();
 
-  // ─── Verify Redis connection ───────────────────────────────────────────────
-  // redis client is already initialised in config/redis.js; just log its state
   redis.on('ready', () => logger.info('Redis ready'));
 
-  // ─── AI Keys Check ────────────────────────────────────────────────────────
   const { apiKey1, apiKey2, apiKey3 } = config.ai.openrouter;
   if (!apiKey1) {
     logger.warn('[AI Pipeline] OPENROUTER_API_KEY_1 is empty. Stages running on local fallback: scenes, timeline');
@@ -30,27 +26,22 @@ const bootstrap = async () => {
     logger.warn('[AI Pipeline] OPENROUTER_API_KEY_3 is empty. Stages running on local fallback: relationships');
   }
 
-  // ─── Create Express App ───────────────────────────────────────────────────
   const app = createApp();
   const httpServer = http.createServer(app);
 
-  // ─── Initialise Socket.IO ─────────────────────────────────────────────────
   const io = new SocketIOServer(httpServer, {
     cors: { origin: config.corsAllowedOrigins },
   });
   initSocket(io);
   app.set('io', io);
 
-  // ─── Start BullMQ Workers ─────────────────────────────────────────────────
   startPipelineWorker(io);
   startMaintenanceWorker();
 
-  // ─── Start HTTP Server ────────────────────────────────────────────────────
   httpServer.listen(config.port, () => {
     logger.info(`SceneCraft API listening on port ${config.port} [${config.env}]`);
   });
 
-  // ─── Graceful Shutdown ────────────────────────────────────────────────────
   const shutdown = async (signal) => {
     logger.warn(`${signal} received — shutting down gracefully...`);
     httpServer.close(async () => {
@@ -64,7 +55,6 @@ const bootstrap = async () => {
   process.on('SIGINT', () => shutdown('SIGINT'));
 };
 
-// ─── Process-Wide Error Handlers ─────────────────────────────────────────────
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
@@ -75,7 +65,6 @@ process.on('uncaughtException', (error) => {
 });
 
 bootstrap().catch((err) => {
-  // If bootstrap itself throws (e.g. DB connection fails), log and exit.
   logger.error('Fatal startup error:', err);
   process.exit(1);
 });

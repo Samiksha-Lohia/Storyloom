@@ -10,15 +10,11 @@ import {
 import { USER_ROLES } from '../constants/user-roles.js';
 import { createNotification } from './notification.service.js';
 
-// Strip ASCII control characters except \t, \n, \r
 export const stripControlChars = (str) => {
   if (typeof str !== 'string') return '';
   return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 };
 
-/**
- * Recompute ratingAvg and ratingCount using MongoDB aggregation
- */
 export const recomputeBookRatingStats = async (bookId) => {
   const objectId = typeof bookId === 'string' ? new mongoose.Types.ObjectId(bookId) : bookId;
 
@@ -63,7 +59,6 @@ export const createReview = async ({ readerId, bookId, rating, text = '', userRo
     throw new ForbiddenError('You cannot review your own book.');
   }
 
-  // Check unique review per reader+book
   const existing = await Review.findOne({ readerId, bookId });
   if (existing) {
     throw new ConflictError('You have already reviewed this book.');
@@ -92,10 +87,8 @@ export const createReview = async ({ readerId, bookId, rating, text = '', userRo
     throw err;
   }
 
-  // Recompute book statistics via aggregation
   await recomputeBookRatingStats(bookId);
 
-  // Notify book's author
   try {
     if (book.writerId && book.writerId.toString() !== readerId.toString()) {
       await createNotification({
@@ -107,7 +100,6 @@ export const createReview = async ({ readerId, bookId, rating, text = '', userRo
       });
     }
   } catch (_e) {
-    // Non-blocking notification failure
   }
 
   return Review.findById(review._id).populate('readerId', 'name username avatarUrl');
@@ -217,17 +209,12 @@ export const getBookReviews = async (bookId, { page = 1, limit = 10, sort = 'new
   };
 };
 
-/**
- * Mark a review as read by the book's writer (clears the unread badge).
- * Only the book's writer or an admin may call this.
- */
 export const markReviewRead = async ({ reviewId, bookId, requesterId, requesterRole }) => {
   const query = { _id: reviewId };
   if (bookId) query.bookId = bookId;
   const review = await Review.findOne(query);
   if (!review) throw new NotFoundError('Review not found.');
 
-  // Only the book owner (writer) or admin may mark reviews as read
   const book = await Book.findById(review.bookId).select('writerId').lean();
   if (!book) throw new NotFoundError('Book not found.');
 

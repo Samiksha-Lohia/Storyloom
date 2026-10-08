@@ -20,9 +20,6 @@ import {
 } from '../utilities/custom-errors.js';
 import logger from '../utilities/logger.js';
 
-/**
- * List conversations for the logged in user.
- */
 export const listUserConversations = async (user, { page = 1, limit = 20 } = {}) => {
   const userId = new mongoose.Types.ObjectId(user.id || user._id);
   const numericPage = Math.max(1, parseInt(page, 10) || 1);
@@ -43,7 +40,6 @@ export const listUserConversations = async (user, { page = 1, limit = 20 } = {})
     Conversation.countDocuments(filter),
   ]);
 
-  // Enhance with unread counts and last message snippet
   const enhanced = await Promise.all(
     conversations.map(async (c) => {
       const [unreadCount, lastMessage] = await Promise.all([
@@ -81,9 +77,6 @@ export const listUserConversations = async (user, { page = 1, limit = 20 } = {})
   };
 };
 
-/**
- * Get conversation by ID with participant check.
- */
 export const getConversationById = async (user, conversationId) => {
   const userId = (user.id || user._id).toString();
 
@@ -103,7 +96,6 @@ export const getConversationById = async (user, conversationId) => {
   const isAdmin = user.role === USER_ROLES.ADMIN;
 
   if (!isParticipant && !isAdmin) {
-    // Return same error as missing one to prevent existence probing
     throw new NotFoundError('Conversation not found.');
   }
 
@@ -117,9 +109,6 @@ export const getConversationById = async (user, conversationId) => {
   };
 };
 
-/**
- * Get messages for a conversation with cursor pagination.
- */
 export const getConversationMessages = async (user, conversationId, { before, limit = 30 } = {}) => {
   const userId = (user.id || user._id).toString();
 
@@ -155,7 +144,6 @@ export const getConversationMessages = async (user, conversationId, { before, li
     .limit(numericLimit)
     .lean();
 
-  // Mark unread messages sent by other participant as read
   if (isParticipant) {
     await Message.updateMany(
       {
@@ -168,14 +156,11 @@ export const getConversationMessages = async (user, conversationId, { before, li
   }
 
   return {
-    messages: messages.reverse(), // chronologically ascending for chat view
+    messages: messages.reverse(),
     hasMore: messages.length === numericLimit,
   };
 };
 
-/**
- * Send a message within a conversation.
- */
 export const sendMessage = async (user, conversationId, text, { io } = {}) => {
   const userId = (user.id || user._id).toString();
 
@@ -186,7 +171,6 @@ export const sendMessage = async (user, conversationId, text, { io } = {}) => {
 
   const isParticipant = conversation.participants.some((p) => p.toString() === userId);
   if (!isParticipant) {
-    // Return same error as missing one
     throw new NotFoundError('Conversation not found.');
   }
 
@@ -202,7 +186,6 @@ export const sendMessage = async (user, conversationId, text, { io } = {}) => {
     throw new BadRequestError('Message text cannot exceed 2000 characters.');
   }
 
-  // Contact info safety check (A7 / Spec 13)
   if (!conversation.contactSharingEnabled) {
     const { containsContact, type } = detectContactInfo(trimmedText);
     if (containsContact) {
@@ -224,7 +207,6 @@ export const sendMessage = async (user, conversationId, text, { io } = {}) => {
 
   const recipientId = conversation.participants.find((p) => p.toString() !== userId);
 
-  // Emit to socket room if socket server provided
   if (io) {
     io.to(`conversation:${conversationId}`).emit('message:new', {
       _id: message._id,
@@ -236,7 +218,6 @@ export const sendMessage = async (user, conversationId, text, { io } = {}) => {
     });
   }
 
-  // Notify recipient
   try {
     const sender = await User.findById(userId).select('name');
     const senderName = sender ? sender.name : 'Someone';
@@ -258,9 +239,6 @@ export const sendMessage = async (user, conversationId, text, { io } = {}) => {
   return message;
 };
 
-/**
- * Update conversation settings (close or toggle contact sharing).
- */
 export const updateConversation = async (user, conversationId, { status, contactSharingEnabled }) => {
   const userId = (user.id || user._id).toString();
 
@@ -281,14 +259,12 @@ export const updateConversation = async (user, conversationId, { status, contact
 
   if (status === CONVERSATION_STATUSES.CLOSED) {
     conversation.status = CONVERSATION_STATUSES.CLOSED;
-    // Also update request to closed if accepted
     await PublishRequest.findByIdAndUpdate(conversation.requestId, {
       status: PUBLISH_REQUEST_STATUSES.CLOSED,
     });
   }
 
   if (contactSharingEnabled !== undefined) {
-    // Spec 13 / A5: Writer toggles contactSharingEnabled
     if (!isWriter && !isAdmin) {
       throw new ForbiddenError('Only the book author can toggle contact sharing.');
     }
@@ -299,9 +275,6 @@ export const updateConversation = async (user, conversationId, { status, contact
   return conversation;
 };
 
-/**
- * Admin access to conversation (A9: Requires open report targeting conversation/user).
- */
 export const adminGetConversation = async (adminUser, conversationId, reportId) => {
   if (adminUser.role !== USER_ROLES.ADMIN) {
     throw new ForbiddenError('Administrative privileges required.');
@@ -346,7 +319,6 @@ export const adminGetConversation = async (adminUser, conversationId, reportId) 
     );
   }
 
-  // Audit log entry (A9 requirement)
   await AuditLog.create({
     actor: adminUser.id || adminUser._id,
     action: 'conversation_read',

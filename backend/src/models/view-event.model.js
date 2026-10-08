@@ -21,7 +21,7 @@ const viewEventSchema = new mongoose.Schema(
       index: true,
     },
     day: {
-      type: String, // 'YYYY-MM-DD'
+      type: String,
       required: true,
       index: true,
     },
@@ -37,13 +37,11 @@ const viewEventSchema = new mongoose.Schema(
   }
 );
 
-// Unique compound index: deduplicate per viewer per target per day
 viewEventSchema.index(
   { type: 1, targetId: 1, viewerKey: 1, day: 1 },
   { unique: true }
 );
 
-// Auxiliary compound index for fast rollup aggregations by day and type
 viewEventSchema.index({ day: 1, type: 1, targetId: 1 });
 
 const ViewEvent = mongoose.model('ViewEvent', viewEventSchema);

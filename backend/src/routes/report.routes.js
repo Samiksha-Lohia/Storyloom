@@ -14,7 +14,6 @@ import { ApiError } from '../utilities/custom-errors.js';
 
 const router = Router();
 
-// Rate limiter for in-app report submissions: 15 per hour per user/IP
 const appReportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 15,
@@ -30,7 +29,6 @@ const appReportLimiter = rateLimit({
   },
 });
 
-// Strict rate limiter for unauthenticated public copyright notices: 5 per 15 minutes per IP
 const publicNoticeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
@@ -46,10 +44,6 @@ const publicNoticeLimiter = rateLimit({
   },
 });
 
-/**
- * POST /api/reports
- * In-app report submission by logged-in active users
- */
 router.post(
   '/',
   authenticate,
@@ -59,10 +53,6 @@ router.post(
   reportController.createAppReport
 );
 
-/**
- * POST /api/reports/public-notice
- * Public takedown notice endpoint with honeypot and strict rate limiting
- */
 router.post(
   '/public-notice',
   publicNoticeLimiter,

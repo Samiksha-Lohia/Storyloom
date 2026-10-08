@@ -56,7 +56,6 @@ export async function seedAdmin() {
   return admin;
 }
 
-// Direct execution guard
 if (process.argv[1] && process.argv[1].endsWith('seed-admin.js')) {
   seedAdmin()
     .then(async () => {

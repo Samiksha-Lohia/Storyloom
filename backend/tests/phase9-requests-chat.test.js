@@ -304,7 +304,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       const requestId = createRes.body.data._id;
 
-      // Writer accepts
       const acceptRes = await req(
         'PATCH',
         `/publish-requests/${requestId}`,
@@ -318,7 +317,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(acceptRes.body.data.conversation.status, 'open');
       assert.strictEqual(acceptRes.body.data.conversation.contactSharingEnabled, false);
 
-      // Verify conversation in DB
       const convoInDb = await Conversation.findOne({ requestId });
       assert.ok(convoInDb);
       assert.strictEqual(convoInDb.participants.length, 2);
@@ -346,7 +344,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       const requestId = createRes.body.data._id;
 
-      // Writer declines
       const declineRes = await req(
         'PATCH',
         `/publish-requests/${requestId}`,
@@ -358,7 +355,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(declineRes.body.data.request.status, 'declined');
       assert.ok(declineRes.body.data.request.cooldownUntil);
 
-      // Attempting to re-apply while under cooldown returns 403
       const retryRes = await req(
         'POST',
         '/publish-requests',
@@ -400,7 +396,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       const requestId = createRes.body.data._id;
 
-      // Publisher withdraws
       const withdrawRes = await req(
         'PATCH',
         `/publish-requests/${requestId}`,
@@ -411,7 +406,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(withdrawRes.status, 200);
       assert.strictEqual(withdrawRes.body.data.request.status, 'withdrawn');
 
-      // Writer cannot accept a withdrawn request
       const acceptFail = await req(
         'PATCH',
         `/publish-requests/${requestId}`,
@@ -426,7 +420,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       const book = await createBook(writer);
       const { user: pubUser, token: pubToken } = await createApprovedPublisher();
 
-      // Writer blocks publisher
       const blockRes = await req(
         'PUT',
         `/publish-requests/blocks/${pubUser._id}`,
@@ -435,7 +428,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       assert.strictEqual(blockRes.status, 200);
 
-      // Blocked publisher attempts to request
       const createRes = await req(
         'POST',
         '/publish-requests',
@@ -453,7 +445,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       assert.strictEqual(createRes.status, 403);
 
-      // Unblock and try again
       await req('DELETE', `/publish-requests/blocks/${pubUser._id}`, null, writerToken);
       const retryRes = await req(
         'POST',
@@ -503,7 +494,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       const convoId = acceptRes.body.data.conversation._id;
 
-      // 1. Try sending email while sharing disabled -> fails
       const emailAttempt = await req(
         'POST',
         `/conversations/${convoId}/messages`,
@@ -513,7 +503,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(emailAttempt.status, 400);
       assert.strictEqual(emailAttempt.body.code, 'CONTACT_SHARING_NOT_ALLOWED');
 
-      // 2. Normal prose without contact info passes
       const normalMsg = await req(
         'POST',
         `/conversations/${convoId}/messages`,
@@ -522,7 +511,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       assert.strictEqual(normalMsg.status, 201);
 
-      // 3. Publisher attempts to enable contact sharing -> 403 (writer only!)
       const pubEnableFail = await req(
         'PATCH',
         `/conversations/${convoId}`,
@@ -531,7 +519,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       assert.strictEqual(pubEnableFail.status, 403);
 
-      // 4. Writer enables contact sharing
       const writerEnable = await req(
         'PATCH',
         `/conversations/${convoId}`,
@@ -541,7 +528,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(writerEnable.status, 200);
       assert.strictEqual(writerEnable.body.data.contactSharingEnabled, true);
 
-      // 5. Publisher sends email now -> succeeds
       const emailSuccess = await req(
         'POST',
         `/conversations/${convoId}/messages`,
@@ -580,10 +566,8 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       const convoId = acceptRes.body.data.conversation._id;
 
-      // Close conversation
       await req('PATCH', `/conversations/${convoId}`, { status: 'closed' }, writerToken);
 
-      // Attempt to send message
       const sendRes = await req(
         'POST',
         `/conversations/${convoId}/messages`,
@@ -624,7 +608,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       const convoId = acceptRes.body.data.conversation._id;
 
-      // Connect outsider via socket
       const outsiderSocket = ioClient(`http://localhost:${serverPort}`, {
         auth: { token: `Bearer ${outsiderToken}` },
         transports: ['websocket'],
@@ -632,7 +615,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
 
       await new Promise((resolve) => outsiderSocket.on('connect', resolve));
 
-      // Outsider attempts to join room
       const joinErr = await new Promise((resolve) => {
         outsiderSocket.emit('conversation:join', convoId, (err, res) => {
           resolve(err);
@@ -642,7 +624,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       assert.strictEqual(joinErr.message, 'Conversation not found.');
       outsiderSocket.disconnect();
 
-      // Connect publisher and test rate limit (20 msgs per min)
       const pubSocket = ioClient(`http://localhost:${serverPort}`, {
         auth: { token: `Bearer ${pubToken}` },
         transports: ['websocket'],
@@ -653,11 +634,9 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
         pubSocket.emit('conversation:join', convoId, () => resolve());
       });
 
-      // Clear redis rate limit counter first
       const pubUser = await User.findOne({ email: { $regex: '^pub_' } });
       await redis.del(`ratelimit:chat:${pubUser._id}`);
 
-      // Send 20 messages successfully
       for (let i = 1; i <= 20; i++) {
         const sendResult = await new Promise((resolve) => {
           pubSocket.emit('message:send', { conversationId: convoId, text: `Test message ${i}` }, (err, res) => {
@@ -667,7 +646,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
         assert.strictEqual(sendResult.err, null);
       }
 
-      // 21st message must trigger rate limit
       const limitResult = await new Promise((resolve) => {
         pubSocket.emit('message:send', { conversationId: convoId, text: '21st message' }, (err, res) => {
           resolve({ err, res });
@@ -708,7 +686,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       const convoId = acceptRes.body.data.conversation._id;
 
-      // Connect writer socket
       const writerSocket = ioClient(`http://localhost:${serverPort}`, {
         auth: { token: `Bearer ${writerToken}` },
         transports: ['websocket'],
@@ -716,7 +693,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       await new Promise((resolve) => writerSocket.on('connect', resolve));
       await new Promise((resolve) => writerSocket.emit('conversation:join', convoId, () => resolve()));
 
-      // Connect publisher socket
       const pubSocket = ioClient(`http://localhost:${serverPort}`, {
         auth: { token: `Bearer ${pubToken}` },
         transports: ['websocket'],
@@ -724,14 +700,12 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       await new Promise((resolve) => pubSocket.on('connect', resolve));
       await new Promise((resolve) => pubSocket.emit('conversation:join', convoId, () => resolve()));
 
-      // Writer listens for message:new
       const receivedPromise = new Promise((resolve) => {
         writerSocket.on('message:new', (msg) => {
           resolve(msg);
         });
       });
 
-      // Publisher sends message
       pubSocket.emit('message:send', {
         conversationId: convoId,
         text: 'Live message delivery over WebSocket test.',
@@ -776,12 +750,10 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       );
       const convoId = acceptRes.body.data.conversation._id;
 
-      // 1. Admin attempts without reportId -> 403
       const noReportRes = await req('GET', `/admin/conversations/${convoId}`, null, adminToken);
       assert.strictEqual(noReportRes.status, 403);
       assert.strictEqual(noReportRes.body.code, 'REPORT_REQUIRED');
 
-      // 2. Create an open report targeting the publisher
       const report = await Report.create({
         reporterId: writer._id,
         targetType: 'user',
@@ -791,7 +763,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
         status: 'open',
       });
 
-      // 3. Admin accesses with valid reportId -> 200 & AuditLog created
       const adminRes = await req(
         'GET',
         `/admin/conversations/${convoId}?reportId=${report._id}`,
@@ -817,10 +788,8 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
       const book = await createBook(writer);
       const { user: pubUser, token: pubToken } = await createApprovedPublisher();
 
-      // Add book to wishlist
       await Wishlist.create({ publisherId: pubUser._id, bookId: book._id });
 
-      // Create a pending publish request
       await req(
         'POST',
         '/publish-requests',
@@ -836,7 +805,6 @@ describe('Phase 9: Publish Requests, Chat, and Safety Controls (Part A)', () => 
         pubToken
       );
 
-      // Check writer dashboard analytics
       const dashRes = await req('GET', '/writer/analytics', null, writerToken);
       assert.strictEqual(dashRes.status, 200);
       assert.strictEqual(dashRes.body.data.kpis.publisherWishlists, 1);

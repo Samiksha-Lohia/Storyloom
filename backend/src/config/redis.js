@@ -7,16 +7,15 @@ let redisClient = null;
 const getRedisClient = () => {
   if (!redisClient) {
     redisClient = new Redis(config.redis.url, {
-      maxRetriesPerRequest: null, // Required by BullMQ
+      maxRetriesPerRequest: null,
       reconnectOnError: (err) => {
         const targetError = 'READONLY';
         if (err.message.slice(0, targetError.length) === targetError) {
-          return true; // Reconnect on read-only errors
+          return true;
         }
         return false;
       },
       retryStrategy: (times) => {
-        // Exponential backoff strategy up to 20 seconds maximum
         const delay = Math.min(times * 100, 20000);
         return delay;
       }

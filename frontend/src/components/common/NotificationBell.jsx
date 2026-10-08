@@ -15,7 +15,6 @@ export default function NotificationBell() {
   const currentUser = api.auth.getCurrentUser();
   const token = localStorage.getItem('scenecraft_access_token');
 
-  // Load notifications and count
   const fetchNotifications = async () => {
     if (!token) return;
     try {
@@ -50,7 +49,6 @@ export default function NotificationBell() {
     };
   }, [currentUser?.id, token]);
 
-  // Handle outside click to close dropdown
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -126,7 +124,6 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Button */}
       <button
         type="button"
         onClick={handleToggle}
@@ -141,10 +138,8 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Popover Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-paper rounded border border-rule overflow-hidden z-50 text-ink">
-          {/* Header */}
           <div className="p-3 border-b border-rule flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-bold text-ink uppercase tracking-wider">
@@ -167,7 +162,6 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {/* List */}
           <div className="max-h-80 overflow-y-auto divide-y divide-rule">
             {loading && notifications.length === 0 ? (
               <div className="py-6 text-center text-xs text-muted">

@@ -12,7 +12,6 @@ export default function BookmarksDrawer({
 }) {
   if (!isOpen) return null;
 
-  // Helper to determine page number from offset
   const getPageForOffset = (offset) => {
     if (!pageOffsets || pageOffsets.length === 0) return 1;
     let low = 0;
@@ -63,7 +62,6 @@ export default function BookmarksDrawer({
       <div
         className={`w-full max-w-sm h-full flex flex-col border-l ${styles.bg} ${styles.text} ${styles.border}`}
       >
-        {/* Header */}
         <div className={`p-4 border-b flex items-center justify-between ${styles.border}`}>
           <div className="flex items-center gap-2">
             <Bookmark className="w-4 h-4 text-ink" />
@@ -79,7 +77,6 @@ export default function BookmarksDrawer({
           </button>
         </div>
 
-        {/* Bookmarks List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {bookmarks.length === 0 ? (
             <div className="text-center py-12 px-4 space-y-2 text-muted">

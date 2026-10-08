@@ -28,12 +28,6 @@ export const PRESETS = {
   avatar: 'c_fill,w_256,h_256,g_face,f_auto,q_auto',
 };
 
-/**
- * Saves an image to Cloudinary from a buffer.
- * @param {Buffer} buffer
- * @param {{ folder?: string, mimetype?: string }} options
- * @returns {Promise<{ publicId: string, url: string }>}
- */
 export const saveImage = async (buffer, { folder = 'platform/covers', mimetype } = {}) => {
   if (process.env.MOCK_CLOUDINARY_FAIL === 'true') {
     throw new Error('Cloudinary simulated failure');
@@ -66,11 +60,6 @@ export const saveImage = async (buffer, { folder = 'platform/covers', mimetype }
   });
 };
 
-/**
- * Deletes an image from Cloudinary by its publicId.
- * @param {string} publicId
- * @returns {Promise<any>}
- */
 export const deleteImage = async (publicId) => {
   if (!publicId) return;
   try {
@@ -81,12 +70,6 @@ export const deleteImage = async (publicId) => {
   }
 };
 
-/**
- * Generates an optimized Cloudinary delivery URL for an image.
- * @param {string} publicId
- * @param {'cover' | 'thumb' | 'avatar' | string} preset
- * @returns {string}
- */
 export const imageUrl = (publicId, preset = 'cover') => {
   if (!publicId) return '';
   ensureCloudinaryConfig();

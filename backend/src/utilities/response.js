@@ -1,6 +1,3 @@
-/**
- * Standard API response helper
- */
 export const sendSuccess = (res, data, statusCode = 200, message = 'Success') => {
   return res.status(statusCode).json({
     success: true,

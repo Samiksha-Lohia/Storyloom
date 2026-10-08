@@ -16,12 +16,10 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
     );
   }
 
-  // If not logged in, redirect to login
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If pending publisher, render the waiting for approval screen
   if (role === 'publisher' && status === 'pending') {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto bg-paper text-ink">
@@ -45,7 +43,6 @@ export default function RoleRoute({ children, allowedRoles = [] }) {
     );
   }
 
-  // If role is restricted and user does not have an allowed role
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto bg-paper text-ink">

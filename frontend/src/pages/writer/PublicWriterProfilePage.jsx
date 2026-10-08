@@ -109,16 +109,11 @@ export function PublicWriterProfilePage() {
   const template = (writer.defaultTemplate || 'classic').toLowerCase();
   const isSelf = user && (user._id || user.id)?.toString() === writer.id?.toString();
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 1. SHOWCASE TEMPLATE
-  // ─────────────────────────────────────────────────────────────────────────────
   if (template === 'showcase') {
     return (
       <div className="book-template-showcase min-h-screen bg-paper text-ink pb-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 space-y-8 text-left">
-          {/* Centered Hero Card */}
           <section className="bg-paper border border-rule rounded p-6 sm:p-10 flex flex-col items-center text-center space-y-6">
-            {/* Avatar */}
             {writer.avatarUrl ? (
               <img
                 src={writer.avatarUrl}
@@ -141,14 +136,12 @@ export function PublicWriterProfilePage() {
               <p className="text-xs text-muted">@{writer.username}</p>
             </div>
 
-            {/* Bio */}
             {writer.bio && (
               <p className="text-xs sm:text-sm text-ink max-w-2xl leading-relaxed italic">
                 "{writer.bio}"
               </p>
             )}
 
-            {/* Stats */}
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold pt-2">
               <div className="px-3.5 py-1.5 bg-paper rounded border border-rule flex items-center gap-2 text-ink">
                 <BookOpen className="w-4 h-4 text-accent" />
@@ -160,7 +153,6 @@ export function PublicWriterProfilePage() {
               </div>
             </div>
 
-            {/* Action buttons */}
             <div className="flex items-center gap-3 pt-2">
               {!isSelf && (
                 <button
@@ -196,7 +188,6 @@ export function PublicWriterProfilePage() {
             </div>
           </section>
 
-          {/* Books Shelf */}
           <section className="space-y-4">
             <h2 className="text-base font-bold text-ink flex items-center gap-2">
               <Feather className="w-4 h-4 text-accent" />
@@ -214,17 +205,12 @@ export function PublicWriterProfilePage() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 2. NOTEBOOK TEMPLATE
-  // ─────────────────────────────────────────────────────────────────────────────
   if (template === 'notebook') {
     return (
       <div className="book-template-notebook min-h-screen bg-paper text-ink pb-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 space-y-8 text-left">
-          {/* Paper Note Card */}
           <div className="bg-paper border border-rule rounded p-6 sm:p-10 space-y-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
-              {/* Avatar */}
               <div>
                 {writer.avatarUrl ? (
                   <img
@@ -239,7 +225,6 @@ export function PublicWriterProfilePage() {
                 )}
               </div>
 
-              {/* Bio & Details */}
               <div className="flex-1 space-y-3 text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -290,7 +275,6 @@ export function PublicWriterProfilePage() {
                   </p>
                 )}
 
-                {/* Sticker Chips */}
                 <div className="flex flex-wrap gap-2 pt-2">
                   <span className="px-2.5 py-0.5 bg-paper text-ink border border-rule rounded text-xs font-bold">
                     📚 {writer.publishedBooksCount || books.length} Stories
@@ -303,7 +287,6 @@ export function PublicWriterProfilePage() {
             </div>
           </div>
 
-          {/* Books Shelf */}
           <div className="space-y-4">
             <h2 className="text-base font-bold text-ink">
               Manuscripts & Publications
@@ -319,13 +302,9 @@ export function PublicWriterProfilePage() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 3. CLASSIC TEMPLATE (Default)
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className="book-template-classic min-h-screen bg-paper text-ink pb-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 space-y-8 text-left">
-        {/* Profile Card */}
         <div className="bg-paper border border-rule rounded p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
             {writer.avatarUrl ? (
@@ -365,7 +344,6 @@ export function PublicWriterProfilePage() {
             </div>
           </div>
 
-          {/* Action buttons */}
           <div className="flex items-center gap-3">
             {!isSelf && (
               <button
@@ -401,7 +379,6 @@ export function PublicWriterProfilePage() {
           </div>
         </div>
 
-        {/* Books Shelf */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-3">
             <h2 className="text-base font-bold text-ink">

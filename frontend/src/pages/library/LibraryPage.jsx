@@ -77,7 +77,6 @@ export function LibraryPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
-      {/* Page Title & Heading */}
       <div className="border-b border-rule pb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -97,7 +96,6 @@ export function LibraryPage() {
           </Link>
         </div>
 
-        {/* Status Tabs */}
         <div className="flex items-center gap-3 sm:gap-6 mt-8 overflow-x-auto no-scrollbar" role="tablist">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -125,14 +123,12 @@ export function LibraryPage() {
         </div>
       </div>
 
-      {/* Error Notice */}
       {error && (
         <div className="p-3 bg-paper border border-danger rounded text-xs text-danger">
           {error}
         </div>
       )}
 
-      {/* Library Grid / List */}
       {loading ? (
         <div className="p-8 text-center text-xs text-muted">
           Loading…
@@ -184,7 +180,6 @@ export function LibraryPage() {
               >
                 <div>
                   <div className="flex gap-4">
-                    {/* Cover image (2:3 Aspect ratio) */}
                     <div className="w-24 sm:w-28 shrink-0">
                       <Link to={`/book/${bookId}`}>
                         <div className="rounded overflow-hidden border border-rule aspect-2/3">
@@ -200,7 +195,6 @@ export function LibraryPage() {
                       </Link>
                     </div>
 
-                    {/* Book Metadata */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-1">
                         <Link to={`/book/${bookId}`}>
@@ -209,7 +203,6 @@ export function LibraryPage() {
                           </h3>
                         </Link>
 
-                        {/* Dropdown Menu Toggle */}
                         <div className="relative">
                           <button
                             type="button"
@@ -222,7 +215,6 @@ export function LibraryPage() {
                             <MoreVertical className="w-4 h-4" />
                           </button>
 
-                          {/* Dropdown Menu */}
                           {menuOpenId === bookId && (
                             <div className="absolute right-0 top-full mt-1 w-44 bg-paper border border-rule rounded py-1.5 z-20 text-xs font-semibold">
                               <span className="block px-3 py-1 text-[10px] text-muted uppercase tracking-wider font-bold">
@@ -289,7 +281,6 @@ export function LibraryPage() {
                     </div>
                   </div>
 
-                  {/* Progress Bar & Reading Stats */}
                   <div className="mt-4 pt-3 border-t border-rule space-y-1.5">
                     <div className="flex items-center justify-between text-xs text-muted">
                       <span className="font-semibold text-ink">
@@ -302,7 +293,6 @@ export function LibraryPage() {
                       </span>
                     </div>
 
-                    {/* Progress Track */}
                     <div className="w-full h-1.5 bg-rule/30 rounded overflow-hidden">
                       <div
                         className="h-full bg-ink rounded"
@@ -312,7 +302,6 @@ export function LibraryPage() {
                   </div>
                 </div>
 
-                {/* Primary Action Button */}
                 <div className="mt-4 pt-2">
                   <Link to={`/read/${bookId}?page=${currentPage}`}>
                     <Button

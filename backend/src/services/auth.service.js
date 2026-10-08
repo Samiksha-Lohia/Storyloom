@@ -10,9 +10,6 @@ import { redis } from '../config/redis.js';
 import { USER_ROLES, USER_STATUSES } from '../constants/user-roles.js';
 import { TERMS_VERSION } from '../constants/terms.js';
 
-/**
- * Parses JWT expiry string to seconds.
- */
 const parseExpiryToSeconds = (expiry) => {
   if (typeof expiry === 'number') return expiry;
   if (!expiry) return 7 * 24 * 3600;
@@ -29,10 +26,6 @@ const parseExpiryToSeconds = (expiry) => {
   }
 };
 
-/**
- * Signs a JWT access token.
- * Payload includes id, email, plan, role, status.
- */
 const signAccessToken = (payload) =>
   jwt.sign(
     {
@@ -46,9 +39,6 @@ const signAccessToken = (payload) =>
     { expiresIn: config.jwt.accessExpiry }
   );
 
-/**
- * Signs a JWT refresh token with a unique ID (jti).
- */
 const signRefreshToken = (payload) =>
   jwt.sign(
     { sub: payload.id, jti: payload.jti },
@@ -56,10 +46,6 @@ const signRefreshToken = (payload) =>
     { expiresIn: config.jwt.refreshExpiry }
   );
 
-/**
- * Returns a { accessToken, refreshToken } pair for the given user,
- * registering the refresh token's jti in Redis.
- */
 const generateTokenPair = async (user) => {
   const userId = (user._id || user.id).toString();
   const jti = crypto.randomUUID();
@@ -72,7 +58,6 @@ const generateTokenPair = async (user) => {
   });
   const refreshToken = signRefreshToken({ id: userId, jti });
 
-  // Store refresh token in Redis
   const ttl = parseExpiryToSeconds(config.jwt.refreshExpiry);
   await redis.set(`refresh_token:${jti}`, userId, 'EX', ttl);
   await redis.sadd(`user_refresh_tokens:${userId}`, jti);
@@ -81,16 +66,6 @@ const generateTokenPair = async (user) => {
   return { accessToken, refreshToken };
 };
 
-// ─── Public Service Functions ─────────────────────────────────────────────────
-
-/**
- * Register a new user account.
- * @param {string} name
- * @param {string} email
- * @param {string} password
- * @param {object} [options] - { role, company, website, note }
- * @returns {Promise<{ user: UserDto, tokens: { accessToken, refreshToken } }>}
- */
 const register = async (name, email, password, options = {}) => {
   const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
   const existing = await userRepository.findByEmail(normalizedEmail);
@@ -146,12 +121,6 @@ const register = async (name, email, password, options = {}) => {
   }
 };
 
-/**
- * Authenticate a user with email + password.
- * Banned or suspended users get 403 Forbidden.
- * On invalid credentials, throws 401 without revealing if email exists.
- * @returns {Promise<{ user: UserDto, tokens: { accessToken, refreshToken } }>}
- */
 const login = async (email, password) => {
   const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
   const user = await userRepository.findByEmail(normalizedEmail);
@@ -175,11 +144,6 @@ const login = async (email, password) => {
   return { user: UserDto.toResponse(user), tokens };
 };
 
-/**
- * Refresh the access token using a valid refresh token.
- * Re-reads the user so role/status changes take effect immediately.
- * @returns {Promise<{ accessToken: string, refreshToken: string }>}
- */
 const refreshTokens = async (refreshToken) => {
   if (!refreshToken) {
     throw new BadRequestError('Refresh token is required.');
@@ -200,7 +164,6 @@ const refreshTokens = async (refreshToken) => {
     throw new UnauthorizedError('Invalid or expired refresh token.');
   }
 
-  // Re-read user from DB to pick up any role or status changes
   const user = await userRepository.findById(payload.sub);
   if (!user) {
     throw new UnauthorizedError('User not found.');
@@ -210,16 +173,11 @@ const refreshTokens = async (refreshToken) => {
     throw new ForbiddenError('Your account is suspended or banned.');
   }
 
-  // Revoke old refresh token jti
   await redis.del(`refresh_token:${payload.jti}`);
 
-  // Generate new token pair
   return generateTokenPair(user);
 };
 
-/**
- * Log out user by deleting the refresh token from Redis.
- */
 const logout = async (refreshToken) => {
   if (!refreshToken) {
     throw new BadRequestError('Refresh token is required.');
@@ -240,10 +198,6 @@ const logout = async (refreshToken) => {
   }
 };
 
-/**
- * Invalidate all active refresh tokens for a specific user ID.
- * @param {string} userId
- */
 const invalidateAllUserRefreshTokens = async (userId) => {
   const strId = userId.toString();
   try {
@@ -254,7 +208,6 @@ const invalidateAllUserRefreshTokens = async (userId) => {
       await redis.del(`user_refresh_tokens:${strId}`);
     }
 
-    // Also scan as fallback in case any tokens were created without the set
     let cursor = '0';
     do {
       const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', 'refresh_token:*', 'COUNT', 100);
@@ -267,16 +220,9 @@ const invalidateAllUserRefreshTokens = async (userId) => {
       }
     } while (cursor !== '0');
   } catch (err) {
-    // Non-blocking fallback
   }
 };
 
-/**
- * Generate password reset token, save hashed token with 30m expiry,
- * send email via mailer.service.js, and return generic response.
- * @param {string} email
- * @returns {Promise<{ message: string }>}
- */
 const forgotPassword = async (email) => {
   const normalizedEmail = email ? email.toString().toLowerCase().trim() : '';
   const user = await userRepository.findByEmail(normalizedEmail);
@@ -286,7 +232,7 @@ const forgotPassword = async (email) => {
     const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
 
     user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000);
     await user.save();
 
     const frontendBaseUrl = (config.frontendUrl || config.corsAllowedOrigins?.[0] || 'http://localhost:3000').replace(/\/+$/, '');
@@ -312,16 +258,9 @@ const forgotPassword = async (email) => {
     });
   }
 
-  // Always return identical generic 200 response to avoid email enumeration
   return { message: 'If an account exists with this email, password reset instructions have been sent.' };
 };
 
-/**
- * Reset user password with token and invalidate all refresh tokens.
- * @param {string} token
- * @param {string} newPassword
- * @returns {Promise<{ message: string }>}
- */
 const resetPassword = async (token, newPassword) => {
   if (!token) {
     throw new BadRequestError('Reset token is required.');
@@ -338,13 +277,11 @@ const resetPassword = async (token, newPassword) => {
     throw new BadRequestError('Invalid or expired password reset token.');
   }
 
-  // Update password (pre-save hook will hash passwordHash)
   user.passwordHash = newPassword;
   user.passwordResetToken = null;
   user.passwordResetExpires = null;
   await user.save();
 
-  // Invalidate all refresh tokens for this user
   await invalidateAllUserRefreshTokens(user._id.toString());
 
   return { message: 'Password has been reset successfully. Please log in with your new password.' };

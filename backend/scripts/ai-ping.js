@@ -6,7 +6,6 @@ async function main() {
   logger.info('Starting AI Ping test...');
   
   try {
-    // 1. Test generateJSON
     logger.info('Testing generateJSON...');
     const testPrompt = 'Respond with a JSON object containing a "status" field set to "success" and a "message" field saying hello.';
     const schemaHint = {
@@ -27,7 +26,6 @@ async function main() {
       throw new Error('generateJSON did not return the expected JSON format');
     }
     
-    // 2. Test buildTextEmbedding (local)
     logger.info('Testing buildTextEmbedding (local)...');
     const embedding = buildTextEmbedding('SceneCraft AI Ping');
     logger.info(`buildTextEmbedding result: array of size ${embedding.length}`);

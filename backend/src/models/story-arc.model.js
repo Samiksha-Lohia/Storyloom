@@ -28,7 +28,7 @@ const storyArcSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Document',
       required: true,
-      unique: true, // One story arc record per document
+      unique: true,
     },
     arcPoints: [arcPointSchema],
     climaxSceneId: {

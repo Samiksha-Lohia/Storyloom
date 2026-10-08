@@ -50,7 +50,6 @@ describe('Auth Service & Sign-up Endpoint Tests (Spec §12.5)', () => {
     assert.ok(result.tokens.accessToken);
     assert.ok(result.tokens.refreshToken);
 
-    // Verify user is in MongoDB
     const userInDb = await User.findOne({ email: 'jane@example.com' });
     assert.ok(userInDb);
     assert.strictEqual(userInDb.name, 'Jane Doe');
@@ -59,7 +58,6 @@ describe('Auth Service & Sign-up Endpoint Tests (Spec §12.5)', () => {
   });
 
   it('should log in an existing user', async () => {
-    // Pre-create user
     await authService.register('John Doe', 'john@example.com', 'securepass');
 
     const result = await authService.login('john@example.com', 'securepass');
@@ -79,10 +77,8 @@ describe('Auth Service & Sign-up Endpoint Tests (Spec §12.5)', () => {
   it('should revoke refresh token upon logout', async () => {
     const reg = await authService.register('Bob', 'bob@example.com', 'password123');
 
-    // Log out Bob
     await authService.logout(reg.tokens.refreshToken);
 
-    // Try to refresh — should throw UnauthorizedError
     await assert.rejects(
       async () => {
         await authService.refreshTokens(reg.tokens.refreshToken);
@@ -92,7 +88,6 @@ describe('Auth Service & Sign-up Endpoint Tests (Spec §12.5)', () => {
   });
 
   it('terms missing/false → 400', async () => {
-    // Missing termsAccepted
     const resMissing = await apiPost('/auth/register', {
       name: 'Alice Reader',
       email: 'alice.missing@example.com',
@@ -100,7 +95,6 @@ describe('Auth Service & Sign-up Endpoint Tests (Spec §12.5)', () => {
     });
     assert.strictEqual(resMissing.status, 400);
 
-    // False termsAccepted
     const resFalse = await apiPost('/auth/register', {
       name: 'Alice Reader',
       email: 'alice.false@example.com',

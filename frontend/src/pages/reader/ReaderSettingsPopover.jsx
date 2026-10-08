@@ -59,7 +59,6 @@ export default function ReaderSettingsPopover({
       <div
         className="w-full max-w-sm rounded p-6 border bg-paper text-ink border-rule"
       >
-        {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-rule mb-4">
           <div className="flex items-center gap-2">
             <Type className="w-4 h-4 text-ink" />
@@ -76,7 +75,6 @@ export default function ReaderSettingsPopover({
         </div>
 
         <div className="space-y-4 text-xs">
-          {/* Theme Selector */}
           <div>
             <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Color Theme
@@ -105,7 +103,6 @@ export default function ReaderSettingsPopover({
             </div>
           </div>
 
-          {/* Font Family */}
           <div>
             <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Typeface
@@ -136,7 +133,6 @@ export default function ReaderSettingsPopover({
             </div>
           </div>
 
-          {/* Font Size */}
           <div>
             <div className="flex items-center justify-between uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               <span>Text Size</span>
@@ -160,7 +156,6 @@ export default function ReaderSettingsPopover({
             </div>
           </div>
 
-          {/* Line Height */}
           <div>
             <label className="block uppercase tracking-wider text-[11px] text-muted mb-1.5 font-bold">
               Line Spacing
@@ -184,7 +179,6 @@ export default function ReaderSettingsPopover({
           </div>
         </div>
 
-        {/* Footer Note */}
         <div className="mt-5 pt-3 border-t border-rule text-[11px] text-muted text-center">
           Preferences sync automatically across devices.
         </div>

@@ -26,7 +26,6 @@ export function WriterReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Filter state
   const [selectedBookId, setSelectedBookId] = useState('');
   const [selectedRating, setSelectedRating] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -64,7 +63,6 @@ export function WriterReviewsPage() {
     try {
       setMarkingReadId(reviewId);
       await api.reviews.markRead(reviewId);
-      // Optimistic update
       setReviews((prev) =>
         prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, readByWriter: true } : r))
       );
@@ -87,7 +85,6 @@ export function WriterReviewsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-16 text-left">
-      {/* ─── Page Header ────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-3">
@@ -129,10 +126,8 @@ export function WriterReviewsPage() {
         </div>
       </div>
 
-      {/* ─── Filter Bar ─────────────────────────────────────────────── */}
       <div className="bg-paper rounded p-4 sm:p-5 border border-rule space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Story Selector */}
           <div className="flex-1 max-w-xs">
             <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Filter by Story
@@ -154,7 +149,6 @@ export function WriterReviewsPage() {
             </select>
           </div>
 
-          {/* Rating filter */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Star Rating
@@ -190,7 +184,6 @@ export function WriterReviewsPage() {
             </div>
           </div>
 
-          {/* Unread Toggle */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
               Status
@@ -249,7 +242,6 @@ export function WriterReviewsPage() {
         )}
       </div>
 
-      {/* ─── Error Banner ───────────────────────────────────────────── */}
       {error && (
         <div className="bg-paper border border-danger rounded p-4 flex items-center gap-3 text-danger text-xs">
           <AlertCircle className="w-5 h-5 shrink-0" />
@@ -260,7 +252,6 @@ export function WriterReviewsPage() {
         </div>
       )}
 
-      {/* ─── Reviews List ───────────────────────────────────────────── */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
@@ -308,7 +299,6 @@ export function WriterReviewsPage() {
                 className="bg-paper rounded border border-rule p-5 sm:p-6 space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  {/* Reader & Meta */}
                   <div className="flex items-start gap-3.5">
                     {reader.avatarUrl ? (
                       <img
@@ -360,7 +350,6 @@ export function WriterReviewsPage() {
                     </div>
                   </div>
 
-                  {/* Rating & Mark Read Action */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0">
                     <StarRating rating={review.rating} size="default" />
 
@@ -385,7 +374,6 @@ export function WriterReviewsPage() {
                   </div>
                 </div>
 
-                {/* Review Body */}
                 <div className="mt-4 pt-3 border-t border-rule">
                   <p className="text-ink text-xs md:text-sm leading-relaxed whitespace-pre-line font-body">
                     {review.text}
@@ -397,7 +385,6 @@ export function WriterReviewsPage() {
         </div>
       )}
 
-      {/* ─── Pagination ─────────────────────────────────────────────── */}
       {!loading && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between pt-6 border-t border-rule">
           <p className="text-xs text-muted">

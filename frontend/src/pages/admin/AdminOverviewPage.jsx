@@ -42,7 +42,6 @@ export function AdminOverviewPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-2">
@@ -69,9 +68,7 @@ export function AdminOverviewPage() {
         </button>
       </div>
 
-      {/* Quick Action Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Pending Publishers Banner */}
         <div className="bg-paper border border-rule rounded p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded border border-rule flex items-center justify-center text-ink shrink-0">
@@ -104,7 +101,6 @@ export function AdminOverviewPage() {
           </Link>
         </div>
 
-        {/* Open Reports Banner */}
         <div className="bg-paper border border-rule rounded p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded border border-rule flex items-center justify-center text-ink shrink-0">
@@ -138,9 +134,7 @@ export function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Users */}
         <div className="bg-paper border border-rule rounded p-4 space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[10px] font-semibold uppercase tracking-wider">
@@ -165,7 +159,6 @@ export function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Active Readers (DAU / WAU) */}
         <div className="bg-paper border border-rule rounded p-4 space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[10px] font-semibold uppercase tracking-wider">
@@ -190,7 +183,6 @@ export function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Published Manuscripts */}
         <div className="bg-paper border border-rule rounded p-4 space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[10px] font-semibold uppercase tracking-wider">
@@ -214,7 +206,6 @@ export function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Reader Reviews */}
         <div className="bg-paper border border-rule rounded p-4 space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[10px] font-semibold uppercase tracking-wider">
@@ -236,9 +227,7 @@ export function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* Role Breakdown & Signups Bar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User Role Distribution */}
         <div className="bg-paper border border-rule rounded p-5 space-y-3">
           <h3 className="font-bold text-ink text-sm">
             Community Role Breakdown
@@ -300,7 +289,6 @@ export function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* Top Manuscripts */}
         <div className="lg:col-span-2 bg-paper border border-rule rounded p-5 space-y-3">
           <div>
             <h3 className="font-bold text-ink text-sm">
@@ -367,7 +355,6 @@ export function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* Manuscript Lifecycle Status Distribution */}
       <div className="bg-paper border border-rule rounded p-5 space-y-4">
         <div>
           <h3 className="font-bold text-ink text-sm">

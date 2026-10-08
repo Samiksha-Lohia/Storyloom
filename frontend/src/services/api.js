@@ -1,6 +1,5 @@
 import { socketClient } from './socket';
 
-// Storyloom Frontend API Service
 const getApiBase = () => {
   let base = import.meta.env.VITE_API_URL || '/api';
   if (base.startsWith('http')) {
@@ -13,7 +12,6 @@ const getApiBase = () => {
 };
 const API_BASE = getApiBase();
 
-// Single-flight token refresh state
 let refreshPromise = null;
 
 const isAuthEndpoint = (url) => {
@@ -72,7 +70,6 @@ const refreshAccessToken = async () => {
       try {
         socketClient.reconnect();
       } catch (_err) {
-        // Socket reconnect failure shouldn't fail HTTP token refresh
       }
 
       return tokens.accessToken;
@@ -84,7 +81,6 @@ const refreshAccessToken = async () => {
   return refreshPromise;
 };
 
-// Central request wrapper for all API calls
 const request = async (url, options = {}, isRetry = false) => {
   const res = await window.fetch(url, options);
 
@@ -109,10 +105,8 @@ const request = async (url, options = {}, isRetry = false) => {
   return res;
 };
 
-// Module-level fetch override so all API methods use the central request wrapper
 const fetch = (url, options) => request(url, options);
 
-// Helper to get headers with authentication token
 const getHeaders = (isMultipart = false) => {
   const headers = {};
   if (!isMultipart) {
@@ -125,7 +119,6 @@ const getHeaders = (isMultipart = false) => {
   return headers;
 };
 
-// Handle response checks
 const handleResponse = async (response) => {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -140,7 +133,6 @@ const handleResponse = async (response) => {
 };
 
 export const api = {
-  // Authentication
   auth: {
     async register(nameOrPayload, email, password, options = {}) {
       let payload;
@@ -169,7 +161,6 @@ export const api = {
         };
       }
 
-      // Filter out undefined/empty optional fields
       Object.keys(payload).forEach((k) => {
         if (payload[k] === undefined) delete payload[k];
       });
@@ -257,7 +248,6 @@ export const api = {
     },
   },
 
-  // Reader / Me endpoints
   me: {
     async getLibrary(params = {}) {
       const query = new URLSearchParams();
@@ -269,7 +259,7 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { items, pagination }
+      return data.data;
     },
 
     async getReadingList(params = {}) {
@@ -333,7 +323,6 @@ export const api = {
     },
   },
 
-  // ─── Reader Library & Shelf Management ─────────────────────────────────────
   library: {
     async getShelf(status, params = {}) {
       return api.me.getLibrary({ status, ...params });
@@ -346,7 +335,6 @@ export const api = {
     },
   },
 
-  // Books / Catalogue
   books: {
     async list(params = {}) {
       const query = new URLSearchParams();
@@ -367,7 +355,7 @@ export const api = {
       const url = `${API_BASE}/books${qs ? `?${qs}` : ''}`;
       const res = await fetch(url, { headers: getHeaders() });
       const data = await handleResponse(res);
-      return data; // Envelope: { success, message, data: results, pagination }
+      return data;
     },
 
     async getById(id) {
@@ -411,7 +399,7 @@ export const api = {
       if (to) url += `&to=${to}`;
       const res = await fetch(url, { headers: getHeaders() });
       const data = await handleResponse(res);
-      return data.data; // { pages: [{ page, text }], pageCount }
+      return data.data;
     },
 
     async getSceneMarkers(bookId) {
@@ -441,9 +429,6 @@ export const api = {
     },
   },
 
-
-
-  // Uploads
   uploads: {
     async avatar(file) {
       const formData = new FormData();
@@ -458,7 +443,6 @@ export const api = {
     },
   },
 
-  // Documents (legacy & dev workspace)
   documents: {
     async list() {
       const res = await fetch(`${API_BASE}/documents`, {
@@ -508,7 +492,6 @@ export const api = {
     },
   },
 
-  // Pipeline/Jobs
   jobs: {
     async getStatus(documentId, signal) {
       const res = await fetch(`${API_BASE}/documents/${documentId}/jobs`, {
@@ -529,7 +512,6 @@ export const api = {
     },
   },
 
-  // Story Elements
   story: {
     async getScenes(documentId, page, limit) {
       let url = `${API_BASE}/documents/${documentId}/scenes`;
@@ -636,7 +618,6 @@ export const api = {
     },
   },
 
-  // Role-gated and spoiler-protected analysis helper
   analysis: {
     normalizeSource(source) {
       if (!source) return { kind: 'document', id: null };
@@ -842,7 +823,6 @@ export const api = {
           const data = await res.json();
           return data;
         }
-        // Fallback: use document jobs if book-level not found
         const book = await api.books.getById(bookId).catch(() => null);
         const documentId = book?.documentId?._id || book?.documentId;
         if (documentId) {
@@ -869,7 +849,6 @@ export const api = {
     },
   },
 
-  // ─── Reviews ────────────────────────────────────────────────────────────────
   reviews: {
     async list(bookId, params = {}) {
       const bId = (bookId?._id || bookId?.id || bookId)?.toString();
@@ -893,7 +872,6 @@ export const api = {
       };
     },
 
-    // Alias used by BookReviews component
     async getReviews(bookId, params) { return this.list(bookId, params); },
 
     async create(bookId, payload) {
@@ -945,7 +923,6 @@ export const api = {
     },
   },
 
-  // ─── Reports ────────────────────────────────────────────────────────────────
   reports: {
     async create(payload) {
       const res = await fetch(`${API_BASE}/reports`, {
@@ -956,7 +933,6 @@ export const api = {
       const data = await handleResponse(res);
       return data.data;
     },
-    // Alias used by ReportButton component
     async submitAppReport(payload) { return this.create(payload); },
 
     async submitPublicNotice(payload) {
@@ -970,7 +946,6 @@ export const api = {
     },
   },
 
-  // ─── Notifications ───────────────────────────────────────────────────────────
   notifications: {
     async list(params = {}) {
       const qs = new URLSearchParams();
@@ -981,9 +956,8 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { notifications, unreadCount, pagination }
+      return data.data;
     },
-    // Alias used by NotificationBell component
     async getNotifications(params) { return this.list(params); },
 
     async getUnreadCount() {
@@ -1013,7 +987,6 @@ export const api = {
     },
   },
 
-  // ─── Writer Analytics & Reviews ─────────────────────────────────────────────
   writer: {
     async getAnalytics(params = {}) {
       const qs = new URLSearchParams();
@@ -1049,7 +1022,6 @@ export const api = {
     },
   },
 
-  // ─── Publisher Wishlist ───────────────────────────────────────────────────
   wishlist: {
     async list(params = {}) {
       const qs = new URLSearchParams();
@@ -1059,7 +1031,7 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data; // { success, message, data: results, pagination }
+      return data;
     },
 
     async check(bookId) {
@@ -1067,7 +1039,7 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { wishlisted: boolean }
+      return data.data;
     },
 
     async add(bookId, notes = '') {
@@ -1090,7 +1062,6 @@ export const api = {
     },
   },
 
-  // ─── Pitch Panel & AI Pitch Card ──────────────────────────────────────────
   pitch: {
     async get(bookId) {
       const res = await fetch(`${API_BASE}/books/${bookId}/pitch`, {
@@ -1119,14 +1090,13 @@ export const api = {
     },
   },
 
-  // ─── Public Writers & Social ──────────────────────────────────────────────
   writers: {
     async getProfile(username) {
       const res = await fetch(`${API_BASE}/writers/${encodeURIComponent(username)}`, {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { writer, publishedBooks, followerCount, isFollowing }
+      return data.data;
     },
 
     async follow(username) {
@@ -1135,7 +1105,7 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { following: true, followerCount }
+      return data.data;
     },
 
     async unfollow(username) {
@@ -1144,11 +1114,10 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data.data; // { following: false, followerCount }
+      return data.data;
     },
   },
 
-  // ─── Admin Management ─────────────────────────────────────────────────────
   admin: {
     async getReports(params = {}) {
       const qs = new URLSearchParams();
@@ -1327,7 +1296,6 @@ export const api = {
     },
   },
 
-  // ─── Publish Requests ──────────────────────────────────────────────────────
   publishRequests: {
     async create(payload) {
       const res = await fetch(`${API_BASE}/publish-requests`, {
@@ -1348,7 +1316,7 @@ export const api = {
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
-      return data; // { success, message, data: results, pagination }
+      return data;
     },
 
     async getById(id) {
@@ -1397,7 +1365,6 @@ export const api = {
     },
   },
 
-  // ─── Conversations & Messaging ─────────────────────────────────────────────
   conversations: {
     async list(params = {}) {
       const qs = new URLSearchParams();

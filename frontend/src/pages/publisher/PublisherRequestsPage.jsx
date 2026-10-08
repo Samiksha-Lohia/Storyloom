@@ -55,7 +55,6 @@ export function PublisherRequestsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modal / Confirm state for Withdraw action
   const [withdrawingReq, setWithdrawingReq] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -103,7 +102,6 @@ export function PublisherRequestsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -129,7 +127,6 @@ export function PublisherRequestsPage() {
         </Link>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-rule overflow-x-auto pb-1">
         {STATUS_TABS.map((tab) => {
           const isActive = statusFilter === tab.id;
@@ -153,7 +150,6 @@ export function PublisherRequestsPage() {
         })}
       </div>
 
-      {/* Content list */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
@@ -198,9 +194,7 @@ export function PublisherRequestsPage() {
                 key={req._id}
                 className="bg-paper border border-rule rounded p-5 flex flex-col md:flex-row gap-5 justify-between"
               >
-                {/* Book & Proposal Info */}
                 <div className="flex gap-4 min-w-0">
-                  {/* Thumbnail Cover */}
                   <div className="w-20 aspect-[2/3] bg-paper rounded overflow-hidden shrink-0 border border-rule">
                     {book.coverUrl ? (
                       <img
@@ -216,7 +210,6 @@ export function PublisherRequestsPage() {
                     )}
                   </div>
 
-                  {/* Text details */}
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
@@ -247,7 +240,6 @@ export function PublisherRequestsPage() {
                       </span>
                     </div>
 
-                    {/* Proposed Terms summary */}
                     <div className="bg-paper border border-rule rounded p-3 text-xs text-ink space-y-1.5 max-w-xl">
                       <div className="font-bold text-ink flex items-center gap-2">
                         <span>Commercial Proposal:</span>
@@ -274,7 +266,6 @@ export function PublisherRequestsPage() {
                   </div>
                 </div>
 
-                {/* Actions & Status details */}
                 <div className="flex flex-col justify-between items-start md:items-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-rule">
                   <div className="text-right">
                     {req.status === 'accepted' && (
@@ -326,7 +317,6 @@ export function PublisherRequestsPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6">
           <button
@@ -349,7 +339,6 @@ export function PublisherRequestsPage() {
         </div>
       )}
 
-      {/* Withdraw Confirmation Modal */}
       {withdrawingReq && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-paper rounded max-w-md w-full p-6 border border-rule space-y-4">

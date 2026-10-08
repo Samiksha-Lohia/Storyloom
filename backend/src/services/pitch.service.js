@@ -25,11 +25,6 @@ const pitchValidationSchema = Joi.object({
   forFansOf: Joi.array().items(Joi.string().trim().max(150)).min(1).max(5).required(),
 });
 
-/**
- * Creates a dynamic, book-tailored pitch card when LLM generation fails or is unavailable.
- * Derives tone, target audience, and comparable titles directly from the book's specific
- * metadata, tags, and blurb without hardcoding generic placeholders.
- */
 export const buildFallbackPitchCard = (book, inputHash = null) => {
   const blurbText = (book.blurb || '').trim();
 
@@ -59,7 +54,6 @@ export const buildFallbackPitchCard = (book, inputHash = null) => {
   const genreLower = (book.genre || '').toLowerCase();
   const titleLower = (book.title || '').toLowerCase();
 
-  // 1. Dynamic Tone based on tags and genre
   let tone = 'Narrative-Driven, Atmospheric, Resonant';
   if (tags.length > 0) {
     const formattedTags = tags.slice(0, 3).map((t) =>
@@ -86,7 +80,6 @@ export const buildFallbackPitchCard = (book, inputHash = null) => {
     tone = 'Bleak, Resilient, World-Weary';
   }
 
-  // 2. Dynamic Comparable Titles / Authors tailored to story theme
   let forFansOf = [];
   if (tags.includes('steampunk') || titleLower.includes('clockwork')) {
     forFansOf = ['Philip Pullman (His Dark Materials)', 'China Miéville (Perdido Street Station)', 'Scott Lynch (Gentleman Bastard)'];
@@ -120,7 +113,6 @@ export const buildFallbackPitchCard = (book, inputHash = null) => {
     forFansOf = [`Contemporary ${book.genre || 'Fiction'} Aficionados`, `Readers of Character-Driven Literary ${book.genre || 'Novels'}`];
   }
 
-  // 3. Dynamic Target Audience
   let targetAudience = '';
   if (tags.includes('steampunk')) {
     targetAudience = 'Adult & New Adult readers of intricate worldbuilding, celestial gears, and rebellion fiction';
@@ -163,21 +155,12 @@ export const buildFallbackPitchCard = (book, inputHash = null) => {
   };
 };
 
-/**
- * Generate or retrieve the cached pitch card for a book.
- * Never blocks publishing if LLM generation fails.
- *
- * @param {string} bookId
- * @param {boolean} [force=false]
- * @returns {Promise<object>} Pitch card object
- */
 export const generatePitchCard = async (bookId, force = false) => {
   const book = await Book.findById(bookId);
   if (!book) {
     throw new NotFoundError('Book not found.');
   }
 
-  // 1. Gather text input safely
   let sampleExcerpt = '';
   try {
     if (book.documentId) {
@@ -187,13 +170,11 @@ export const generatePitchCard = async (bookId, force = false) => {
       }
     }
   } catch (_err) {
-    // Non-fatal
   }
 
   const rawInput = `${book.title || ''}::${book.blurb || ''}::${book.genre || ''}::${sampleExcerpt}`;
   const inputHash = crypto.createHash('sha256').update(rawInput).digest('hex');
 
-  // Check cache unless forced or old generic demo seed
   if (
     !force &&
     book.pitchCard?.inputHash !== 'demo_seed_hash' &&
@@ -204,7 +185,6 @@ export const generatePitchCard = async (bookId, force = false) => {
     return book.pitchCard;
   }
 
-  // 2. Prepare delimited prompt for the LLM
   const prompt = `
 You are an expert literary scout, acquisition editor, and story pitch consultant.
 Analyze the provided book information and manuscript sample to compose an acquisition-ready publisher pitch card.
@@ -267,11 +247,6 @@ Return a single JSON object strictly matching this schema:
   }
 };
 
-/**
- * Regenerate pitch card (owner or admin only, max 3 per day).
- * @param {string} bookId
- * @param {any} user
- */
 export const regeneratePitchCard = async (bookId, user) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -285,7 +260,6 @@ export const regeneratePitchCard = async (bookId, user) => {
     throw new ForbiddenError('Only the book owner or an administrator can regenerate pitch cards.');
   }
 
-  // Rate limit: 3 per book per day
   const day = getDayString();
   const redisKey = `pitch:regen:${book._id}:${day}`;
   const count = await redis.incr(redisKey);
@@ -300,13 +274,6 @@ export const regeneratePitchCard = async (bookId, user) => {
   return generatePitchCard(bookId, true);
 };
 
-/**
- * Clear pitch card for a book (owner or admin only).
- *
- * @param {string} bookId
- * @param {any} user
- * @returns {Promise<object>}
- */
 export const clearPitchCard = async (bookId, user) => {
   const book = await Book.findById(bookId);
   if (!book) {
@@ -327,20 +294,12 @@ export const clearPitchCard = async (bookId, user) => {
   return { success: true, message: 'Pitch card cleared successfully.' };
 };
 
-/**
- * Compile whole-book pitch payload for approved publishers, owners, and admins.
- *
- * @param {string} bookId
- * @param {any} user
- * @returns {Promise<object>} Complete pitch panel payload
- */
 export const getPitchPayload = async (bookId, user) => {
   const book = await Book.findById(bookId).populate('writerId', 'name username bio avatarUrl defaultTemplate createdAt');
   if (!book) {
     throw new NotFoundError('Book not found.');
   }
 
-  // 1. Enforce access control matrix
   if (!user) {
     throw new ForbiddenError('Authentication required to view pitch panel.');
   }
@@ -360,13 +319,10 @@ export const getPitchPayload = async (bookId, user) => {
       throw new ForbiddenError('Writers can only view the pitch panel of their own books.');
     }
   } else if (user.role === USER_ROLES.ADMIN) {
-    // Admin has full access
   } else {
-    // Readers are not allowed to view pitch panel
     throw new ForbiddenError('Pitch panel is restricted to approved publishers and authors.');
   }
 
-  // 2. Fetch cached pitch card; if cleared by user, respect cleared state
   let pitchCard = book.pitchCard;
   const isOldGenericCard =
     pitchCard?.inputHash === 'demo_seed_hash' ||
@@ -386,7 +342,6 @@ export const getPitchPayload = async (bookId, user) => {
 
   const documentId = book.documentId;
 
-  // 3. Parallel queries for mood, arc, characters, relationships, and stats
   const [
     moods,
     storyArc,
@@ -396,27 +351,20 @@ export const getPitchPayload = async (bookId, user) => {
     authorFollowersCount,
     authorOtherBooksCount,
   ] = await Promise.all([
-    // Mood analysis summary
     MoodAnalysis.find({ documentId }).lean(),
-    // Story arc
     StoryArc.findOne({ documentId }).lean(),
-    // Main cast
     Character.find({ documentId })
       .select('name role aliases traits description arcSummary')
       .sort({ createdAt: 1 })
       .limit(8)
       .lean(),
-    // Relationships
     Relationship.find({ documentId })
       .populate('characterAId', 'name role')
       .populate('characterBId', 'name role')
       .limit(15)
       .lean(),
-    // Private wishlist count (only number, never identities!)
     Wishlist.countDocuments({ bookId: book._id }),
-    // Followers count
     Follow.countDocuments({ writerId: book.writerId?._id || book.writerId }),
-    // Writer's other published books count
     Book.countDocuments({
       writerId: book.writerId?._id || book.writerId,
       status: 'published',
@@ -424,7 +372,6 @@ export const getPitchPayload = async (bookId, user) => {
     }),
   ]);
 
-  // Compute mood summary
   let moodSummary = {
     dominantEmotions: [],
     intensityRange: { min: 0, max: 0, average: 0 },
@@ -465,7 +412,6 @@ export const getPitchPayload = async (bookId, user) => {
     };
   }
 
-  // Pacing summary from Story Arc
   const arcPoints = storyArc?.arcPoints || [];
   let pacingSummary = 'Pacing steadily unfolds across scenes.';
   if (arcPoints.length > 0) {
@@ -508,7 +454,7 @@ export const getPitchPayload = async (bookId, user) => {
       ratingCount: book.stats?.ratingCount || 0,
       completionRate: book.stats?.completionRate || 0,
       readingListAdds: book.stats?.readingListAdds || 0,
-      wishlistCount, // Number of publishers who wishlisted (identity never leaked)
+      wishlistCount,
     },
     writerSnapshot: {
       id: book.writerId?._id || book.writerId,

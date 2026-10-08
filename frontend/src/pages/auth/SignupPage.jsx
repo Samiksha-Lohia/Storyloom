@@ -51,7 +51,6 @@ export function SignupPage() {
     return getRoleHomePath(targetUser || user);
   };
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       navigate(getDestination(user), { replace: true });
@@ -235,7 +234,6 @@ export function SignupPage() {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
-      {/* Back to home navigation */}
       <div className="w-full px-4 sm:px-6 pt-4 pb-1">
         <Link
           to="/"
@@ -247,12 +245,10 @@ export function SignupPage() {
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row">
-        {/* Left: Collage (Visual panel / mobile top banner) */}
         <div className="w-full md:w-1/2 p-3 sm:p-4 md:p-6 lg:p-8 shrink-0">
           <AuthCollage />
         </div>
 
-      {/* Right: Signup Form */}
       <div className="flex-1 flex flex-col justify-center px-6 py-8 lg:px-14 xl:px-20 max-w-xl mx-auto md:max-w-none md:w-1/2 overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
           <div className="mb-6">
@@ -264,7 +260,6 @@ export function SignupPage() {
             </p>
           </div>
 
-          {/* Role Chooser */}
           <div className="mb-5">
             <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">
               I want to join as:
@@ -310,8 +305,6 @@ export function SignupPage() {
             </div>
           )}
 
-
-          {/* Form */}
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <Input
               id="signup-name"
@@ -361,7 +354,6 @@ export function SignupPage() {
               />
               <p className="text-[11px] text-muted">At least 8 characters</p>
 
-              {/* Password strength meter - advisory */}
               {formData.password && (
                 <div className="pt-1">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-muted mb-1">
@@ -382,7 +374,6 @@ export function SignupPage() {
               )}
             </div>
 
-            {/* Publisher Extra Fields */}
             {role === 'publisher' && (
               <div className="p-4 bg-paper border border-rule rounded space-y-3">
                 <div className="flex items-start gap-2">
@@ -441,7 +432,6 @@ export function SignupPage() {
               </div>
             )}
 
-            {/* Terms checkbox */}
             <div className="pt-2">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -492,7 +482,6 @@ export function SignupPage() {
             </Button>
           </form>
 
-          {/* Footer note */}
           <p className="text-center text-xs text-muted mt-6">
             Already have an account?{' '}
             <Link

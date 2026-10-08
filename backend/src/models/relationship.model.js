@@ -30,7 +30,6 @@ const relationshipSchema = new mongoose.Schema(
       max: 1,
       default: 0,
     },
-    // Map where Key is sceneId (as string) and Value is the sentiment score at that scene
     sentimentBySceneId: {
       type: Map,
       of: Number,
@@ -48,7 +47,6 @@ const relationshipSchema = new mongoose.Schema(
   }
 );
 
-// Ensure unique entry for any character pair inside a document, regardless of who is characterA or characterB
 relationshipSchema.index({ documentId: 1, characterAId: 1, characterBId: 1 }, { unique: true });
 
 const Relationship = mongoose.model('Relationship', relationshipSchema);

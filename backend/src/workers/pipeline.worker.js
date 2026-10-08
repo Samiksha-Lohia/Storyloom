@@ -50,14 +50,6 @@ import { BOOK_STATUSES } from '../constants/book.js';
 import { paginate } from '../services/paginator.service.js';
 import processingJobRepository from '../repositories/processing-job.repository.js';
 
-
-// STAGE_DEPENDENCIES imported from constants/stages.js.
-// This remains the single source of truth.
-
-/**
- * Normalizes responses that should be arrays.
- * If the AI wraps an array inside an object, extract the array.
- */
 const normalizeArrayResponse = (response) => {
   if (Array.isArray(response)) {
     return response;
@@ -144,10 +136,6 @@ const runStage = async (job) => {
   throw new Error(`Unsupported pipeline stage: ${stage}`);
 };
 
-/* -------------------------------------------------------------------------- */
-/* JOB STATUS                                                                  */
-/* -------------------------------------------------------------------------- */
-
 const markRunning = async (documentId, stage) => {
   const jobRecord = await processingJobRepository.updateOne(
     { documentId, stage },
@@ -203,10 +191,6 @@ const markFailed = async (documentId, stage, err) => {
   });
 };
 
-/* -------------------------------------------------------------------------- */
-/* QUEUE                                                                       */
-/* -------------------------------------------------------------------------- */
-
 const enqueueReadyStages = async (documentId) => {
   const jobs =
     await processingJobRepository.findByDocumentId(documentId);
@@ -260,7 +244,6 @@ const enqueueReadyStages = async (documentId) => {
       status: DOCUMENT_STATUSES.READY,
     });
 
-    // Enqueue pitch generation on platform-maintenance queue and ensure book is published
     try {
       const book = await Book.findOne({ documentId });
       if (book) {
@@ -275,10 +258,6 @@ const enqueueReadyStages = async (documentId) => {
     }
   }
 };
-
-/* -------------------------------------------------------------------------- */
-/* HELPERS                                                                     */
-/* -------------------------------------------------------------------------- */
 
 const getDocumentWithText = (documentId) =>
   Document.findById(documentId).select('+parsedText');
@@ -425,10 +404,6 @@ const NAME_PATTERN_FROM_TEXT = (text) => {
     : /$a/;
 };
 
-/* -------------------------------------------------------------------------- */
-/* PARSING                                                                     */
-/* -------------------------------------------------------------------------- */
-
 const runParsing = async ({
   documentId,
   storageUrl,
@@ -448,7 +423,6 @@ const runParsing = async ({
     status: DOCUMENT_STATUSES.PROCESSING,
   });
 
-  // If a Book exists for the document, compute offsets and save pageOffsets, pageCount
   const book = await Book.findOne({ documentId });
   if (book) {
     const pageOffsets = paginate(normalized);
@@ -468,11 +442,6 @@ const runParsing = async ({
     wordCount: wordCount(normalized),
   };
 };
-
-
-/* -------------------------------------------------------------------------- */
-/* SCENES                                                                      */
-/* -------------------------------------------------------------------------- */
 
 const runScenes = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
@@ -677,10 +646,6 @@ ${parsedText}`;
     totalScenes: processedScenes.length,
   };
 };
-
-/* -------------------------------------------------------------------------- */
-/* CHARACTERS                                                                  */
-/* -------------------------------------------------------------------------- */
 
 const runCharacters = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
@@ -959,10 +924,6 @@ ${parsedText}`;
   };
 };
 
-/* -------------------------------------------------------------------------- */
-/* RELATIONSHIPS                                                               */
-/* -------------------------------------------------------------------------- */
-
 const runRelationships = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
   const langInstruction = getAnalysisLanguageInstruction(language);
@@ -1189,7 +1150,6 @@ ${scenesListFormatted}
         STAGES.RELATIONSHIPS
       );
 
-  // Setup robust scene resolution mapping
   const sceneResolverMap = new Map();
   for (const scene of scenes) {
     const sId = scene._id.toString();
@@ -1416,7 +1376,6 @@ ${scenesListFormatted}
       return nameToCharMap.get(clean);
     }
 
-    // Substring / partial matching
     for (const character of characters) {
       const charName = character.name.toLowerCase().trim();
       if (clean === charName || clean.includes(charName) || charName.includes(clean)) {
@@ -1445,7 +1404,6 @@ ${scenesListFormatted}
     if (!charA || !charB) continue;
     if (charA._id.toString() === charB._id.toString()) continue;
 
-    // Deduplicate pair
     const pairKey = [charA._id.toString(), charB._id.toString()].sort().join('_');
     if (processedPairs.has(pairKey)) continue;
     processedPairs.add(pairKey);
@@ -1531,10 +1489,6 @@ ${scenesListFormatted}
       relationshipsToInsert.length,
   };
 };
-
-/* -------------------------------------------------------------------------- */
-/* TIMELINE                                                                    */
-/* -------------------------------------------------------------------------- */
 
 const runTimeline = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
@@ -1719,7 +1673,6 @@ ${scenes
       });
     }
 
-    // Ensure all scenes from the story are included
     for (const scene of scenes) {
       const sceneIdStr = scene._id.toString();
       if (!seenSceneIds.has(sceneIdStr)) {
@@ -1734,7 +1687,6 @@ ${scenes
       }
     }
 
-    // Normalize chronologicalOrder to 1..N to strictly obey unique index
     cleanList.sort((a, b) => a.chronologicalOrder - b.chronologicalOrder);
     cleanList.forEach((ev, idx) => {
       ev.chronologicalOrder = idx + 1;
@@ -1756,7 +1708,6 @@ ${scenes
     });
   }
 
-  // Clear existing timeline events right before inserting to prevent race-condition duplicate keys
   await TimelineEvent.deleteMany({
     documentId,
   });
@@ -1772,10 +1723,6 @@ ${scenes
       timelineEventsToInsert.length,
   };
 };
-
-/* -------------------------------------------------------------------------- */
-/* DIALOGUE - LOCAL                                                            */
-/* -------------------------------------------------------------------------- */
 
 const runDialogue = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
@@ -1831,10 +1778,6 @@ const runDialogue = async ({ documentId }) => {
   };
 };
 
-/* -------------------------------------------------------------------------- */
-/* MOOD - LOCAL                                                                */
-/* -------------------------------------------------------------------------- */
-
 const runMood = async ({ documentId }) => {
   const language = await resolveStoryLanguage(documentId);
   const scenes =
@@ -1850,12 +1793,6 @@ const runMood = async ({ documentId }) => {
     };
   }
 
-  /*
-   * IMPORTANT:
-   * Mood analysis is completely local.
-   *
-   * This prevents one Gemini/Groq request per scene.
-   */
   const moodRecords = scenes.map(
     (scene) => {
       const mood =
@@ -1891,10 +1828,6 @@ const runMood = async ({ documentId }) => {
       moodRecords.length,
   };
 };
-
-/* -------------------------------------------------------------------------- */
-/* ARC - LOCAL                                                                 */
-/* -------------------------------------------------------------------------- */
 
 const runArc = async ({ documentId }) => {
   const scenes = await Scene.find({
@@ -1973,10 +1906,6 @@ const runArc = async ({ documentId }) => {
       arcPoints.length,
   };
 };
-
-/* -------------------------------------------------------------------------- */
-/* CONTINUITY                                                                  */
-/* -------------------------------------------------------------------------- */
 
 const runContinuity = async ({
   documentId,
@@ -2419,10 +2348,6 @@ ${scenes
   };
 };
 
-/* -------------------------------------------------------------------------- */
-/* EMBEDDINGS - LOCAL                                                          */
-/* -------------------------------------------------------------------------- */
-
 const runEmbeddings = async ({
   documentId,
 }) => {
@@ -2445,15 +2370,6 @@ const runEmbeddings = async ({
     documentId,
   });
 
-  /*
-   * Embeddings are now completely local.
-   *
-   * This means:
-   * - No Gemini request
-   * - No Groq request
-   * - No embedding API quota usage
-   * - No embedding retry calls
-   */
   const embeddings = [
     ...scenes.map((scene) => ({
       documentId,
@@ -2501,10 +2417,6 @@ const runEmbeddings = async ({
   };
 };
 
-/**
- * Runs all pipeline stages sequentially for a document.
- * Creates or updates ProcessingJob records and updates Document status.
- */
 const processDocumentDirectly = async (documentId) => {
   const STAGE_ORDER = [
     STAGES.PARSING,
@@ -2519,7 +2431,6 @@ const processDocumentDirectly = async (documentId) => {
     STAGES.EMBEDDINGS,
   ];
 
-  // 1. Ensure processing jobs exist
   const existingJobs = await processingJobRepository.findByDocumentId(documentId);
   if (!existingJobs || existingJobs.length === 0) {
     const jobRecords = STAGE_LIST.map((stage) => ({
@@ -2531,7 +2442,6 @@ const processDocumentDirectly = async (documentId) => {
     await processingJobRepository.create(jobRecords);
   }
 
-  // 2. Run each stage in order
   for (const stage of STAGE_ORDER) {
     await markRunning(documentId, stage);
     try {

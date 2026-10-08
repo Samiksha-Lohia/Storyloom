@@ -22,7 +22,6 @@ export const createAppReport = async ({
   claimantName = null,
   claimantContact = null,
 }) => {
-  // Validate duplicate active reports
   const existingActive = await Report.findOne({
     reporterId,
     targetType,
@@ -34,7 +33,6 @@ export const createAppReport = async ({
     throw new ConflictError('You have already submitted a pending report for this item.');
   }
 
-  // Validate target existence
   if (targetType === 'book') {
     const book = await Book.findById(targetId);
     if (!book) throw new NotFoundError('Target book not found.');
@@ -76,7 +74,6 @@ export const createPublicNotice = async ({
   claimantContact,
   honeypot = null,
 }) => {
-  // Honeypot bot protection
   if (honeypot && typeof honeypot === 'string' && honeypot.trim().length > 0) {
     throw new BadRequestError('Bot submission detected.');
   }
@@ -241,7 +238,6 @@ export const handleReportAction = async (reportId, { adminUser, action, notes = 
 
     if (targetUser.strikes >= 3) {
       targetUser.status = USER_STATUSES.SUSPENDED;
-      // Hide all published books
       await Book.updateMany(
         { writerId: targetUser._id, status: BOOK_STATUSES.PUBLISHED },
         { status: BOOK_STATUSES.REMOVED }
@@ -289,7 +285,6 @@ export const handleReportAction = async (reportId, { adminUser, action, notes = 
   report.outcome = action === 'dismiss' ? 'dismissed' : action;
   report.adminNotes = cleanNotes;
   await report.save();
-
 
   return report;
 };

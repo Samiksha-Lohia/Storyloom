@@ -117,7 +117,6 @@ const bookSchema = new mongoose.Schema(
   }
 );
 
-// Compound and catalogue indexes
 bookSchema.index({ status: 1, genre: 1 });
 bookSchema.index({ status: 1, createdAt: -1 });
 bookSchema.index({ status: 1, 'stats.ratingAvg': -1 });

@@ -37,7 +37,6 @@ const embeddingSchema = new mongoose.Schema(
   }
 );
 
-// Compound index to prevent duplicate vectors per source entity
 embeddingSchema.index({ documentId: 1, sourceType: 1, sourceId: 1 }, { unique: true });
 
 const Embedding = mongoose.model('Embedding', embeddingSchema);

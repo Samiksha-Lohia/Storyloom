@@ -45,7 +45,6 @@ export class StoryArcDto {
     this.createdAt = arc.createdAt;
     this.updatedAt = arc.updatedAt;
 
-    // Generate overlay comparison curves
     const N = this.arcPoints.length;
     const threeAct = [];
     const herosJourney = [];

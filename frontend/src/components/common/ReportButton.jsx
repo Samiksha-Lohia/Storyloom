@@ -6,7 +6,7 @@ export default function ReportButton({
   targetType = 'book',
   targetId,
   targetTitle = '',
-  variant = 'button', // 'button', 'icon', 'link'
+  variant = 'button',
   className = '',
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,7 +100,6 @@ export default function ReportButton({
         </button>
       )}
 
-      {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60">
           <div className="bg-paper rounded max-w-lg w-full p-6 border border-rule relative max-h-[90vh] overflow-y-auto text-ink">

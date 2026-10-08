@@ -36,4 +36,3 @@ export default function Chip({
 
 export { Chip };
 
-

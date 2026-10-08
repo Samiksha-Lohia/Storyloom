@@ -16,7 +16,6 @@ import { ApiError } from '../utilities/custom-errors.js';
 
 const router = Router({ mergeParams: true });
 
-// Rate limiter for review posting: 30 reviews per hour per user/IP
 const reviewPostLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 30,
@@ -32,10 +31,6 @@ const reviewPostLimiter = rateLimit({
   },
 });
 
-/**
- * GET /api/books/:bookId/reviews
- * Public endpoint to fetch reviews, histogram, and optional current user review
- */
 router.get(
   '/',
   authenticateOptional,
@@ -43,10 +38,6 @@ router.get(
   reviewController.getBookReviews
 );
 
-/**
- * POST /api/books/:bookId/reviews
- * Readers only, rate limited, duplicate guarded
- */
 router.post(
   '/',
   authenticate,
@@ -56,10 +47,6 @@ router.post(
   reviewController.createReview
 );
 
-/**
- * PATCH /api/books/:bookId/reviews/:reviewId
- * Review owner or admin
- */
 router.patch(
   '/:reviewId',
   authenticate,
@@ -68,10 +55,6 @@ router.patch(
   reviewController.updateReview
 );
 
-/**
- * DELETE /api/books/:bookId/reviews/:reviewId
- * Review owner or admin
- */
 router.delete(
   '/:reviewId',
   authenticate,
@@ -80,10 +63,6 @@ router.delete(
   reviewController.deleteReview
 );
 
-/**
- * PATCH /api/books/:bookId/reviews/:reviewId/read
- * Writer marks a review as read (clears new-review badge)
- */
 router.patch(
   '/:reviewId/read',
   authenticate,

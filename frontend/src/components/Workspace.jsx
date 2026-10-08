@@ -68,7 +68,6 @@ export default function Workspace({ documentId, onBack }) {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col text-ink">
-      {/* Workspace Header */}
       <header className="w-full bg-paper border-b border-rule px-6 py-4 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-4 max-w-[60%]">
           <button 
@@ -110,10 +109,8 @@ export default function Workspace({ documentId, onBack }) {
         </div>
       </header>
 
-      {/* Main Workspace Frame */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Navigation Sidebar */}
         <aside className="w-64 bg-paper border-r border-rule p-4 flex flex-col justify-between hidden md:flex shrink-0">
           <div className="space-y-1">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted px-3 mb-2">Notebook Tabs</p>
@@ -133,7 +130,6 @@ export default function Workspace({ documentId, onBack }) {
             ))}
           </div>
 
-          {/* Bottom user card or badge */}
           <div className="p-3 border-t border-rule flex items-center gap-3">
             <div className="w-7 h-7 rounded border border-rule flex items-center justify-center font-bold text-[10px] text-ink">
               SL
@@ -145,7 +141,6 @@ export default function Workspace({ documentId, onBack }) {
           </div>
         </aside>
 
-        {/* Content Sheet */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-paper relative">
           <div className="max-w-6xl mx-auto">
             {activeTab === 'overview' && <OverviewTab documentId={documentId} />}

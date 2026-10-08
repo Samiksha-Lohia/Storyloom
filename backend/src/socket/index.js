@@ -14,7 +14,6 @@ let socketServer = null;
 const initSocket = (io) => {
   socketServer = io;
 
-  // Connection-level JWT authentication middleware
   io.use((socket, next) => {
     try {
       const authHeader = socket.handshake.auth?.token || socket.handshake.headers?.authorization;
@@ -22,7 +21,6 @@ const initSocket = (io) => {
         return next(new Error('Authentication error: Access token missing.'));
       }
 
-      // Handle both "Bearer <token>" and raw "<token>"
       const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
       const payload = jwt.verify(token, config.jwt.accessSecret);
 
@@ -43,7 +41,6 @@ const initSocket = (io) => {
   io.on('connection', (socket) => {
     logger.info(`Socket connected: ${socket.id} (user: ${socket.user.id}, role: ${socket.user.role})`);
 
-    // Auto-join per-user room for notifications
     socket.join(`user:${socket.user.id}`);
     logger.info(`Socket ${socket.id} joined personal room user:${socket.user.id}`);
 
@@ -72,7 +69,6 @@ const initSocket = (io) => {
       }
     });
 
-    // ─── Conversation / Chat Handlers ──────────────────────────────────────────
     socket.on('conversation:join', async (rawPayload, callback) => {
       const conversationId = typeof rawPayload === 'object' && rawPayload !== null
         ? (rawPayload.conversationId || rawPayload.id || rawPayload._id)
@@ -168,7 +164,6 @@ const initSocket = (io) => {
       try {
         const userId = socket.user.id.toString();
 
-        // 1. Redis rate limit: max 20 messages per minute per user
         const rateLimitKey = `ratelimit:chat:${userId}`;
         const count = await redis.incr(rateLimitKey);
         if (count === 1) {
@@ -184,7 +179,6 @@ const initSocket = (io) => {
           return;
         }
 
-        // 2. Fetch conversation
         const conversation = await Conversation.findById(conversationId);
         if (!conversation || !conversation.participants.some((p) => p.toString() === userId)) {
           const errPayload = { message: 'Conversation not found.' };
@@ -215,7 +209,6 @@ const initSocket = (io) => {
           return;
         }
 
-        // 3. Contact information check (A7 / Spec 13)
         if (!conversation.contactSharingEnabled) {
           const { containsContact, type } = detectContactInfo(trimmedText);
           if (containsContact) {
@@ -229,7 +222,6 @@ const initSocket = (io) => {
           }
         }
 
-        // 4. Persist message
         const message = await Message.create({
           conversationId: conversation._id,
           senderId: userId,
@@ -254,10 +246,8 @@ const initSocket = (io) => {
           message: messagePayload,
         };
 
-        // 5. Emit message:new to room
         io.to(`conversation:${conversationId}`).emit('message:new', eventEnvelope);
 
-        // Also emit directly to participants' user rooms
         conversation.participants.forEach((p) => {
           io.to(`user:${p.toString()}`).emit('message:new', eventEnvelope);
           io.to(`user:${p.toString()}`).emit('conversation:updated', {
@@ -267,7 +257,6 @@ const initSocket = (io) => {
           });
         });
 
-        // 6. Notify offline/unfocused recipient
         const recipientId = conversation.participants.find((p) => p.toString() !== userId);
         try {
           const sender = await User.findById(userId).select('name');

@@ -9,9 +9,6 @@ const PRESETS = {
 
 const defaultCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'n7j7nivw';
 
-/**
- * Builds a Cloudinary transformation URL from a publicId and preset.
- */
 export const coverUrl = (publicId, preset = 'thumb', cloudName = defaultCloudName) => {
   if (!publicId) return '';
   if (publicId.startsWith('http://') || publicId.startsWith('https://')) {
@@ -32,7 +29,6 @@ export default function CoverImage({
 }) {
   const [hasError, setHasError] = useState(false);
 
-  // If a direct URL is given and valid, use it; otherwise build Cloudinary URL
   const resolvedUrl = url || (publicId ? coverUrl(publicId, preset) : '');
 
   if (!resolvedUrl || hasError) {
@@ -73,5 +69,4 @@ export default function CoverImage({
 }
 
 export { CoverImage };
-
 

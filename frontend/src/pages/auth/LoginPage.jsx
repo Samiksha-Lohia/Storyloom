@@ -55,7 +55,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex flex-col items-center justify-center py-6 px-4">
-      {/* Back to home navigation */}
       <div className="w-full max-w-4xl mb-3 flex items-center justify-start">
         <Link
           to="/"
@@ -67,12 +66,10 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-4xl bg-paper rounded border border-rule overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
-        {/* Left Tinted Collage Panel */}
         <div className="h-full">
           <AuthCollage heading="Welcome back to your story." />
         </div>
 
-        {/* Right Form Panel */}
         <div className="p-6 md:p-8 flex flex-col justify-center">
           <div className="mb-6">
             <h1 className="font-calligraphy text-3xl font-normal text-ink mb-1">
@@ -83,8 +80,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-
-          {/* Error Message */}
           {error && (
             <div
               className="mb-4 p-3 rounded bg-paper border border-danger text-danger text-xs flex items-start gap-2 select-none"
@@ -95,7 +90,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
               id="login-email"
@@ -140,7 +134,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Sign up link */}
           <div className="mt-6 text-center text-xs text-muted">
             New to {APP_NAME}?{' '}
             <Link

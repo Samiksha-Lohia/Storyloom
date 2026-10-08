@@ -2,17 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, ZoomIn, ZoomOut, RotateCcw, Check, Image as ImageIcon } from 'lucide-react';
 import { Button } from './Button';
 
-/**
- * CoverCropper
- * A zero-dependency 2:3 aspect-ratio canvas image cropper.
- * Standard 2:3 book covers (e.g. 600x900).
- * Supports pan via dragging, zoom slider/wheel, and live 2:3 viewport framing.
- *
- * @param {Object} props
- * @param {File|null} props.initialFile
- * @param {Function} props.onCropComplete - Callback receiving (croppedBlobOrFile, previewUrl)
- * @param {Function} props.onCancel
- */
 export default function CoverCropper({ initialFile = null, onCropComplete, onCancel }) {
   const [imageSrc, setImageSrc] = useState(null);
   const [originalFilename, setOriginalFilename] = useState('cover.jpg');
@@ -25,11 +14,9 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
-  // Viewport display dimensions: 240px wide by 360px tall (exact 2:3 ratio)
   const VIEWPORT_W = 240;
   const VIEWPORT_H = 360;
 
-  // Export 600x900 crop to callback
   const exportCrop = useCallback((img, currentZoom, currentOffset, filename) => {
     if (!img) return;
 
@@ -65,7 +52,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     }, 'image/jpeg', 0.92);
   }, [onCropComplete]);
 
-  // Load image from file
   const loadFile = useCallback((file) => {
     if (!file || !file.type.startsWith('image/')) return;
     const croppedFilename = file.name.replace(/\.[^/.]+$/, '') + '-cropped.jpg';
@@ -75,7 +61,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
       const img = new Image();
       img.onload = () => {
         imageRef.current = img;
-        // Calculate initial zoom to cover viewport
         const scaleX = VIEWPORT_W / img.width;
         const scaleY = VIEWPORT_H / img.height;
         const baseZoom = Math.max(scaleX, scaleY);
@@ -87,7 +72,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
         setOffset(initOffset);
         setImageSrc(e.target.result);
 
-        // Automatically export immediately so coverFile is captured right away in form state
         exportCrop(img, baseZoom, initOffset, croppedFilename);
       };
       img.src = e.target.result;
@@ -101,7 +85,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     }
   }, [initialFile, imageSrc, loadFile]);
 
-  // Redraw canvas on changes
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const img = imageRef.current;
@@ -110,11 +93,9 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, VIEWPORT_W, VIEWPORT_H);
 
-    // Draw background
     ctx.fillStyle = '#1C1917';
     ctx.fillRect(0, 0, VIEWPORT_W, VIEWPORT_H);
 
-    // Draw transformed image
     const drawW = img.width * zoom;
     const drawH = img.height * zoom;
     ctx.drawImage(img, offset.x, offset.y, drawW, drawH);
@@ -124,7 +105,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     draw();
   }, [draw]);
 
-  // Drag handlers
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
@@ -160,12 +140,10 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     });
   };
 
-  // Zoom handlers
   const handleZoomChange = (newZoom) => {
     const img = imageRef.current;
     if (!img) return;
 
-    // Zoom into center of viewport
     const centerX = VIEWPORT_W / 2;
     const centerY = VIEWPORT_H / 2;
 
@@ -201,7 +179,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
     exportCrop(img, baseZoom, resetOffset, originalFilename);
   };
 
-  // Export full 600x900 crop on manual confirmation
   const handleConfirmCrop = () => {
     const img = imageRef.current;
     if (!img) return;
@@ -230,7 +207,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
       </div>
 
       {!imageSrc ? (
-        /* Upload Drag-and-Drop Area */
         <label className="border border-dashed border-rule hover:border-ink bg-paper rounded p-8 flex flex-col items-center justify-center cursor-pointer min-h-[260px]">
           <input
             type="file"
@@ -252,9 +228,7 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
           </span>
         </label>
       ) : (
-        /* Interactive Cropper Viewport */
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* Viewport Frame */}
           <div className="relative shrink-0">
             <div
               className="relative overflow-hidden rounded border border-rule bg-ink cursor-move"
@@ -275,7 +249,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
                 className="w-full h-full block select-none"
               />
 
-              {/* Viewport Grid Lines for Framing */}
               <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-white/20">
                 <div className="border-r border-b border-white/20" />
                 <div className="border-r border-b border-white/20" />
@@ -288,16 +261,13 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
                 <div />
               </div>
 
-              {/* Helper badge */}
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-ink text-paper text-[10px] px-2 py-0.5 rounded border border-rule pointer-events-none">
                 Drag to frame
               </div>
             </div>
           </div>
 
-          {/* Controls & Previews */}
           <div className="flex-1 w-full space-y-4">
-            {/* Zoom Slider */}
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-ink mb-1.5">
                 <span className="flex items-center gap-1.5">
@@ -321,7 +291,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
               </div>
             </div>
 
-            {/* Change Image Button */}
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 px-3 py-1.5 rounded border border-rule hover:bg-rule/40 text-xs font-semibold text-ink cursor-pointer">
                 <ImageIcon className="w-4 h-4" />
@@ -337,7 +306,6 @@ export default function CoverCropper({ initialFile = null, onCropComplete, onCan
               </label>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-3 pt-2">
               <Button
                 type="button"

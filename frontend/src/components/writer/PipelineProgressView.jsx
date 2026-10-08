@@ -44,7 +44,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
     }
   };
 
-  // Auto-publish once pagination is complete if autoPublish was initiated from publish flow
   React.useEffect(() => {
     if (autoPublish && isPaginated && !publishing && !publishSuccess && book?.status !== 'published') {
       handlePublish();
@@ -59,7 +58,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 font-body text-ink">
-      {/* Top Banner & Status */}
       <div className="bg-paper rounded border border-rule p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-rule">
           <div>
@@ -77,7 +75,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
             </p>
           </div>
 
-          {/* Action CTAs */}
             {!publishSuccess && book?.status !== 'published' && (
               <div className="flex items-center gap-2">
                 <Link to="/w/books">
@@ -131,7 +128,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
             )}
           </div>
 
-        {/* Overall Progress Bar */}
         <div className="pt-6 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold">
             <span className="text-ink">Pipeline Progress</span>
@@ -145,7 +141,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
           </div>
         </div>
 
-        {/* Feedback / Errors */}
         {publishError && (
           <div className="mt-4 p-3 rounded border border-danger text-danger text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -160,7 +155,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
         )}
       </div>
 
-      {/* 10 Pipeline Stages Grid */}
       <div className="bg-paper rounded border border-rule p-6">
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-rule">
           <div>
@@ -219,7 +213,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
                     </div>
                   </div>
 
-                  {/* Status Indicator */}
                   <div className="shrink-0 ml-2">
                     {isCompleted ? (
                       <span className="text-success text-xs font-bold">Done</span>
@@ -245,7 +238,6 @@ export default function PipelineProgressView({ book, documentId, onPublished, au
         </div>
       </div>
 
-      {/* Footer Navigation */}
       <div className="flex justify-between items-center text-xs text-muted px-1">
         <Link to="/w/books" className="hover:text-ink hover:underline flex items-center gap-1 font-bold">
           ← Back to My Books

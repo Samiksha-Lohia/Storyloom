@@ -24,7 +24,6 @@ export function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [loadingCatalogue, setLoadingCatalogue] = useState(false);
 
-  // Load trending and continue reading
   useEffect(() => {
     let isMounted = true;
     async function loadContent() {
@@ -58,7 +57,6 @@ export function LandingPage() {
     };
   }, [user]);
 
-  // Load single unified catalogue
   const fetchCatalogue = useCallback(async (page = 1, append = false, genre = '', search = '') => {
     try {
       setLoadingCatalogue(true);
@@ -123,9 +121,6 @@ export function LandingPage() {
   );
 }
 
-// -------------------------------------------------------------
-// LOGGED-IN HOME FEED (Reader & Publisher Home)
-// -------------------------------------------------------------
 function LoggedInHomeFeed({
   user,
   trending,
@@ -143,7 +138,6 @@ function LoggedInHomeFeed({
 }) {
   return (
     <div className="space-y-10 pb-16">
-      {/* Welcome Banner */}
       <section className="bg-paper border border-rule rounded p-6 sm:p-8">
         <div className="max-w-2xl space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-muted block">
@@ -158,7 +152,6 @@ function LoggedInHomeFeed({
         </div>
       </section>
 
-      {/* 3.1 Continue Reading Shelf (Real unfinished books) */}
       <section>
         <div className="flex items-center justify-between mb-4 border-b border-rule pb-2">
           <div>
@@ -208,7 +201,6 @@ function LoggedInHomeFeed({
                       by {book.writer?.name || 'Author'}
                     </p>
 
-                    {/* Progress Bar */}
                     <div className="space-y-1 mb-2">
                       <div className="flex justify-between text-[11px] text-muted">
                         <span>Page {currentPage} of {totalPages}</span>
@@ -243,7 +235,6 @@ function LoggedInHomeFeed({
         )}
       </section>
 
-      {/* 3.2 Trending Now (Equal size cards via shared BookRow) */}
       <BookRow
         title="Trending Right Now"
         subtitle="Stories with active reader engagement"
@@ -258,7 +249,6 @@ function LoggedInHomeFeed({
         }
       />
 
-      {/* 3.3 Single Unified Catalogue (Replaces separate category sections) */}
       <section className="space-y-4 pt-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rule pb-3">
           <div>
@@ -268,7 +258,6 @@ function LoggedInHomeFeed({
             <p className="text-xs text-muted">Browse all published stories</p>
           </div>
 
-          {/* Search & Genre Filters */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -297,7 +286,6 @@ function LoggedInHomeFeed({
           </div>
         </div>
 
-        {/* Catalogue Grid */}
         <BookRow
           books={catalogue}
           loading={loadingCatalogue && catalogue.length === 0}
@@ -305,7 +293,6 @@ function LoggedInHomeFeed({
           emptyMessage="No stories found matching your filter criteria."
         />
 
-        {/* Load More Button */}
         {cataloguePage < catalogueTotalPages && (
           <div className="pt-4 flex justify-center">
             <Button
@@ -331,13 +318,9 @@ function LoggedInHomeFeed({
   );
 }
 
-// -------------------------------------------------------------
-// GUEST LANDING PAGE (Landing page design stays exactly as is)
-// -------------------------------------------------------------
 function GuestLandingPage({ trending, loading }) {
   return (
     <div className="space-y-12 pb-16">
-      {/* 1. HERO SECTION */}
       <section className="pt-6 sm:pt-10 pb-8 border-b border-rule">
         <div className="max-w-3xl space-y-4">
           <span className="text-xs font-bold uppercase tracking-wider text-muted block">
@@ -362,7 +345,6 @@ function GuestLandingPage({ trending, loading }) {
         </div>
       </section>
 
-      {/* 2. TRENDING NOW CAROUSEL (Strict equal card slots via shared BookRow) */}
       <BookRow
         title="Trending Stories"
         subtitle="Weekly active stories"
@@ -377,7 +359,6 @@ function GuestLandingPage({ trending, loading }) {
         }
       />
 
-      {/* 3. GENRE TILES: Outline only */}
       <section>
         <div className="mb-4 border-b border-rule pb-2">
           <h2 className="font-bold text-xl text-ink">

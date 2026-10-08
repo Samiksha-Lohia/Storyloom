@@ -39,7 +39,6 @@ export function PublisherWishlistPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6">
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-rule text-muted flex items-center gap-1.5">
@@ -55,7 +54,6 @@ export function PublisherWishlistPage() {
         </p>
       </div>
 
-      {/* Grid of Wishlisted Books */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
@@ -88,7 +86,6 @@ export function PublisherWishlistPage() {
                 className="bg-paper border border-rule rounded overflow-hidden flex flex-col justify-between"
               >
                 <div>
-                  {/* Cover */}
                   <div className="relative aspect-[2/3] bg-paper overflow-hidden border-b border-rule">
                     {book.coverUrl ? (
                       <img
@@ -103,7 +100,6 @@ export function PublisherWishlistPage() {
                       </div>
                     )}
 
-                    {/* Remove button */}
                     <button
                       onClick={() => handleRemove(bookId)}
                       title="Remove from wishlist"
@@ -112,7 +108,6 @@ export function PublisherWishlistPage() {
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    {/* Genre */}
                     <div className="absolute bottom-3 left-3 z-10">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-ink text-paper">
                         {book.genre || 'General'}
@@ -120,7 +115,6 @@ export function PublisherWishlistPage() {
                     </div>
                   </div>
 
-                  {/* Details */}
                   <div className="p-4 space-y-2">
                     <h3 className="font-bold text-ink text-sm line-clamp-1">
                       {book.title}
@@ -138,7 +132,6 @@ export function PublisherWishlistPage() {
                       </div>
                     )}
 
-                    {/* Traction quick chips */}
                     <div className="flex items-center justify-between text-xs pt-2 border-t border-rule text-muted">
                       <span>★ {Number(book.stats?.ratingAvg || 0).toFixed(1)}</span>
                       <span>{book.stats?.reads || 0} reads</span>
@@ -147,7 +140,6 @@ export function PublisherWishlistPage() {
                   </div>
                 </div>
 
-                {/* Footer buttons */}
                 <div className="p-4 pt-0 space-y-2">
                   <Link
                     to={`/p/book/${bookId}`}
@@ -170,7 +162,6 @@ export function PublisherWishlistPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6">
           <button

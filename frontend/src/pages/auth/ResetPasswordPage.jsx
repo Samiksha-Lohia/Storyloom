@@ -46,12 +46,10 @@ export function ResetPasswordPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-6">
       <div className="w-full max-w-4xl bg-paper rounded border border-rule overflow-hidden grid grid-cols-1 md:grid-cols-2 p-3 md:p-4 gap-4">
-        {/* Left Tinted Collage Panel */}
         <div className="h-full">
           <AuthCollage heading="Password Reset" />
         </div>
 
-        {/* Right Form Panel */}
         <div className="flex flex-col justify-center px-6 py-8 md:px-10">
           <div className="mb-6">
             <Link

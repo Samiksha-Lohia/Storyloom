@@ -9,7 +9,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Filter States
   const [selectedCharacter, setSelectedCharacter] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
   const [sceneRangeFrom, setSceneRangeFrom] = useState('');
@@ -62,7 +61,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
         <p className="text-xs text-muted mt-0.5">Ask questions about your story in plain English, powered by AI vector embeddings.</p>
       </div>
 
-      {/* Search Input bar */}
       <form onSubmit={handleSearchSubmit} className="space-y-4">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -101,10 +99,8 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
           </button>
         </div>
 
-        {/* Collapsible Filters box */}
         {showFilters && (
           <div className="bg-paper border border-rule rounded p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold">
-            {/* Character filter */}
             <div className="flex flex-col gap-1.5">
               <span className="text-muted">Speaker / Character:</span>
               <select
@@ -119,7 +115,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
               </select>
             </div>
 
-            {/* Mood filter */}
             <div className="flex flex-col gap-1.5">
               <span className="text-muted">Scene Mood:</span>
               <select
@@ -136,7 +131,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
               </select>
             </div>
 
-            {/* Scene Range from */}
             <div className="flex flex-col gap-1.5">
               <span className="text-muted">Scene Range (From):</span>
               <input
@@ -149,7 +143,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
               />
             </div>
 
-            {/* Scene Range to */}
             <div className="flex flex-col gap-1.5">
               <span className="text-muted">Scene Range (To):</span>
               <input
@@ -165,7 +158,6 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
         )}
       </form>
 
-      {/* Search results */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted text-sm">
           Loading…
@@ -205,12 +197,10 @@ export default function SearchTab({ documentId, source, charactersList = [], onN
                       </span>
                     </div>
 
-                    {/* Result Content */}
                     <p className="text-sm text-ink leading-relaxed">
                       {res.text}
                     </p>
 
-                    {/* Meta info / Action linking */}
                     {res.sceneNumber && (
                       <div className="flex items-center justify-between pt-2 border-t border-rule mt-1">
                         <span className="text-xs font-semibold text-muted">

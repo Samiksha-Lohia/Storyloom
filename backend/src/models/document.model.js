@@ -7,7 +7,7 @@ const documentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true, // Index for listing a user's library efficiently
+      index: true,
     },
     bookId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -58,7 +58,7 @@ const documentSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: { createdAt: 'uploadedAt', updatedAt: false }, // mapping uploadedAt to createdAt
+    timestamps: { createdAt: 'uploadedAt', updatedAt: false },
   }
 );
 

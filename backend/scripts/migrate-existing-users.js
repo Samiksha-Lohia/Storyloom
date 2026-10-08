@@ -17,10 +17,8 @@ async function migrateExistingUsers() {
     for (const user of users) {
       let needsSave = false;
 
-      // Ensure username exists
       if (!user.username) {
         let candidate = generateUsername(user.name);
-        // Check uniqueness
         let exists = await User.findOne({ username: candidate, _id: { $ne: user._id } });
         while (exists) {
           candidate = generateUsername(user.name);
@@ -30,13 +28,11 @@ async function migrateExistingUsers() {
         needsSave = true;
       }
 
-      // Existing single-user app users become writers
       if (!user.role || user.role === 'reader') {
         user.role = USER_ROLES.WRITER;
         needsSave = true;
       }
 
-      // Ensure status is active
       if (!user.status) {
         user.status = USER_STATUSES.ACTIVE;
         needsSave = true;

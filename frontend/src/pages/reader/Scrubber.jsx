@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
-/**
- * Scrubber
- * Bottom reading progress scrubber with draggable slider, percentage,
- * scene marker ticks from GET /books/:bookId/scene-markers, and jump-to-page input.
- */
 export default function Scrubber({
   currentPage,
   pageCount,
@@ -66,7 +61,6 @@ export default function Scrubber({
       className={`fixed bottom-0 inset-x-0 z-40 border-t px-4 sm:px-8 py-3 ${styles.barBg}`}
     >
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Current Page & Percentage */}
         <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
           <span>
             Page <strong className="font-bold">{currentPage}</strong> of {pageCount}
@@ -75,9 +69,7 @@ export default function Scrubber({
           <span className="text-accent font-bold">{percentage}% read</span>
         </div>
 
-        {/* Center: Draggable Track with Scene Markers */}
         <div className="flex-1 relative flex items-center mx-2">
-          {/* Custom Track Background */}
           <div className={`absolute inset-x-0 h-1 rounded overflow-hidden ${styles.trackBg}`}>
             <div
               className="h-full bg-accent"
@@ -85,7 +77,6 @@ export default function Scrubber({
             />
           </div>
 
-          {/* Scene Marker Ticks along Track */}
           {sceneMarkers.map((markerPage) => {
             if (markerPage < 1 || markerPage > pageCount) return null;
             const leftPercent = ((markerPage - 1) / Math.max(1, pageCount - 1)) * 100;
@@ -102,7 +93,6 @@ export default function Scrubber({
             );
           })}
 
-          {/* Actual Input Range */}
           <input
             type="range"
             min={1}
@@ -114,7 +104,6 @@ export default function Scrubber({
           />
         </div>
 
-        {/* Right: Quick Jump to Page Form */}
         <form onSubmit={handleJumpSubmit} className="flex items-center gap-2 shrink-0">
           <input
             type="number"

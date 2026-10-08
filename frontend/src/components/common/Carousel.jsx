@@ -49,7 +49,6 @@ export default function Carousel({
 
   return (
     <section className={`relative w-full ${className}`}>
-      {/* Header with Title and Desktop Nav Buttons */}
       {hasHeader && (
         <div className="flex items-center justify-between mb-4 border-b border-rule pb-2">
           <div>
@@ -66,7 +65,6 @@ export default function Carousel({
           <div className="flex items-center gap-2">
             {actions || viewAllLink}
 
-            {/* Desktop Carousel Controls */}
             <div className="hidden sm:flex items-center gap-1.5 ml-2">
               <button
                 type="button"
@@ -91,7 +89,6 @@ export default function Carousel({
         </div>
       )}
 
-      {/* Floating side arrows if no header */}
       {!hasHeader && (
         <>
           <button
@@ -115,7 +112,6 @@ export default function Carousel({
         </>
       )}
 
-      {/* Scrollable Track */}
       <div
         ref={scrollRef}
         onScroll={checkScroll}
@@ -133,5 +129,4 @@ export default function Carousel({
 }
 
 export { Carousel };
-
 

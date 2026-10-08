@@ -16,10 +16,6 @@ import ClassicTemplate from './ClassicTemplate';
 import ShowcaseTemplate from './ShowcaseTemplate';
 import NotebookTemplate from './NotebookTemplate';
 
-/**
- * Shared data and state container for book pages and live previews.
- * Wraps around the 3 layout wrappers (Classic, Showcase, Notebook) with --accent token.
- */
 export function BookPageData({
   book,
   relatedBooks = [],
@@ -35,14 +31,12 @@ export function BookPageData({
 
   const bookId = book?.id || book?._id;
 
-  // Effective template and accent (safe fallback: 'accent' -> 'classic')
   let templateName = (forcedTemplate || book?.template || 'classic').toLowerCase();
   if (templateName === 'accent') {
     templateName = 'classic';
   }
   const accent = forcedAccent || book?.accent || DEFAULT_ACCENT;
 
-  // Load library progress if not in preview mode
   useEffect(() => {
     let isMounted = true;
     async function loadLibraryProgress() {
@@ -53,7 +47,6 @@ export function BookPageData({
           setLibraryEntry(entry);
         }
       } catch (err) {
-        // Not in library yet
       }
     }
     loadLibraryProgress();
@@ -156,7 +149,6 @@ export function BookPageData({
         </Link>
       )}
 
-      {/* Library Bookmark Button */}
       <div className="relative group">
         <button
           type="button"
@@ -384,7 +376,6 @@ export function BookPageData({
     user,
   };
 
-  // Whoever reads a book (reader, writer, publisher, admin) sees the Classic template
   return <ClassicTemplate {...dataProps} />;
 }
 

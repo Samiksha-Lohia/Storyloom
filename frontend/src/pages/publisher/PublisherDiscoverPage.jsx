@@ -56,7 +56,6 @@ export function PublisherDiscoverPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   
-  // Filters
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [minRating, setMinRating] = useState('');
   const [completionMin, setCompletionMin] = useState('');
@@ -64,7 +63,6 @@ export function PublisherDiscoverPage() {
   const [onlyWishlisted, setOnlyWishlisted] = useState(false);
   const [sort, setSort] = useState('rating');
 
-  // Load continue reading and trending shelves on mount
   useEffect(() => {
     let isMounted = true;
     async function loadShelves() {
@@ -79,7 +77,6 @@ export function PublisherDiscoverPage() {
             setContinueReading(libraryRes.items);
           }
         } catch {
-          // Non-blocking
         }
       } catch (err) {
         console.error('Failed to load discovery shelves:', err);
@@ -132,7 +129,6 @@ export function PublisherDiscoverPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rule pb-6">
         <div>
           <div className="flex items-center gap-2">
@@ -148,7 +144,6 @@ export function PublisherDiscoverPage() {
           </p>
         </div>
 
-        {/* Wishlist quick toggle & Sort */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -180,7 +175,6 @@ export function PublisherDiscoverPage() {
         </div>
       </div>
 
-      {/* ─── Continue Reading Shelf (Unfinished Books) ────────────────────────── */}
       {continueReading.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-2">
@@ -244,7 +238,6 @@ export function PublisherDiscoverPage() {
         </section>
       )}
 
-      {/* ─── Trending Now Shelf ────────────────────────────────────────────── */}
       {trendingBooks.length > 0 && (
         <BookRow
           title="Trending Now"
@@ -255,15 +248,12 @@ export function PublisherDiscoverPage() {
         />
       )}
 
-      {/* ─── Unified Catalogue Section ──────────────────────────────────────── */}
       <section className="space-y-6 pt-4">
         <div className="flex items-center justify-between border-b border-rule pb-2">
           <h2 className="text-xl font-bold text-ink">Catalogue</h2>
         </div>
 
-      {/* Search and Filters Bar */}
       <div className="bg-paper border border-rule rounded p-4 md:p-5 space-y-4">
-        {/* Search Input */}
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-muted absolute left-3.5 top-3" />
@@ -283,9 +273,7 @@ export function PublisherDiscoverPage() {
           </button>
         </form>
 
-        {/* Filter Chips Rows */}
         <div className="space-y-3 pt-2 border-t border-rule text-xs">
-          {/* Genre Chips */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <span className="text-muted font-bold shrink-0">Genre:</span>
             {GENRES.map((g) => (
@@ -306,9 +294,7 @@ export function PublisherDiscoverPage() {
             ))}
           </div>
 
-          {/* Rating, Completion, Length Dropdowns / Chips */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Rating Filter */}
             <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
               <Star className="w-3.5 h-3.5 text-accent" />
               <select
@@ -327,7 +313,6 @@ export function PublisherDiscoverPage() {
               </select>
             </div>
 
-            {/* Completion Filter */}
             <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
               <CheckCircle className="w-3.5 h-3.5 text-success" />
               <select
@@ -346,7 +331,6 @@ export function PublisherDiscoverPage() {
               </select>
             </div>
 
-            {/* Length Bucket Filter */}
             <div className="flex items-center gap-1.5 bg-paper border border-rule rounded px-2.5 py-1">
               <Layers className="w-3.5 h-3.5 text-muted" />
               <select
@@ -384,7 +368,6 @@ export function PublisherDiscoverPage() {
         </div>
       </div>
 
-      {/* Book Grid */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
@@ -408,7 +391,6 @@ export function PublisherDiscoverPage() {
                 className="bg-paper border border-rule rounded overflow-hidden flex flex-col justify-between"
               >
                 <div>
-                  {/* Cover & Overlay */}
                   <div className="relative aspect-[2/3] bg-paper overflow-hidden border-b border-rule">
                     {book.coverUrl ? (
                       <img
@@ -423,7 +405,6 @@ export function PublisherDiscoverPage() {
                       </div>
                     )}
 
-                    {/* Star Wishlist Button in Top-Right Corner */}
                     <div className="absolute top-3 right-3 z-10">
                       <StarWishlistButton
                         bookId={bookId}
@@ -432,7 +413,6 @@ export function PublisherDiscoverPage() {
                       />
                     </div>
 
-                    {/* Genre badge */}
                     <div className="absolute bottom-3 left-3 z-10">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-ink text-paper">
                         {book.genre || 'General'}
@@ -440,13 +420,11 @@ export function PublisherDiscoverPage() {
                     </div>
                   </div>
 
-                  {/* Details */}
                   <div className="p-4 space-y-2">
                     <h3 className="font-bold text-ink text-sm line-clamp-1">
                       {book.title}
                     </h3>
 
-                    {/* Author link */}
                     {author && (
                       <div className="text-xs text-muted">
                         by{' '}
@@ -459,7 +437,6 @@ export function PublisherDiscoverPage() {
                       </div>
                     )}
 
-                    {/* Metric Chips */}
                     <div className="grid grid-cols-3 gap-1 pt-2 border-t border-rule text-center text-[11px]">
                       <div className="p-1.5 bg-paper border border-rule rounded">
                         <span className="block text-muted text-[9px] uppercase font-bold">Rating</span>
@@ -483,7 +460,6 @@ export function PublisherDiscoverPage() {
                   </div>
                 </div>
 
-                {/* Card Footer: View Pitch Deck */}
                 <div className="p-4 pt-0">
                   <Link
                     to={`/p/book/${bookId}`}
@@ -499,7 +475,6 @@ export function PublisherDiscoverPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6">
           <button

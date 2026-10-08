@@ -18,8 +18,7 @@ export function AdminBooksPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
-  // Moderation Dialog State
-  const [activeModal, setActiveModal] = useState(null); // { action: 'suspend' | 'restore', book }
+  const [activeModal, setActiveModal] = useState(null);
   const [actionReason, setActionReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -92,7 +91,6 @@ export function AdminBooksPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -114,7 +112,6 @@ export function AdminBooksPage() {
         </span>
       </div>
 
-      {/* Search & Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -150,7 +147,6 @@ export function AdminBooksPage() {
         </div>
       </div>
 
-      {/* Books Table */}
       <div className="bg-paper border border-rule rounded overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -187,7 +183,6 @@ export function AdminBooksPage() {
 
                   return (
                     <tr key={b._id} className="hover:bg-rule/10">
-                      {/* Cover & Title */}
                       <td className="p-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-12 bg-paper rounded overflow-hidden shrink-0 border border-rule aspect-2/3">
@@ -214,7 +209,6 @@ export function AdminBooksPage() {
                         </div>
                       </td>
 
-                      {/* Author */}
                       <td className="p-3">
                         <div className="font-semibold text-ink">{author.name || 'Author'}</div>
                         <div className="text-[11px] text-muted font-mono">
@@ -222,25 +216,20 @@ export function AdminBooksPage() {
                         </div>
                       </td>
 
-                      {/* Genre */}
                       <td className="p-3 font-medium text-muted">{b.genre || 'General'}</td>
 
-                      {/* Status */}
                       <td className="p-3">{getStatusBadge(b.status)}</td>
 
-                      {/* Reads */}
                       <td className="p-3 font-mono font-semibold text-ink">
                         {b.stats?.reads?.toLocaleString() || 0}
                       </td>
 
-                      {/* Rating */}
                       <td className="p-3">
                         <span className="text-ink font-semibold flex items-center gap-1">
                           ★ {Number(b.stats?.ratingAvg || 0).toFixed(1)}
                         </span>
                       </td>
 
-                      {/* Reports */}
                       <td className="p-3">
                         {b.reportsCount > 0 ? (
                           <span className="px-1.5 py-0.5 border border-danger text-danger font-bold rounded text-[10px]">
@@ -251,7 +240,6 @@ export function AdminBooksPage() {
                         )}
                       </td>
 
-                      {/* Actions */}
                       <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
@@ -295,7 +283,6 @@ export function AdminBooksPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="p-3 border-t border-rule flex justify-between items-center text-xs">
             <span className="text-muted">
@@ -321,7 +308,6 @@ export function AdminBooksPage() {
         )}
       </div>
 
-      {/* Moderation Dialog Modal */}
       {activeModal && (
         <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
           <div

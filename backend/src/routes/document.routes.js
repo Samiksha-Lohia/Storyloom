@@ -10,13 +10,8 @@ import { DocumentDto } from '../dtos/document.dto.js';
 
 const router = Router();
 
-// All document routes require authentication
 router.use(authenticate);
 
-/**
- * GET /api/documents
- * Returns all documents belonging to the authenticated user.
- */
 router.get('/', async (req, res, next) => {
   try {
     const page = req.query.page ? parseInt(req.query.page, 10) : undefined;
@@ -33,10 +28,6 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/**
- * POST /api/documents
- * Uploads a new story document. Expects multipart/form-data with field "file".
- */
 router.post('/',
    uploadSingle, async (req, res, next) => {
   try {
@@ -44,17 +35,12 @@ router.post('/',
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
     const doc = await documentService.uploadDocument(req.user.id, req.file);
-    // documentService.uploadDocument already returns a DocumentDto response
     sendCreated(res, doc, 'Document uploaded and processing started.');
   } catch (err) {
     next(err);
   }
 });
 
-/**
- * GET /api/documents/:documentId
- * Returns metadata for a single document.
- */
 router.get(
   '/:documentId',
   validate(documentIdParamSchema),
@@ -68,10 +54,6 @@ router.get(
   }
 );
 
-/**
- * GET /api/documents/:documentId/download
- * Secure download endpoint returning local files or redirecting to remote URLs.
- */
 router.get(
   '/:documentId/download',
   validate(documentIdParamSchema),
@@ -89,10 +71,6 @@ router.get(
   }
 );
 
-/**
- * PATCH /api/documents/:documentId
- * Updates the document's title.
- */
 router.patch(
   '/:documentId',
   validate(documentIdParamSchema),
@@ -112,10 +90,6 @@ router.patch(
   },
 );
 
-/**
- * DELETE /api/documents/:documentId
- * Deletes a document and all associated analysis data.
- */
 router.delete(
   '/:documentId',
   validate(documentIdParamSchema),

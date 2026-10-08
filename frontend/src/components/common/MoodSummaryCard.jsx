@@ -14,7 +14,6 @@ export default function MoodSummaryCard({ moodSummary, className = '' }) {
 
   return (
     <div className={`bg-paper border border-rule rounded p-4 space-y-4 ${className}`}>
-      {/* Header with tone badge */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-ink" />
@@ -25,7 +24,6 @@ export default function MoodSummaryCard({ moodSummary, className = '' }) {
         </span>
       </div>
 
-      {/* Dominant Emotions Progress */}
       {dominantEmotions.length > 0 ? (
         <div className="space-y-2">
           <p className="text-[11px] font-bold text-muted uppercase tracking-wider">
@@ -52,7 +50,6 @@ export default function MoodSummaryCard({ moodSummary, className = '' }) {
         <p className="text-xs text-muted italic">No primary emotions recorded.</p>
       )}
 
-      {/* Intensity Range Meter */}
       <div className="pt-2 border-t border-rule flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 text-muted">
           <Flame className="w-4 h-4 text-muted" />

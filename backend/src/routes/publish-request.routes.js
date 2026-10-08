@@ -10,7 +10,6 @@ import { USER_ROLES } from '../constants/user-roles.js';
 
 const router = Router();
 
-// Create publish request: approved publisher only
 router.post(
   '/',
   authenticate,
@@ -20,7 +19,6 @@ router.post(
   publishRequestController.create
 );
 
-// List publish requests: publisher, writer, or admin
 router.get(
   '/',
   authenticate,
@@ -29,7 +27,6 @@ router.get(
   publishRequestController.list
 );
 
-// Get publish request by ID: participants or admin
 router.get(
   '/:id',
   authenticate,
@@ -38,7 +35,6 @@ router.get(
   publishRequestController.getById
 );
 
-// Update request status (accept, decline, withdraw, close)
 router.patch(
   '/:id',
   authenticate,
@@ -47,7 +43,6 @@ router.patch(
   publishRequestController.updateStatus
 );
 
-// Blocking endpoints for writers
 router.get(
   '/blocks/all',
   authenticate,

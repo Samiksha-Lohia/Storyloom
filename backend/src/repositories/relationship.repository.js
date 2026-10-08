@@ -11,8 +11,6 @@ class RelationshipRepository extends BaseRepository {
   }
 
   async findPairRelationship(documentId, charAId, charBId, options = {}) {
-    // Relationships are stored such that characterAId & characterBId are unique.
-    // Query check handles characterAId and characterBId bidirectionally.
     return this.findOne({
       documentId,
       $or: [

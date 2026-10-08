@@ -3,10 +3,6 @@ import config from '../config/env.js';
 import { UnauthorizedError } from '../utilities/custom-errors.js';
 import { recordActiveUser } from '../services/event.service.js';
 
-/**
- * Verifies the Bearer JWT access token in the Authorization header.
- * Attaches `req.user = { id, email, plan, role, status }` on success.
- */
 const authenticate = (req, _res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -25,21 +21,15 @@ const authenticate = (req, _res, next) => {
       status: payload.status,
     };
 
-    // Record active event at most once per user per day (Redis SET NX guarded)
     recordActiveUser(req.user.id).catch(() => {});
 
     next();
   } catch (err) {
     if (err instanceof UnauthorizedError) return next(err);
-    // JsonWebTokenError / TokenExpiredError
     next(new UnauthorizedError('Invalid or expired access token.'));
   }
 };
 
-/**
- * Optional authentication: attaches req.user if valid token is provided,
- * but allows unauthenticated requests to proceed with req.user = null.
- */
 const authenticateOptional = (req, _res, next) => {
   try {
     const authHeader = req.headers.authorization;

@@ -1,7 +1,6 @@
 import config from '../config/env.js';
 import logger from '../utilities/logger.js';
 
-// Configuration maps to distribute the stages across the 3 OpenRouter keys
 const STAGE_CONFIG_MAP = {
   scenes: { keyIndex: 1, modelIndex: 1 },
   timeline: { keyIndex: 1, modelIndex: 1 },
@@ -10,10 +9,6 @@ const STAGE_CONFIG_MAP = {
   relationships: { keyIndex: 3, modelIndex: 3 },
 };
 
-/**
- * Gets the OpenRouter API Key and Model configured for a specific stage.
- * Defaults to configuration set 1.
- */
 const getStageConfig = (stage) => {
   const cfg = STAGE_CONFIG_MAP[stage] || { keyIndex: 1, modelIndex: 1 };
   const apiKey = config.ai.openrouter[`apiKey${cfg.keyIndex}`];
@@ -21,10 +16,6 @@ const getStageConfig = (stage) => {
   return { apiKey, model, keyIndex: cfg.keyIndex, modelIndex: cfg.modelIndex };
 };
 
-/**
- * Helper function to execute a function with exponential backoff.
- * Retries up to 3 times for transient failures.
- */
 const retryWithBackoff = async (fn, attempts = 3, initialDelay = 1000) => {
   let delay = initialDelay;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -68,33 +59,24 @@ const retryWithBackoff = async (fn, attempts = 3, initialDelay = 1000) => {
   }
 };
 
-/**
- * Extracts and parses a JSON object robustly from a text response.
- * Handles markdown code fences, extra text, and unmatched leading/trailing braces.
- */
 export const parseRobustJSON = (text) => {
   if (!text) return null;
   const trimmed = text.trim();
   
-  // Try direct parsing first
   try {
     return JSON.parse(trimmed);
   } catch (err) {
-    // Ignore and proceed to extraction
   }
   
-  // Extract JSON from markdown code blocks (e.g. ```json ... ``` or ``` ... ```)
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
   const match = trimmed.match(codeBlockRegex);
   if (match) {
     try {
       return JSON.parse(match[1].trim());
     } catch (err) {
-      // Ignore and try brace matching
     }
   }
   
-  // Find first '{' or '[' and last '}' or ']'
   const firstBrace = trimmed.indexOf('{');
   const lastBrace = trimmed.lastIndexOf('}');
   const firstBracket = trimmed.indexOf('[');
@@ -116,21 +98,12 @@ export const parseRobustJSON = (text) => {
       const jsonStr = trimmed.slice(startIdx, endIdx + 1);
       return JSON.parse(jsonStr);
     } catch (err) {
-      // Ignore
     }
   }
   
   throw new SyntaxError(`Failed to parse robust JSON from response: ${text.slice(0, 100)}...`);
 };
 
-/**
- * Generates structured JSON from a text prompt via OpenRouter.
- *
- * @param {string} prompt - Prompt to pass to the model
- * @param {object} [schemaHint] - Optional JSON schema object or structural hint
- * @param {string} [stage] - Optional pipeline stage to decide key/model mapping
- * @returns {Promise<object>} Parsed JSON response
- */
 export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
   const { apiKey, model, keyIndex, modelIndex } = getStageConfig(stage);
 
@@ -138,7 +111,6 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
     throw new Error(`OpenRouter API Key ${keyIndex} is not configured. Please check your environment variables.`);
   }
 
-  // Support groq model mapping or fallback
   let activeModel = model || 'meta-llama/llama-3.3-70b-instruct';
   if (activeModel.trim().toLowerCase() === 'groq' || activeModel.toLowerCase().includes('groq')) {
     activeModel = 'meta-llama/llama-3.3-70b-instruct';
@@ -161,7 +133,6 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
       max_tokens: effectiveMaxTokens,
     };
 
-    // If model supports JSON format, tell it to output a JSON object
     payload.response_format = { type: 'json_object' };
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -185,7 +156,6 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
         statusError = new Error(errMsg);
         statusError.status = response.status;
 
-        // If credits or max_tokens is exceeded, automatically switch to free model or lower tokens for retry
         if (errMsg.includes('requires more credits') || errMsg.includes('max_tokens')) {
           if (activeModel !== 'openrouter/free') {
             logger.warn(`OpenRouter model "${activeModel}" credit exceeded, switching to "openrouter/free"`);

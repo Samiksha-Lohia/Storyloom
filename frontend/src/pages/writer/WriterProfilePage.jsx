@@ -57,7 +57,6 @@ export function WriterProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8 pb-20 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6">
         <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border border-rule text-muted">
           Writer Studio
@@ -70,7 +69,6 @@ export function WriterProfilePage() {
         </p>
       </div>
 
-      {/* Alerts */}
       {successMsg && (
         <div className="bg-paper border border-success text-success rounded p-4 flex items-center gap-3 text-xs">
           <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
@@ -86,7 +84,6 @@ export function WriterProfilePage() {
       )}
 
       <form onSubmit={handleSaveProfile} className="space-y-8">
-        {/* Author Bio Card */}
         <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
           <div className="flex items-center gap-3 border-b border-rule pb-4">
             <UserIcon className="w-4 h-4 text-accent" />
@@ -138,7 +135,6 @@ export function WriterProfilePage() {
           </div>
         </div>
 
-        {/* Default Template Setting Card */}
         <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
           <div className="flex items-center gap-3 border-b border-rule pb-4">
             <Layout className="w-4 h-4 text-accent" />
@@ -197,7 +193,6 @@ export function WriterProfilePage() {
           </div>
         </div>
 
-        {/* Save Actions */}
         <div className="flex justify-end">
           <Button
             type="submit"

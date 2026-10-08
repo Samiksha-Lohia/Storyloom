@@ -21,7 +21,6 @@ export const PUBLIC_ROUTES = [];
 
 const router = Router();
 
-// Per-user rate limiter for reading progress updates (120 updates per minute)
 const progressLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 120,
@@ -37,10 +36,8 @@ const progressLimiter = rateLimit({
   },
 });
 
-// All /me routes require authentication and active status
 router.use(authenticate, requireActive);
 
-// Allowed roles for library and reader settings: reader, publisher, writer, admin
 const ALLOWED_ROLES = [
   USER_ROLES.READER,
   USER_ROLES.PUBLISHER,
@@ -48,16 +45,8 @@ const ALLOWED_ROLES = [
   USER_ROLES.ADMIN,
 ];
 
-/**
- * PUT /api/me/mature-ack
- * Acknowledges 18+ mature content warning
- */
 router.put('/mature-ack', authorize(...ALLOWED_ROLES), MeController.matureAck);
 
-/**
- * PATCH /api/me/profile
- * Updates user profile (name, bio, defaultTemplate)
- */
 router.patch(
   '/profile',
   authorize(...ALLOWED_ROLES),
@@ -65,10 +54,6 @@ router.patch(
   MeController.updateProfile
 );
 
-/**
- * PATCH /api/me/settings
- * Updates reader typography and theme settings
- */
 router.patch(
   '/settings',
   authorize(...ALLOWED_ROLES),
@@ -76,10 +61,6 @@ router.patch(
   MeController.updateSettings
 );
 
-/**
- * GET /api/me/library
- * Retrieves reader's reading list
- */
 router.get(
   '/library',
   authorize(...ALLOWED_ROLES),
@@ -87,10 +68,6 @@ router.get(
   MeController.getLibrary
 );
 
-/**
- * GET /api/me/reading-list
- * Alias for /library
- */
 router.get(
   '/reading-list',
   authorize(...ALLOWED_ROLES),
@@ -98,20 +75,12 @@ router.get(
   MeController.getLibrary
 );
 
-/**
- * GET /api/me/library/:bookId
- * Retrieves specific book progress and bookmarks
- */
 router.get(
   '/library/:bookId',
   authorize(...ALLOWED_ROLES),
   MeController.getLibraryBook
 );
 
-/**
- * PUT /api/me/library/:bookId
- * Updates reading progress and bookmarks (rate-limited)
- */
 router.put(
   '/library/:bookId',
   authorize(...ALLOWED_ROLES),
@@ -120,30 +89,14 @@ router.put(
   MeController.updateLibraryBook
 );
 
-/**
- * DELETE /api/me/library/:bookId
- * Removes book from reader's reading list
- */
 router.delete(
   '/library/:bookId',
   authorize(...ALLOWED_ROLES),
   MeController.deleteLibraryBook
 );
 
-// ─── Publisher Wishlist Routes ───────────────────────────────────────────────
-
-/**
- * GET /api/me/wishlist
- * Roles: approved publisher
- * Lists wishlisted books for the publisher
- */
 router.get('/wishlist', requireApprovedPublisher, wishlistController.getWishlist);
 
-/**
- * GET /api/me/wishlist/:bookId
- * Roles: approved publisher
- * Checks whether a specific book is wishlisted
- */
 router.get(
   '/wishlist/:bookId',
   requireApprovedPublisher,
@@ -151,11 +104,6 @@ router.get(
   wishlistController.getWishlistBook
 );
 
-/**
- * PUT /api/me/wishlist/:bookId
- * Roles: approved publisher
- * Stars/adds a book to the publisher's private wishlist
- */
 router.put(
   '/wishlist/:bookId',
   requireApprovedPublisher,
@@ -163,11 +111,6 @@ router.put(
   wishlistController.addToWishlist
 );
 
-/**
- * DELETE /api/me/wishlist/:bookId
- * Roles: approved publisher
- * Removes a book from the publisher's private wishlist
- */
 router.delete(
   '/wishlist/:bookId',
   requireApprovedPublisher,

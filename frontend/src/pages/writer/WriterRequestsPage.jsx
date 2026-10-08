@@ -63,8 +63,7 @@ export function WriterRequestsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modals for actions
-  const [activeModal, setActiveModal] = useState(null); // { type: 'accept'|'decline'|'block'|'close', request }
+  const [activeModal, setActiveModal] = useState(null);
   const [modalNote, setModalNote] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -105,7 +104,6 @@ export function WriterRequestsPage() {
         });
         setActiveModal(null);
         setModalNote('');
-        // Navigate directly to the newly created/opened conversation
         if (result.conversationId) {
           navigate(`/w/chat?convo=${result.conversationId}`);
         } else {
@@ -143,7 +141,6 @@ export function WriterRequestsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6 text-left">
-      {/* Header */}
       <div className="border-b border-rule pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -169,7 +166,6 @@ export function WriterRequestsPage() {
         </Link>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-rule overflow-x-auto pb-1">
         {STATUS_TABS.map((tab) => {
           const isActive = statusFilter === tab.id;
@@ -193,7 +189,6 @@ export function WriterRequestsPage() {
         })}
       </div>
 
-      {/* Requests list */}
       {loading ? (
         <div className="p-12 text-center text-xs text-muted border border-rule rounded bg-paper">
           Loading…
@@ -238,9 +233,7 @@ export function WriterRequestsPage() {
                 key={req._id}
                 className="bg-paper border border-rule rounded p-6 flex flex-col lg:flex-row gap-6 justify-between"
               >
-                {/* Left/Middle Content */}
                 <div className="flex flex-col sm:flex-row gap-5 min-w-0 flex-1">
-                  {/* Book thumbnail */}
                   <div className="w-20 aspect-[2/3] bg-paper rounded overflow-hidden shrink-0 border border-rule">
                     {book.coverUrl ? (
                       <img
@@ -256,7 +249,6 @@ export function WriterRequestsPage() {
                     )}
                   </div>
 
-                  {/* Proposal details */}
                   <div className="space-y-3 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
@@ -275,7 +267,6 @@ export function WriterRequestsPage() {
                       </h2>
                     </div>
 
-                    {/* Publisher Meta Box */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-paper border border-rule rounded p-3 text-xs text-ink">
                       <div className="flex items-center gap-1.5">
                         <Building className="w-3.5 h-3.5 text-muted shrink-0" />
@@ -293,7 +284,6 @@ export function WriterRequestsPage() {
                       </div>
                     </div>
 
-                    {/* Commercial Terms & Message */}
                     <div className="space-y-1.5 text-xs text-ink">
                       <div className="p-3 bg-paper border border-rule rounded space-y-1">
                         <span className="font-bold text-muted uppercase text-[10px] tracking-wider block">
@@ -308,7 +298,6 @@ export function WriterRequestsPage() {
                         </div>
                       )}
 
-                      {/* Rights Requested */}
                       {req.rights && req.rights.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap pt-1">
                           <span className="text-[11px] font-bold text-muted">
@@ -328,7 +317,6 @@ export function WriterRequestsPage() {
                   </div>
                 </div>
 
-                {/* Right Action Column */}
                 <div className="flex flex-col justify-between items-stretch lg:items-end gap-3 shrink-0 lg:w-48 pt-3 lg:pt-0 border-t lg:border-t-0 border-rule">
                   <div className="space-y-1 text-left lg:text-right">
                     {req.status === 'accepted' && (
@@ -392,7 +380,6 @@ export function WriterRequestsPage() {
                       </>
                     )}
 
-                    {/* Secondary actions: Block & Report */}
                     <div className="flex items-center justify-between pt-1 text-muted">
                       <button
                         onClick={() => {
@@ -421,7 +408,6 @@ export function WriterRequestsPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6">
           <button
@@ -444,11 +430,9 @@ export function WriterRequestsPage() {
         </div>
       )}
 
-      {/* Interactive Action Modals */}
       {activeModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-paper rounded max-w-md w-full p-6 space-y-4 border border-rule">
-            {/* Accept */}
             {activeModal.type === 'accept' && (
               <>
                 <div className="flex items-center gap-3 text-accent">
@@ -479,7 +463,6 @@ export function WriterRequestsPage() {
               </>
             )}
 
-            {/* Decline */}
             {activeModal.type === 'decline' && (
               <>
                 <div className="flex items-center gap-3 text-danger">
@@ -506,7 +489,6 @@ export function WriterRequestsPage() {
               </>
             )}
 
-            {/* Close */}
             {activeModal.type === 'close' && (
               <>
                 <div className="flex items-center gap-3 text-ink">
@@ -533,7 +515,6 @@ export function WriterRequestsPage() {
               </>
             )}
 
-            {/* Block */}
             {activeModal.type === 'block' && (
               <>
                 <div className="flex items-center gap-3 text-danger">
@@ -560,7 +541,6 @@ export function WriterRequestsPage() {
               </>
             )}
 
-            {/* Footer Buttons */}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
