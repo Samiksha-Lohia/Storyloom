@@ -14,19 +14,15 @@ import {
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import CoverCropper from '../../components/common/CoverCropper';
-import PipelineProgressView from '../../components/writer/PipelineProgressView';
-import TemplatePicker from '../../components/writer/TemplatePicker';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { GENRES } from '../../constants/app';
-import { DEFAULT_ACCENT } from '../../constants/templates';
 
 const STEPS = [
   { id: 'manuscript', label: '1. Manuscript' },
   { id: 'cover', label: '2. Cover Artwork' },
   { id: 'metadata', label: '3. Story Details' },
-  { id: 'template', label: '4. Layout Template' },
-  { id: 'rights', label: '5. Rights & AI' },
+  { id: 'rights', label: '4. Rights & AI' },
 ];
 
 export function NewBookPage() {
@@ -45,8 +41,6 @@ export function NewBookPage() {
   const [tags, setTags] = useState([]);
   const [language, setLanguage] = useState('en');
   const [mature, setMature] = useState(false);
-  const [template, setTemplate] = useState(user?.defaultTemplate || 'classic');
-  const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [acceptedRights, setAcceptedRights] = useState(false);
   const [acceptedAi, setAcceptedAi] = useState(false);
 
@@ -112,8 +106,7 @@ export function NewBookPage() {
     if (currentStep === 0) return !!manuscriptFile;
     if (currentStep === 1) return true;
     if (currentStep === 2) return title.trim().length > 0 && blurb.trim().length > 0;
-    if (currentStep === 3) return true;
-    if (currentStep === 4) return acceptedRights && acceptedAi;
+    if (currentStep === 3) return acceptedRights && acceptedAi;
     return true;
   };
 
@@ -139,8 +132,8 @@ export function NewBookPage() {
       formData.append('genre', genre);
       formData.append('language', language);
       formData.append('mature', String(mature));
-      formData.append('template', template);
-      formData.append('accent', accent);
+      formData.append('template', 'classic');
+      formData.append('accent', '#9B2D20');
       formData.append('acceptedRights', 'true');
 
       formData.append('status', targetStatus === 'publish' ? 'published' : 'draft');
@@ -468,34 +461,6 @@ export function NewBookPage() {
         )}
 
         {currentStep === 3 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-bold text-base text-ink">Story Presentation Template</h2>
-              <p className="text-xs text-muted">
-                Choose how your book detail page is rendered to readers, and see the live preview below.
-              </p>
-            </div>
-
-            <TemplatePicker
-              selectedTemplate={template}
-              onSelectTemplate={setTemplate}
-              selectedAccent={accent}
-              onSelectAccent={setAccent}
-              draftBook={{
-                title: title.trim(),
-                blurb: blurb.trim(),
-                genre,
-                tags,
-                mature,
-                coverPreviewUrl,
-                writerName: user?.name,
-                writerUsername: user?.username,
-              }}
-            />
-          </div>
-        )}
-
-        {currentStep === 4 && (
           <div className="space-y-6">
             <div>
               <h2 className="font-bold text-base text-ink">Rights & AI Intelligence Disclosure</h2>

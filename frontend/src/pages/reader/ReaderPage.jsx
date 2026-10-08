@@ -358,21 +358,27 @@ export function ReaderPage() {
     switch (settings.theme) {
       case 'dark':
         return {
-          wrapperBg: 'bg-[#18181A] text-[#E6E6E6]',
-          topBarBg: 'bg-[#18181A] border-[#333333] text-[#E6E6E6]',
-          navArrow: 'bg-[#2A2A30] hover:bg-[#383842] text-white',
+          wrapperBg: 'bg-[#121214] text-white',
+          topBarBg: 'bg-[#18181B] border-[#2E2E33] text-white',
+          navArrow: 'bg-[#222226] hover:bg-[#2E2E33] text-white border-[#383840]',
+          btn: 'border-[#383840] hover:bg-[#2E2E33] text-white',
+          subtitle: 'text-[#9CA3AF]',
         };
       case 'sepia':
         return {
           wrapperBg: 'bg-[#F4ECD8] text-[#382C1E]',
           topBarBg: 'bg-[#F4ECD8] border-[#D9D2C3] text-[#382C1E]',
-          navArrow: 'bg-[#EAE0C7] hover:bg-[#DFD4B7] text-[#382C1E]',
+          navArrow: 'bg-[#EAE0C7] hover:bg-[#DFD4B7] text-[#382C1E] border-[#D9D2C3]',
+          btn: 'border-[#D9D2C3] hover:bg-rule/40 text-[#382C1E]',
+          subtitle: 'text-[#7C6A53]',
         };
       default:
         return {
           wrapperBg: 'bg-paper text-ink',
           topBarBg: 'bg-paper border-rule text-ink',
           navArrow: 'bg-paper hover:bg-rule/40 border border-rule text-ink',
+          btn: 'border-rule hover:bg-rule/40 text-ink',
+          subtitle: 'text-muted',
         };
     }
   };
@@ -418,7 +424,7 @@ export function ReaderPage() {
         <div className="flex items-center gap-3">
           <Link
             to={`/book/${bookId}`}
-            className="p-1.5 rounded hover:bg-rule/40 cursor-pointer"
+            className={`p-1.5 rounded hover:bg-rule/40 cursor-pointer ${themeStyles.btn}`}
             title="Return to Story Overview"
             aria-label="Back to story overview"
           >
@@ -428,7 +434,7 @@ export function ReaderPage() {
             <h1 className="font-bold text-sm truncate max-w-xs md:max-w-md">
               {book.title}
             </h1>
-            <span className="text-[11px] text-muted block">
+            <span className={`text-[11px] block ${themeStyles.subtitle}`}>
               {book.genre || 'Story'} • Page {Math.min(currentPage, pageCount)} of {pageCount}
             </span>
           </div>
@@ -438,7 +444,7 @@ export function ReaderPage() {
           <button
             type="button"
             onClick={() => setShowInsights(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-bold border border-rule hover:bg-rule/40 cursor-pointer"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-bold border cursor-pointer ${themeStyles.btn}`}
             title="Story Insights"
             aria-label="Story Insights"
           >
@@ -451,7 +457,7 @@ export function ReaderPage() {
             className={`p-2 rounded border cursor-pointer ${
               isBookmarked
                 ? 'border-accent text-accent font-bold'
-                : 'border-rule hover:bg-rule/40 text-ink'
+                : themeStyles.btn
             }`}
             title={isBookmarked ? 'Remove Bookmark' : 'Mark Page'}
             aria-label={isBookmarked ? 'Remove Bookmark' : 'Mark Page'}
@@ -462,7 +468,7 @@ export function ReaderPage() {
           <button
             type="button"
             onClick={() => setShowBookmarks(true)}
-            className="p-2 rounded border border-rule hover:bg-rule/40 text-ink cursor-pointer"
+            className={`p-2 rounded border cursor-pointer ${themeStyles.btn}`}
             title="View All Bookmarks"
             aria-label="Saved Bookmarks"
           >
@@ -476,7 +482,7 @@ export function ReaderPage() {
               className={`p-2 rounded border cursor-pointer ${
                 twoPageSpread
                   ? 'border-accent text-accent font-bold'
-                  : 'border-rule hover:bg-rule/40 text-ink'
+                  : themeStyles.btn
               }`}
               title={twoPageSpread ? 'Switch to Single Page' : 'Switch to Two-Page Spread'}
               aria-label="Toggle two page spread"
@@ -488,7 +494,7 @@ export function ReaderPage() {
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="p-2 rounded border border-rule hover:bg-rule/40 text-ink cursor-pointer"
+            className={`p-2 rounded border cursor-pointer ${themeStyles.btn}`}
             title="Reader Typography & Theme Settings"
             aria-label="Reader Settings"
           >

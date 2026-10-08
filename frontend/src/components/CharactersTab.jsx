@@ -68,6 +68,19 @@ export default function CharactersTab({
     return 'border-rule text-muted';
   };
 
+  const sortedCharacters = useMemo(() => {
+    const rolePriority = { protagonist: 1, antagonist: 2, supporting: 3 };
+    return [...characters].sort((a, b) => {
+      const rA = rolePriority[a.role?.toLowerCase()] || 99;
+      const rB = rolePriority[b.role?.toLowerCase()] || 99;
+      if (rA !== rB) return rA - rB;
+      const countA = a.sceneIds?.length || 0;
+      const countB = b.sceneIds?.length || 0;
+      if (countA !== countB) return countB - countA;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [characters]);
+
   if (loading) {
     return (
       <div className="p-8 text-center text-sm text-muted">
@@ -76,7 +89,7 @@ export default function CharactersTab({
     );
   }
 
-  if (characters.length === 0) {
+  if (sortedCharacters.length === 0) {
     return (
       <div className="text-center py-16 bg-paper border border-rule rounded p-8">
         <Users className="w-8 h-8 text-muted mx-auto mb-3" />
@@ -94,12 +107,12 @@ export default function CharactersTab({
           <p className="text-xs text-muted mt-0.5 font-medium">Extract, merge aliases, and view developmental story arcs.</p>
         </div>
         <div className="text-xs font-semibold text-muted">
-          Total Cast: {characters.length} characters
+          Total Cast: {sortedCharacters.length} characters
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {characters.map((char) => {
+        {sortedCharacters.map((char) => {
           const charId = char._id || char.id;
           return (
             <div 

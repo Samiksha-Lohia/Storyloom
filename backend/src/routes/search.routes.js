@@ -8,6 +8,8 @@ import * as searchService from '../services/search.service.js';
 import { sendSuccess } from '../utilities/response.js';
 import { generateJSON } from '../services/ai-provider.service.js';
 import { resolveStoryLanguage, getAnalysisLanguageInstruction } from '../utilities/language.helper.js';
+import Scene from '../models/scene.model.js';
+import Character from '../models/character.model.js';
 
 const router = Router({ mergeParams: true });
 
@@ -37,39 +39,61 @@ router.post('/ask', validate(documentIdParamSchema), validate(askQuestionSchema)
     const { question } = req.body;
     const documentId = req.params.documentId;
 
-    const results = await searchService.semanticSearch(documentId, question, {}, 5);
+    const [allScenes, characters, semanticResults] = await Promise.all([
+      Scene.find({ documentId }).sort({ sceneNumber: 1 }).lean(),
+      Character.find({ documentId }).lean(),
+      searchService.semanticSearch(documentId, question, {}, 6).catch(() => []),
+    ]);
 
-    const context = results
+    const scenesTimeline = allScenes
+      .map((s) => {
+        const textSample = s.rawText ? `\nScene excerpt: ${s.rawText.slice(0, 400).replace(/\n+/g, ' ')}` : '';
+        return `[Scene ${s.sceneNumber}: "${s.title}"]\nLocation: ${s.location || 'Unspecified'}\nSummary: ${s.summary || 'No summary'}${textSample}`;
+      })
+      .join('\n\n---\n\n');
+
+    const charactersContext = characters
+      .map((c) => `- ${c.name} (Role: ${c.role}): ${c.description || ''} | Traits: ${(c.traits || []).join(', ')} | Arc: ${c.arcSummary || ''}`)
+      .join('\n');
+
+    const excerpts = semanticResults
       .map((item) => {
-        if (item.sourceType === 'scene') {
-          return `[Scene ${item.source.sceneNumber}] Title: ${item.source.title}\nSummary: ${item.source.summary}`;
-        }
-        if (item.sourceType === 'character') {
-          return `[Character Profile] Name: ${item.source.name} (Role: ${item.source.role})\nDescription: ${item.source.description}\nTraits: ${(item.source.traits || []).join(', ')}\nArc: ${item.source.arcSummary || ''}`;
+        if (item.sourceType === 'scene' && item.source?.rawText) {
+          return `[Scene ${item.source.sceneNumber} Exact Text]: ${item.source.rawText.slice(0, 600)}`;
         }
         if (item.sourceType === 'dialogue_summary') {
-          return `[Dialogue Summary] Summary: ${item.source.summaryText}\nTone: ${item.source.tone}\nKey Quotes:\n${(item.source.keyQuotes || []).map((q) => `- "${q}"`).join('\n')}`;
+          return `[Dialogue]: Summary: ${item.source.summaryText}\nKey Quotes: ${(item.source.keyQuotes || []).join(' | ')}`;
         }
         return '';
       })
       .filter(Boolean)
-      .join('\n\n---\n\n');
+      .join('\n\n');
 
     const language = await resolveStoryLanguage(documentId);
     const langInstruction = getAnalysisLanguageInstruction(language);
 
-    const prompt = `You are a story analysis assistant for SceneCraft. Answer the user's question about the story based on the provided analysis context.
-If the context doesn't contain the answer, use your intelligence to deduce the best response based on the available information, but keep it grounded in the provided context.
-${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
-Context:
-${context || 'No specific context found.'}
+    const prompt = `You are an expert story analysis assistant for SceneCraft. Answer the user's question by analyzing the COMPLETE story scene-by-scene.
 
-Question:
+IMPORTANT INSTRUCTIONS:
+1. Thoroughly examine the entire story progression across all scenes and character interactions.
+2. Directly answer the question with precise facts, events, motivations, and scene developments from the narrative.
+3. If the user asks about specific characters, motivations, secrets, or outcomes, cross-reference their actions across all scenes.
+4. Keep the response natural, highly accurate, and comprehensive. Do not give vague or superficial answers.
+${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
+
+Complete Story Breakdown (Scene by Scene):
+${scenesTimeline || 'No scene details recorded.'}
+
+Characters Overview:
+${charactersContext || 'No character profiles recorded.'}
+${excerpts ? `\nKey Text Excerpts Matching Query:\n${excerpts}\n` : ''}
+
+User Question:
 ${question}
 
-Return your response as a JSON object matching this schema:
+Return your response as a JSON object:
 {
-  "answer": "A detailed and accurate answer based on the context."
+  "answer": "A detailed, accurate, and comprehensive answer analyzing the full story scenes."
 }`;
 
     const responseObj = await generateJSON(prompt, null, 'continuity');

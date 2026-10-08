@@ -38,10 +38,16 @@ export default function PageView({
     });
   };
 
+  const isDark = settings.theme === 'dark';
+  const isSepia = settings.theme === 'sepia';
+  const textColorClass = isDark ? 'text-white' : isSepia ? 'text-[#382C1E]' : 'text-ink';
+  const mutedColorClass = isDark ? 'text-[#A1A1AA]' : isSepia ? 'text-[#7C6A53]' : 'text-muted';
+  const divideClass = isDark ? 'lg:divide-[#333333]' : 'lg:divide-rule';
+
   return (
     <div
       key={`page-${pageNumber}`}
-      className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 select-text text-ink"
+      className={`w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 select-text ${textColorClass}`}
       role="document"
       lang={language}
       style={{
@@ -51,17 +57,17 @@ export default function PageView({
       }}
     >
       {twoPageSpread && nextPageText !== null ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:divide-x lg:divide-rule">
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:divide-x ${divideClass}`}>
           <div className="flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(pageText)}</div>
-            <div className="pt-8 text-center text-xs text-muted select-none">
+            <div className={`pt-8 text-center text-xs select-none ${mutedColorClass}`}>
               — {pageNumber} —
             </div>
           </div>
 
           <div className="lg:pl-12 flex flex-col justify-between min-h-[65vh]">
             <div className="space-y-1">{renderFormattedText(nextPageText)}</div>
-            <div className="pt-8 text-center text-xs text-muted select-none">
+            <div className={`pt-8 text-center text-xs select-none ${mutedColorClass}`}>
               — {pageNumber + 1} —
             </div>
           </div>
@@ -69,7 +75,7 @@ export default function PageView({
       ) : (
         <div className="max-w-2xl mx-auto flex flex-col justify-between min-h-[65vh]">
           <div className="space-y-1">{renderFormattedText(pageText)}</div>
-          <div className="pt-8 text-center text-xs text-muted select-none">
+          <div className={`pt-8 text-center text-xs select-none ${mutedColorClass}`}>
             — {pageNumber} —
           </div>
         </div>

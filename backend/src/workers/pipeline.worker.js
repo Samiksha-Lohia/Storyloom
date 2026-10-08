@@ -31,6 +31,9 @@ import {
   summarize,
   traitsForName,
   wordCount,
+  computeNarrativeDevelopment,
+  deriveSceneTitle,
+  deriveLocation,
 } from '../analysis/local-analyzer.js';
 
 import Document from '../models/document.model.js';
@@ -490,23 +493,22 @@ const runScenes = async ({ documentId }) => {
     };
   }
 
-  const prompt = `Analyze the following story text and break it down into consecutive scenes.
+  const prompt = `Analyze the following story text and break it down into consecutive, well-defined scenes.
 
 Return ONLY a valid JSON array.
 
 Each scene object MUST contain EXACTLY these fields:
-- sceneNumber: integer
-- title: short string
-- summary: 2-sentence string
-- location: string
-- sceneText: exact text copied from the original story
+- sceneNumber: integer starting from 1
+- title: an engaging, accurate, and descriptive title capturing the main event or dramatic beat of this scene (e.g. "The Gathering at Sunset" or "संध्या का रहस्यमय मिलन")
+- summary: an accurate 2-3 sentence overview describing the key events, conflicts, and character actions in this scene
+- location: specific location or setting where the scene takes place
+- sceneText: the corresponding text of this scene from the original story (if long, the opening 2-3 paragraphs of the scene)
 
 IMPORTANT:
-- "title" is REQUIRED for every scene.
+- Every scene MUST have a meaningful, specific "title" that reflects the actual events (never generic like "Scene 1" or "दृश्य 1").
+- Every scene MUST have an accurate "summary" describing the narrative progression.
 - Use "location", NOT "primaryLocation".
-- Do NOT include "primaryLocation".
 - Do NOT include any fields other than sceneNumber, title, summary, location, and sceneText.
-- sceneText must be copied exactly from the original text.
 ${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 Story text:
 ${parsedText}`;
@@ -573,7 +575,7 @@ ${parsedText}`;
           location: Joi.string()
             .allow('')
             .default(''),
-          sceneText: Joi.string().required(),
+          sceneText: Joi.string().allow('').default(''),
         }).unknown(true),
       )
       .required();
@@ -590,37 +592,51 @@ ${parsedText}`;
     }
 
     let lastIndex = 0;
-    for (const scene of validatedScenes) {
-      const sceneText = scene.sceneText;
+    for (let i = 0; i < validatedScenes.length; i += 1) {
+      const scene = validatedScenes[i];
+      let sceneText = scene.sceneText || '';
 
-      let start = parsedText.indexOf(
-        sceneText,
-        lastIndex,
-      );
-
-      if (start === -1) {
-        start = parsedText.indexOf(sceneText);
+      let start = -1;
+      if (sceneText && sceneText.length >= 10) {
+        start = parsedText.indexOf(sceneText, lastIndex);
+        if (start === -1) {
+          start = parsedText.indexOf(sceneText.slice(0, 40), lastIndex);
+        }
       }
 
-      const safeStart =
-        start !== -1 ? start : lastIndex;
-
-      const end = safeStart + sceneText.length;
+      const safeStart = start !== -1 ? start : lastIndex;
+      let end = safeStart + (sceneText ? sceneText.length : Math.max(100, Math.floor((parsedText.length - lastIndex) / (validatedScenes.length - i))));
+      if (i === validatedScenes.length - 1 || end > parsedText.length) {
+        end = parsedText.length;
+      }
 
       lastIndex = end;
+      const actualRawText = parsedText.slice(safeStart, end).trim() || sceneText;
+
+      const title = (!scene.title || /^scene\s+\d+$/i.test(scene.title) || /^दृश्य\s+\d+$/i.test(scene.title))
+        ? deriveSceneTitle(actualRawText, scene.sceneNumber, language)
+        : scene.title.trim();
+
+      const summary = (!scene.summary || scene.summary.length < 10)
+        ? summarize(actualRawText, 2)
+        : scene.summary.trim();
+
+      const location = (!scene.location || scene.location.length < 2)
+        ? deriveLocation(actualRawText, language)
+        : scene.location.trim();
 
       processedScenes.push({
         documentId,
         sceneNumber: scene.sceneNumber,
-        title: scene.title,
-        summary: scene.summary,
-        location: scene.location,
+        title,
+        summary,
+        location,
         textRange: {
           start: safeStart,
           end,
         },
-        wordCount: wordCount(sceneText),
-        rawText: sceneText,
+        wordCount: wordCount(actualRawText),
+        rawText: actualRawText,
       });
     }
   } catch (err) {
@@ -713,25 +729,27 @@ const runCharacters = async ({ documentId }) => {
   const scenes = await getScenesWithText(documentId);
   const parsedText = doc?.parsedText || '';
 
-  const prompt = `Analyze the following story text and identify all actual characters.
+  const prompt = `Analyze the following story text and identify all actual characters (major, supporting, and recurring).
 
 Return ONLY a valid JSON array.
 
+ORDER OF CHARACTERS (STRICT REQUIREMENT):
+1. The PROTAGONIST (main character / central lead) MUST be listed FIRST in the array.
+2. The ANTAGONIST (primary adversary, rival, or main opposing figure) MUST be listed SECOND in the array. If there is no explicit villain, list the primary foil or counterpart.
+3. All other supporting, recurring, and secondary characters MUST follow afterwards.
+
 Each character object MUST contain EXACTLY these fields:
 - name: the character's primary name
-- aliases: array of alternative names or references
+- aliases: array of alternative names, nicknames, or references
 - role: one of "protagonist", "antagonist", or "supporting"
-- traits: array of personality or physical traits
-- description: short description of the character
-- arcSummary: short summary of the character's narrative development
+- traits: array of personality, emotional, or physical traits
+- description: detailed description of who the character is and their role in the narrative
+- arcSummary: summary of the character's narrative growth and trajectory
 
 IMPORTANT:
 - "name" is REQUIRED and MUST be a non-empty string.
-- Every character object MUST have a valid name.
-- Do NOT create character objects without a name.
-- Do NOT use "characterName"; use "name".
-- Do NOT use "primaryName"; use "name".
-- Ignore unnamed/background entities that cannot be given a meaningful name.
+- Detect ALL characters who appear, converse, or take action in the story (do not miss minor or supporting characters).
+- Accurately assign roles: "protagonist", "antagonist", or "supporting".
 - Return ONLY the JSON array.
 - Do NOT return markdown or explanations.
 ${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
@@ -865,6 +883,17 @@ ${parsedText}`;
           sceneIds,
         };
       });
+
+    const roleOrder = { protagonist: 1, antagonist: 2, supporting: 3 };
+    charactersToInsert.sort((a, b) => {
+      const pA = roleOrder[a.role?.toLowerCase()] || 99;
+      const pB = roleOrder[b.role?.toLowerCase()] || 99;
+      if (pA !== pB) return pA - pB;
+      const countA = a.sceneIds?.length || 0;
+      const countB = b.sceneIds?.length || 0;
+      if (countA !== countB) return countB - countA;
+      return (a.name || '').localeCompare(b.name || '');
+    });
 
     insertedCharacters =
       await Character.insertMany(
@@ -1065,6 +1094,7 @@ For each pair of characters that interact in the story, return:
 
 IMPORTANT:
 - Return ONLY a valid JSON array.
+- MULTI-WAY NETWORK REQUIREMENT: Do NOT only output relationships where Character A is the protagonist (star graph). You MUST analyze and include relationships between ALL character pairs who interact, converse, have conflict, or share a dynamic (including secondary characters with each other, rivals, allies, family members).
 - Every interacting character pair should have an entry in the array.
 - characterAName is REQUIRED.
 - characterBName is REQUIRED.
@@ -1474,6 +1504,57 @@ ${scenesListFormatted}
     }
   }
 
+  // Cross-analyze ALL character pairs to guarantee interconnected network and avoid one-person star graphs
+  const existingPairs = new Set(
+    relationshipsToInsert.map((r) => {
+      const a = r.characterAId?.toString();
+      const b = r.characterBId?.toString();
+      return a < b ? `${a}:${b}` : `${b}:${a}`;
+    })
+  );
+
+  for (let i = 0; i < characters.length; i += 1) {
+    for (let j = i + 1; j < characters.length; j += 1) {
+      const a = characters[i];
+      const b = characters[j];
+      const aId = a._id.toString();
+      const bId = b._id.toString();
+      const key = aId < bId ? `${aId}:${bId}` : `${bId}:${aId}`;
+      if (existingPairs.has(key)) continue;
+
+      const sharedScenes = scenes.filter((scene) => {
+        const text = (scene.rawText || '').toLowerCase();
+        const matchesChar = (char) => {
+          if (char.name && text.includes(char.name.toLowerCase())) return true;
+          if (Array.isArray(char.aliases)) {
+            for (const alias of char.aliases) {
+              if (alias && text.includes(alias.toLowerCase())) return true;
+            }
+          }
+          return false;
+        };
+        return matchesChar(a) && matchesChar(b);
+      });
+
+      if (!sharedScenes.length) continue;
+
+      const combinedText = sharedScenes.map((s) => s.rawText || '').join(' ');
+      const sentimentScore = sentimentForText(combinedText);
+      const type = relationTypeForPair(combinedText);
+
+      relationshipsToInsert.push({
+        documentId,
+        characterAId: a._id,
+        characterBId: b._id,
+        type,
+        sentimentScore,
+        sentimentBySceneId: new Map(sharedScenes.map((s) => [s._id.toString(), sentimentForText(s.rawText || '')])),
+        sceneIds: sharedScenes.map((s) => s._id),
+      });
+      existingPairs.add(key);
+    }
+  }
+
   await Relationship.deleteMany({
     documentId,
   });
@@ -1830,6 +1911,7 @@ const runMood = async ({ documentId }) => {
 };
 
 const runArc = async ({ documentId }) => {
+  const language = await resolveStoryLanguage(documentId);
   const scenes = await Scene.find({
     documentId,
   }).sort({
@@ -1872,10 +1954,17 @@ const runArc = async ({ documentId }) => {
         ),
       );
 
+      const narrativeDevelopment = computeNarrativeDevelopment(
+        index,
+        scenes.length,
+        scene,
+        language
+      );
+
       return {
         sceneId: scene._id,
         tensionScore,
-        label: scene.summary || scene.title,
+        label: narrativeDevelopment,
       };
     },
   );

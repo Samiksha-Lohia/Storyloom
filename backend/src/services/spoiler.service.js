@@ -433,46 +433,58 @@ export async function askWithSpoilerProtection({
 
   let searchFilters = {};
   let maxVisibleSceneNumber = null;
+  const allScenes = await Scene.find({ documentId })
+    .sort({ sceneNumber: 1 })
+    .lean();
 
+  let targetScenes = allScenes;
   if (mode === FEATURE_ACCESS_MODES.FILTERED && !isReaderOptedOut) {
-    const allScenes = await Scene.find({ documentId })
-      .sort({ sceneNumber: 1 })
-      .lean();
-    const visibleScenes = allScenes.filter(
+    targetScenes = allScenes.filter(
       (s) => (s.textRange?.start ?? 0) < furthestOffset
     );
-    const visibleSceneIds = new Set(visibleScenes.map((s) => s._id.toString()));
+    const visibleSceneIds = new Set(targetScenes.map((s) => s._id.toString()));
     searchFilters.visibleSceneIds = visibleSceneIds;
 
-    if (visibleScenes.length > 0) {
+    if (targetScenes.length > 0) {
       maxVisibleSceneNumber = Math.max(
-        ...visibleScenes.map((s) => s.sceneNumber || 1)
+        ...targetScenes.map((s) => s.sceneNumber || 1)
       );
     }
   }
 
-  const results = await searchService.semanticSearch(
-    documentId,
-    question,
-    searchFilters,
-    5
-  );
+  const [characters, results] = await Promise.all([
+    Character.find({ documentId }).lean().catch(() => []),
+    searchService.semanticSearch(
+      documentId,
+      question,
+      searchFilters,
+      6
+    ).catch(() => []),
+  ]);
 
-  const context = results
+  const scenesTimeline = targetScenes
+    .map((s) => {
+      const textSample = s.rawText ? `\nExcerpt: ${s.rawText.slice(0, 350).replace(/\n+/g, ' ')}` : '';
+      return `[Scene ${s.sceneNumber}: "${s.title}"]\nLocation: ${s.location || 'Unspecified'}\nSummary: ${s.summary || 'No summary'}${textSample}`;
+    })
+    .join('\n\n---\n\n');
+
+  const charactersContext = characters
+    .map((c) => `- ${c.name} (Role: ${c.role}): ${c.description || ''} | Traits: ${(c.traits || []).join(', ')} | Arc: ${c.arcSummary || ''}`)
+    .join('\n');
+
+  const excerpts = results
     .map((item) => {
-      if (item.sourceType === 'scene') {
-        return `[Scene ${item.source.sceneNumber}] Title: ${item.source.title}\nSummary: ${item.source.summary}`;
-      }
-      if (item.sourceType === 'character') {
-        return `[Character Profile] Name: ${item.source.name} (Role: ${item.source.role})\nDescription: ${item.source.description}\nTraits: ${(item.source.traits || []).join(', ')}`;
+      if (item.sourceType === 'scene' && item.source?.rawText) {
+        return `[Scene ${item.source.sceneNumber} Exact Text]: ${item.source.rawText.slice(0, 500)}`;
       }
       if (item.sourceType === 'dialogue_summary') {
-        return `[Dialogue Summary] Summary: ${item.source.summaryText}\nTone: ${item.source.tone}\nKey Quotes:\n${(item.source.keyQuotes || []).map((q) => `- "${q}"`).join('\n')}`;
+        return `[Dialogue]: Summary: ${item.source.summaryText}\nKey Quotes: ${(item.source.keyQuotes || []).join(' | ')}`;
       }
       return '';
     })
     .filter(Boolean)
-    .join('\n\n---\n\n');
+    .join('\n\n');
 
   const boundaryInstruction =
     maxVisibleSceneNumber !== null
@@ -481,18 +493,28 @@ export async function askWithSpoilerProtection({
 
   const langInstruction = getAnalysisLanguageInstruction(book?.language || 'en');
 
-  const prompt = `You are a story analysis assistant for SceneCraft. Answer the user's question about the story based ONLY on the provided analysis context.
+  const prompt = `You are an expert story analysis assistant for SceneCraft. Answer the user's question by analyzing the COMPLETE story scene-by-scene.
+
+IMPORTANT INSTRUCTIONS:
+1. Examine the narrative progression across all scenes and character actions.
+2. Directly answer the question with precise facts, motivations, relationships, and scene developments from the narrative.
+3. Keep the response natural, highly accurate, and comprehensive based on the full scene breakdown.
 ${boundaryInstruction}
 ${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
-Context:
-${context || 'No specific context found within the pages read so far.'}
+
+Complete Story Breakdown (Scene by Scene):
+${scenesTimeline || 'No scene details recorded.'}
+
+Characters Overview:
+${charactersContext || 'No character profiles recorded.'}
+${excerpts ? `\nKey Text Excerpts Matching Query:\n${excerpts}\n` : ''}
 
 Question:
 ${question}
 
-Return your response as a JSON object matching this schema:
+Return your response as a JSON object:
 {
-  "answer": "A detailed and accurate answer based on the context."
+  "answer": "A detailed, accurate, and comprehensive answer analyzing the full story scenes."
 }`;
 
   try {

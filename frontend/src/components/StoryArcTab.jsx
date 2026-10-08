@@ -84,7 +84,7 @@ export default function StoryArcTab({ documentId, source, options = {}, summary 
       const point = {
         name: `Scene ${sceneNum}`,
         tension: (pt.tensionScore || 0) / 100,
-        label: scene ? scene.summary : (pt.label || scene?.title || `Scene ${sceneNum}`),
+        label: pt.label || (scene ? scene.summary : `Scene ${sceneNum}`),
         sceneId: sId,
       };
 

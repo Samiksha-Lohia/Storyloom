@@ -14,9 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import CoverCropper from '../../components/common/CoverCropper';
-import TemplatePicker from '../../components/writer/TemplatePicker';
 import { GENRES } from '../../constants/app';
-import { DEFAULT_ACCENT } from '../../constants/templates';
 
 export function EditBookPage() {
   const { id } = useParams();
@@ -415,29 +413,6 @@ export function EditBookPage() {
               />
             </div>
           )}
-        </div>
-
-        <div className="bg-paper rounded border border-rule p-6 sm:p-8">
-          <TemplatePicker
-            selectedTemplate={template}
-            onSelectTemplate={setTemplate}
-            selectedAccent={accent}
-            onSelectAccent={setAccent}
-            draftBook={{
-              title: title.trim(),
-              blurb: blurb.trim(),
-              genre,
-              tags,
-              mature,
-              status,
-              coverPreviewUrl,
-              pageCount: book?.pageCount,
-              pageOffsets: book?.pageOffsets,
-              writerName: user?.name,
-              writerUsername: user?.username,
-              stats: book?.stats,
-            }}
-          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

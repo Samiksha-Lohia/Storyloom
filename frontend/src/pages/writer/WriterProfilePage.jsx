@@ -4,21 +4,18 @@ import {
   CheckCircle2,
   AlertCircle,
   Save,
-  Layout,
   RefreshCw,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { TEMPLATE_OPTIONS } from '../../constants/templates';
 
 export function WriterProfilePage() {
   const { user, refreshUser } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
-  const [defaultTemplate, setDefaultTemplate] = useState(user?.defaultTemplate || 'classic');
 
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -28,7 +25,6 @@ export function WriterProfilePage() {
     if (user) {
       setName(user.name || '');
       setBio(user.bio || '');
-      setDefaultTemplate(user.defaultTemplate || 'classic');
     }
   }, [user]);
 
@@ -42,11 +38,10 @@ export function WriterProfilePage() {
       await api.me.updateProfile({
         name: name.trim(),
         bio: bio.trim(),
-        defaultTemplate,
       });
 
       await refreshUser();
-      setSuccessMsg('Profile and default template preferences updated successfully!');
+      setSuccessMsg('Profile updated successfully!');
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to update writer profile.');
@@ -65,7 +60,7 @@ export function WriterProfilePage() {
           Writer Profile & Preferences
         </h1>
         <p className="text-xs text-muted mt-1">
-          Manage your public author persona and configure your default story presentation template.
+          Manage your public author persona and profile details.
         </p>
       </div>
 
@@ -135,64 +130,6 @@ export function WriterProfilePage() {
           </div>
         </div>
 
-        <div className="bg-paper rounded border border-rule p-6 sm:p-8 space-y-6">
-          <div className="flex items-center gap-3 border-b border-rule pb-4">
-            <Layout className="w-4 h-4 text-accent" />
-            <div>
-              <h2 className="font-bold text-base text-ink">
-                Default Story Presentation Template
-              </h2>
-              <p className="text-xs text-muted">
-                New stories published in your studio will automatically default to this template layout.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TEMPLATE_OPTIONS.map((tpl) => {
-              const isSelected = defaultTemplate === tpl.id;
-              return (
-                <div
-                  key={tpl.id}
-                  onClick={() => setDefaultTemplate(tpl.id)}
-                  className={`p-5 rounded border cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? 'border-ink bg-paper ring-1 ring-ink'
-                      : 'border-rule bg-paper hover:border-ink'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-sm text-ink">{tpl.name}</h3>
-                      {isSelected ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ink text-paper">
-                          Active Default
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-rule text-muted bg-paper">
-                          {tpl.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted leading-relaxed">{tpl.description}</p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-rule flex items-center justify-between">
-                    <span className="text-[11px] text-muted">Best for: {tpl.bestFor}</span>
-                    <input
-                      type="radio"
-                      name="defaultTemplate"
-                      checked={isSelected}
-                      onChange={() => setDefaultTemplate(tpl.id)}
-                      className="w-4 h-4 accent-ink cursor-pointer"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         <div className="flex justify-end">
           <Button
             type="submit"
@@ -205,7 +142,7 @@ export function WriterProfilePage() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {saving ? 'Saving Preferences...' : 'Save Profile & Default Template'}
+            {saving ? 'Saving Profile...' : 'Save Profile'}
           </Button>
         </div>
       </form>
