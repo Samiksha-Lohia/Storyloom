@@ -4,7 +4,7 @@
 
 Storyloom is a web platform for writers, readers, and book publishers. Writers can upload manuscript drafts in formats such as PDF, Word (DOCX), or plain text. The platform extracts the text and runs an asynchronous background pipeline that breaks the manuscript into individual scenes and extracts story elements, including character profiles, character relationships, narrative timeline events, emotional tone, and potential continuity issues.
 
-Readers can browse published manuscripts, save reading progress, submit reviews, and use a story question-answering assistant that answers questions using only the chapters the reader has read, preventing spoilers.
+Readers can browse published manuscripts, save reading progress, submit reviews, and use an interactive story question-answering assistant that evaluates the story text directly to provide accurate, grounded answers without hallucinations or assumptions.
 
 Publishers can discover manuscripts using catalog filters, review standardized book pitch cards, and make acquisition offers directly to writers. Once an offer is accepted, writers and publishers communicate through a real-time chat with automatic masking of private contact details (phone numbers and email addresses) to maintain author privacy. Administrators manage user accounts, review publisher applications, and resolve moderation reports.
 
@@ -29,17 +29,18 @@ Publishers can discover manuscripts using catalog filters, review standardized b
 - Multi-format file upload support for PDF, Word (.docx), and plain text (.txt).
 - Automatic scene segmentation with generated titles, summaries, and word counts.
 - Character extraction identifying names, narrative roles (protagonist, antagonist, supporting), personality traits, and aliases.
-- Relationship mapping detecting connections and interaction types between characters.
+- Interactive character relationship network featuring dual view modes (ReactFlow graph with character node focus and clean cards view), type pills with live counts, character dropdown, sentiment tone filters, and live search.
 - Story timeline generation organizing plot events in chronological order.
 - Emotional tone tracking measuring scene intensity and mood patterns.
 - Plot continuity checks scanning for narrative discrepancies across scenes.
 - Automated book pitch generation creating loglines, target demographics, and market hooks.
+- One-click story re-analysis enabling authors to re-run and synchronize insights on both new and existing stories.
 
-### Reading Experience and Spoiler Protection
+### Reading Experience and Grounded Story Q&A
 - Distraction-free reader view with adjustable typography and reading modes.
 - Personal library tracking for currently reading, saved, and completed books.
 - Community reviews with five-star ratings and reader feedback.
-- Contextual question-answering assistant that retrieves relevant scene excerpts to answer reader questions while restricting information to scenes already completed by the reader.
+- Grounded Story Q&A assistant utilizing a line-by-line RAG pipeline that evaluates verbatim manuscript text with bilingual English and Hindi (Devanagari) keyword scoring, multi-turn history, and strict anti-hallucination guardrails.
 
 ### Publisher Discovery and Acquisition
 - Search and filtering by genre, word count, reader completion rates, and average rating.
@@ -142,16 +143,16 @@ Storyloom/
 ### Story Analysis and Processing
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| POST | `/api/books/:id/analysis/process` | Trigger asynchronous pipeline analysis on a book |
+| POST | `/api/books/:id/analysis/process` | Trigger pipeline analysis on a book (supports `?force=true` for re-analysis) |
 | GET | `/api/books/:id/analysis/pipeline-status` | Get current background job progress and step state |
-| GET | `/api/books/:id/analysis/scenes` | Retrieve extracted scenes with spoiler filtering |
+| GET | `/api/books/:id/analysis/scenes` | Retrieve extracted scenes, titles, and narrative summaries |
 | GET | `/api/books/:id/analysis/characters` | Retrieve extracted character profiles and roles |
-| GET | `/api/books/:id/analysis/relationships` | Retrieve mapped character relationship pairs |
+| GET | `/api/books/:id/analysis/relationships` | Retrieve mapped character relationship pairs with sentiment |
 | GET | `/api/books/:id/analysis/timeline` | Retrieve chronological narrative timeline events |
 | GET | `/api/books/:id/analysis/mood` | Retrieve emotional arc tracking and intensity data |
 | GET | `/api/books/:id/analysis/continuity` | Retrieve detected plot consistency issues |
 | GET | `/api/books/:id/analysis/pitch` | Retrieve generated publisher pitch deck details |
-| POST | `/api/books/:id/analysis/ask` | Submit questions to the spoiler-protected Q&A assistant |
+| POST | `/api/books/:id/analysis/ask` | Submit questions to the story-grounded RAG assistant |
 
 ### Reading and Reviews
 | Method | Endpoint | Description |
