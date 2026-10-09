@@ -401,6 +401,7 @@ export class AnalysisController {
         furthestOffset: ctx.furthestOffset,
         showAll: ctx.showAll,
         question: question.trim(),
+        history: req.body?.history,
       });
 
       const analysisStatus = await getAnalysisStatusForFeature(ctx.documentId, FEATURES.ASK);

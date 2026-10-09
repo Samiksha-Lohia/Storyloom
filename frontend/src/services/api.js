@@ -607,11 +607,11 @@ export const api = {
       return data.data;
     },
 
-    async ask(documentId, question) {
+    async ask(documentId, question, history = []) {
       const res = await fetch(`${API_BASE}/documents/${documentId}/search/ask`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, history }),
       });
       const data = await handleResponse(res);
       return data.data;
@@ -802,16 +802,17 @@ export const api = {
 
     async ask(source, question, params = {}) {
       const src = this.normalizeSource(source);
+      const { history, ...queryParams } = params;
       if (src.kind === 'book') {
-        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/ask${this.buildQuery(params)}`, {
+        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/ask${this.buildQuery(queryParams)}`, {
           method: 'POST',
           headers: getHeaders(),
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, history }),
         });
         const data = await handleResponse(res);
         return data;
       }
-      return api.story.ask(src.id, question);
+      return api.story.ask(src.id, question, history);
     },
 
     async getPipelineStatus(bookId, params = {}) {

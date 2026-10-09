@@ -96,6 +96,13 @@ const askQuestionSchema = {
       'string.min': 'Question must be at least 1 character.',
       'string.max': 'Question cannot exceed 1000 characters.',
     }),
+    history: Joi.array().items(
+      Joi.object({
+        role: Joi.string().valid('user', 'assistant').required(),
+        content: Joi.string().max(3000).allow('').required(),
+        isError: Joi.boolean().optional(),
+      }).unknown(true)
+    ).optional(),
   }),
 };
 

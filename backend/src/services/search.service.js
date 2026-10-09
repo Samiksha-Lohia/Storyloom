@@ -5,6 +5,7 @@ import embeddingRepository from '../repositories/embedding.repository.js';
 import sceneRepository from '../repositories/scene.repository.js';
 import { buildTextEmbedding, cosineSimilarity } from '../analysis/local-analyzer.js';
 import { Embedding } from '../models/embedding.model.js';
+import Scene from '../models/scene.model.js';
 import MoodAnalysis from '../models/mood-analysis.model.js';
 
 import { SceneDto } from '../dtos/scene.dto.js';
@@ -28,7 +29,7 @@ const hydrateAndFilterResult = async (embedding, score, filterHelpers) => {
   let formattedSource = null;
 
   if (embedding.sourceType === 'scene') {
-    source = await sceneRepository.findById(embedding.sourceId);
+    source = await Scene.findById(embedding.sourceId).select('+rawText');
     if (!source) return null;
 
     if (hasVisibleScenes && !visibleSceneIds.has(source._id.toString())) return null;
@@ -191,7 +192,30 @@ const semanticSearch = async (documentId, query, filters = {}, limit = 10) => {
     ranked.map((item) => hydrateAndFilterResult(item, item.score, filterHelpers))
   );
 
-  return hydrated.filter((item) => item !== null);
+  const filteredResults = hydrated.filter((item) => item !== null);
+  if (filteredResults.length > 0) {
+    return filteredResults;
+  }
+
+  // Keyword / text search fallback across scenes when embeddings are sparse
+  const matchingScenes = await Scene.find({
+    documentId,
+    $or: [
+      { title: new RegExp(escapeRegex(query), 'i') },
+      { summary: new RegExp(escapeRegex(query), 'i') },
+      { rawText: new RegExp(escapeRegex(query), 'i') },
+    ],
+  })
+    .select('+rawText')
+    .limit(limit)
+    .lean();
+
+  return matchingScenes.map((s) => ({
+    sourceType: 'scene',
+    sourceId: s._id,
+    score: 0.85,
+    source: SceneDto.toResponse(s),
+  }));
 };
 
 export { semanticSearch };

@@ -22,7 +22,10 @@ export default function AskQuestionsTab({ documentId, source, options = {} }) {
     setHistory((prev) => [...prev, { role: 'user', content: currentQuestion }]);
 
     try {
-      const response = await api.analysis.ask(resolvedSource, currentQuestion, options);
+      const response = await api.analysis.ask(resolvedSource, currentQuestion, {
+        ...options,
+        history: history.slice(-4),
+      });
       const answer = response?.data?.answer || response?.answer || 'No response returned.';
       setHistory((prev) => [
         ...prev,

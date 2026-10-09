@@ -9,6 +9,7 @@ export class SceneDto {
     this.characterIds = scene.characterIds || [];
     this.textRange = scene.textRange || { start: 0, end: 0 };
     this.wordCount = scene.wordCount || 0;
+    this.rawText = scene.rawText || '';
     this.createdAt = scene.createdAt;
     this.updatedAt = scene.updatedAt;
   }

@@ -8,6 +8,7 @@ import {
 import { USER_ROLES } from '../constants/user-roles.js';
 import { ForbiddenError, NotFoundError } from '../utilities/custom-errors.js';
 import * as searchService from './search.service.js';
+import storyQaService from './story-qa.service.js';
 import { generateJSON } from './ai-provider.service.js';
 import { getAnalysisLanguageInstruction } from '../utilities/language.helper.js';
 
@@ -419,6 +420,7 @@ export async function askWithSpoilerProtection({
   furthestOffset = 0,
   showAll = false,
   question,
+  history = [],
 }) {
   const mode = getFeatureAccessMode(FEATURES.ASK, role);
 
@@ -431,105 +433,34 @@ export async function askWithSpoilerProtection({
 
   const isReaderOptedOut = role === USER_ROLES.READER && showAll === true;
 
-  let searchFilters = {};
   let maxVisibleSceneNumber = null;
-  const allScenes = await Scene.find({ documentId })
-    .sort({ sceneNumber: 1 })
-    .lean();
-
-  let targetScenes = allScenes;
   if (mode === FEATURE_ACCESS_MODES.FILTERED && !isReaderOptedOut) {
-    targetScenes = allScenes.filter(
+    const allScenes = await Scene.find({ documentId })
+      .select('+rawText')
+      .sort({ sceneNumber: 1 })
+      .lean();
+
+    const targetScenes = allScenes.filter(
       (s) => (s.textRange?.start ?? 0) < furthestOffset
     );
-    const visibleSceneIds = new Set(targetScenes.map((s) => s._id.toString()));
-    searchFilters.visibleSceneIds = visibleSceneIds;
 
     if (targetScenes.length > 0) {
       maxVisibleSceneNumber = Math.max(
         ...targetScenes.map((s) => s.sceneNumber || 1)
       );
+    } else if (allScenes.length > 0) {
+      maxVisibleSceneNumber = 1;
     }
   }
 
-  const [characters, results] = await Promise.all([
-    Character.find({ documentId }).lean().catch(() => []),
-    searchService.semanticSearch(
-      documentId,
-      question,
-      searchFilters,
-      6
-    ).catch(() => []),
-  ]);
-
-  const scenesTimeline = targetScenes
-    .map((s) => {
-      const textSample = s.rawText ? `\nExcerpt: ${s.rawText.slice(0, 350).replace(/\n+/g, ' ')}` : '';
-      return `[Scene ${s.sceneNumber}: "${s.title}"]\nLocation: ${s.location || 'Unspecified'}\nSummary: ${s.summary || 'No summary'}${textSample}`;
-    })
-    .join('\n\n---\n\n');
-
-  const charactersContext = characters
-    .map((c) => `- ${c.name} (Role: ${c.role}): ${c.description || ''} | Traits: ${(c.traits || []).join(', ')} | Arc: ${c.arcSummary || ''}`)
-    .join('\n');
-
-  const excerpts = results
-    .map((item) => {
-      if (item.sourceType === 'scene' && item.source?.rawText) {
-        return `[Scene ${item.source.sceneNumber} Exact Text]: ${item.source.rawText.slice(0, 500)}`;
-      }
-      if (item.sourceType === 'dialogue_summary') {
-        return `[Dialogue]: Summary: ${item.source.summaryText}\nKey Quotes: ${(item.source.keyQuotes || []).join(' | ')}`;
-      }
-      return '';
-    })
-    .filter(Boolean)
-    .join('\n\n');
-
-  const boundaryInstruction =
-    maxVisibleSceneNumber !== null
-      ? `CRITICAL SPOILER CONSTRAINT: The reader has only read up to Scene ${maxVisibleSceneNumber}. You MUST NOT reveal, mention, or hint at any events, twists, character deaths, or plot developments beyond Scene ${maxVisibleSceneNumber}. If the question asks about events not yet reached, explain that this happens later in the story and is hidden to protect spoilers.`
-      : '';
-
-  const langInstruction = getAnalysisLanguageInstruction(book?.language || 'en');
-
-  const prompt = `You are an expert story analysis assistant for SceneCraft. Answer the user's question by analyzing the COMPLETE story scene-by-scene.
-
-IMPORTANT INSTRUCTIONS:
-1. Examine the narrative progression across all scenes and character actions.
-2. Directly answer the question with precise facts, motivations, relationships, and scene developments from the narrative.
-3. Keep the response natural, highly accurate, and comprehensive based on the full scene breakdown.
-${boundaryInstruction}
-${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
-
-Complete Story Breakdown (Scene by Scene):
-${scenesTimeline || 'No scene details recorded.'}
-
-Characters Overview:
-${charactersContext || 'No character profiles recorded.'}
-${excerpts ? `\nKey Text Excerpts Matching Query:\n${excerpts}\n` : ''}
-
-Question:
-${question}
-
-Return your response as a JSON object:
-{
-  "answer": "A detailed, accurate, and comprehensive answer analyzing the full story scenes."
-}`;
-
-  try {
-    const responseObj = await generateJSON(prompt, null, 'continuity');
-    return {
-      answer:
-        responseObj.answer ||
-        'I could not extract an answer from the pages read so far.',
-    };
-  } catch (err) {
-    return {
-      answer:
-        'Analysis assistant is temporarily unavailable. Please try again later.',
-    };
-  }
+  return storyQaService.answerStoryQuestion({
+    documentId,
+    question,
+    history,
+    maxVisibleSceneNumber,
+    book,
+    role,
+  });
 }
 
 export default {
