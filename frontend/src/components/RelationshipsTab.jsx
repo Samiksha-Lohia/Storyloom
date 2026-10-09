@@ -88,8 +88,12 @@ export default function RelationshipsTab({
   const [characters, setCharacters] = useState(() => {
     if (!initialData?.characters) return {};
     const map = {};
-    initialData.characters.forEach((c) => {
-      map[extractId(c)] = c;
+    const list = Array.isArray(initialData.characters)
+      ? initialData.characters
+      : Object.values(initialData.characters);
+    list.forEach((c) => {
+      const id = extractId(c);
+      if (id) map[id] = c;
     });
     return map;
   });
@@ -110,13 +114,28 @@ export default function RelationshipsTab({
     if (initialData.relationships) {
       setRelationships(initialData.relationships);
     }
+    const map = {};
     if (initialData.characters) {
-      const map = {};
-      initialData.characters.forEach((c) => {
-        map[extractId(c)] = c;
+      const list = Array.isArray(initialData.characters)
+        ? initialData.characters
+        : Object.values(initialData.characters);
+      list.forEach((c) => {
+        const id = extractId(c);
+        if (id) map[id] = c;
       });
-      setCharacters(map);
     }
+    // Also extract any character objects embedded in relationships
+    (initialData.relationships || []).forEach((r) => {
+      if (r.characterA && typeof r.characterA === 'object' && r.characterA.name) {
+        const idA = extractId(r.characterA);
+        if (idA && !map[idA]) map[idA] = r.characterA;
+      }
+      if (r.characterB && typeof r.characterB === 'object' && r.characterB.name) {
+        const idB = extractId(r.characterB);
+        if (idB && !map[idB]) map[idB] = r.characterB;
+      }
+    });
+    setCharacters(map);
     setLoading(false);
   }, [initialData]);
 
@@ -169,6 +188,24 @@ export default function RelationshipsTab({
 
         const rawRel = relRes?.data !== undefined ? relRes.data : relRes;
         const relList = Array.isArray(rawRel) ? rawRel : rawRel?.results || [];
+
+        // In existing stories, characters might be populated directly in relationships
+        relList.forEach((r) => {
+          if (r.characterA && typeof r.characterA === 'object' && r.characterA.name) {
+            const idA = extractId(r.characterA);
+            if (idA && !charsMap[idA]) {
+              charsMap[idA] = r.characterA;
+            }
+          }
+          if (r.characterB && typeof r.characterB === 'object' && r.characterB.name) {
+            const idB = extractId(r.characterB);
+            if (idB && !charsMap[idB]) {
+              charsMap[idB] = r.characterB;
+            }
+          }
+        });
+
+        setCharacters(charsMap);
         setRelationships(relList || []);
       } catch (err) {
         console.error('Failed to load relationship data:', err);
@@ -204,7 +241,7 @@ export default function RelationshipsTab({
       const charBId =
         extractId(r.characterB) || extractId(r.characterBId) || extractId(r.target);
 
-      const type = (r.type || 'other').toLowerCase().trim();
+      const type = (r.type || r.relationshipType || 'other').toLowerCase().trim();
       const sentimentScore = typeof r.sentimentScore === 'number' ? r.sentimentScore : 0;
 
       return {

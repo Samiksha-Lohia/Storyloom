@@ -79,20 +79,50 @@ export async function answerStoryQuestion({
   ]);
 
   // 2. Enforce spoiler boundary if reader has a viewing limit
-  let visibleScenes = allScenes;
+  let visibleScenes = Array.isArray(allScenes) ? [...allScenes] : [];
   if (maxVisibleSceneNumber !== null && Number.isInteger(maxVisibleSceneNumber)) {
-    visibleScenes = allScenes.filter((s) => s.sceneNumber <= maxVisibleSceneNumber);
+    visibleScenes = visibleScenes.filter((s) => s.sceneNumber <= maxVisibleSceneNumber);
   }
 
   // 3. Fallback text hydration: Ensure every scene has actual text
   const parsedText = document?.parsedText || '';
   for (const scene of visibleScenes) {
     if (!scene.rawText || scene.rawText.trim().length === 0) {
-      if (parsedText && scene.textRange?.start !== undefined && scene.textRange?.end) {
+      if (parsedText && scene.textRange?.start !== undefined && typeof scene.textRange?.end === 'number') {
         scene.rawText = parsedText.slice(scene.textRange.start, scene.textRange.end).trim();
       } else {
         scene.rawText = scene.summary || '';
       }
+    }
+  }
+
+  // 3b. Fallback for existing unsegmented stories: If visibleScenes is empty but document has parsedText, chunk it!
+  if (visibleScenes.length === 0 && parsedText && parsedText.trim()) {
+    const rawChunks = parsedText.split(/\n{2,}|\r?\n/);
+    let currentChunk = '';
+    let chunkIndex = 1;
+    for (const chunk of rawChunks) {
+      if ((currentChunk + '\n' + chunk).length > 2500) {
+        if (currentChunk.trim()) {
+          visibleScenes.push({
+            sceneNumber: chunkIndex++,
+            title: `Section ${chunkIndex - 1}`,
+            rawText: currentChunk.trim(),
+            summary: currentChunk.trim().slice(0, 200),
+          });
+        }
+        currentChunk = chunk;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + chunk;
+      }
+    }
+    if (currentChunk.trim()) {
+      visibleScenes.push({
+        sceneNumber: chunkIndex,
+        title: `Section ${chunkIndex}`,
+        rawText: currentChunk.trim(),
+        summary: currentChunk.trim().slice(0, 200),
+      });
     }
   }
 

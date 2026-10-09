@@ -640,12 +640,14 @@ export const api = {
       return str ? `?${str}` : '';
     },
 
-    async triggerProcessing(source) {
+    async triggerProcessing(source, force = false) {
       const src = this.normalizeSource(source);
       if (src.kind === 'book') {
-        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/process`, {
+        const query = force ? '?force=true' : '';
+        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/process${query}`, {
           method: 'POST',
           headers: getHeaders(),
+          body: JSON.stringify({ force }),
         });
         const data = await handleResponse(res);
         return data;
@@ -812,7 +814,16 @@ export const api = {
         const data = await handleResponse(res);
         return data;
       }
-      return api.story.ask(src.id, question, history);
+      if (api.story && typeof api.story.ask === 'function') {
+        return api.story.ask(src.id, question, history);
+      }
+      const res = await fetch(`${API_BASE}/documents/${src.id}/search/ask`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ question, history }),
+      });
+      const data = await handleResponse(res);
+      return data;
     },
 
     async getPipelineStatus(bookId, params = {}) {

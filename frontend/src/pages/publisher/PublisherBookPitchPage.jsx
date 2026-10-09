@@ -533,7 +533,7 @@ export function PublisherBookPitchPage() {
 
           <RelationshipsTab
             summary={true}
-            initialData={relationshipsData}
+            initialData={{ relationships, characters: mainCast }}
           />
         </div>
       </div>

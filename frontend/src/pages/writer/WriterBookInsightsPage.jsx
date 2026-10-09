@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Layers,
   AlertTriangle,
+  RotateCw,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Button } from '../../components/common/Button';
@@ -43,6 +44,9 @@ export function WriterBookInsightsPage() {
   const [activeTab, setActiveTab] = useState('scenes');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [reanalyzeMessage, setReanalyzeMessage] = useState('');
 
   useEffect(() => {
     async function loadBook() {
@@ -60,10 +64,36 @@ export function WriterBookInsightsPage() {
     if (id) {
       loadBook();
     }
-  }, [id]);
+  }, [id, refreshKey]);
 
   const bookId = (book?._id || book?.id)?.toString();
   const documentId = (book?.documentId?._id || book?.documentId)?.toString();
+
+  // Auto-trigger insights processing on existing stories if pending or unseeded
+  useEffect(() => {
+    if (bookId) {
+      api.analysis.triggerProcessing({ kind: 'book', id: bookId }).catch(() => {});
+    }
+  }, [bookId]);
+
+  const handleReanalyze = async () => {
+    if (!bookId || isReanalyzing) return;
+    try {
+      setIsReanalyzing(true);
+      setReanalyzeMessage('Starting…');
+      await api.analysis.triggerProcessing({ kind: 'book', id: bookId }, true);
+      setRefreshKey((k) => k + 1);
+      setReanalyzeMessage('Analysis queued');
+      setTimeout(() => setReanalyzeMessage(''), 3000);
+    } catch (err) {
+      console.error('Re-analysis trigger error:', err);
+      setReanalyzeMessage('Failed to trigger');
+      setTimeout(() => setReanalyzeMessage(''), 3000);
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
+
   const source = useMemo(() => ({
     kind: 'book',
     id: bookId,
@@ -133,7 +163,18 @@ export function WriterBookInsightsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2"
+              onClick={handleReanalyze}
+              disabled={isReanalyzing}
+              title="Re-run narrative analysis on this story"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isReanalyzing ? 'animate-spin text-accent' : ''}`} />
+              <span>{isReanalyzing ? 'Analyzing…' : reanalyzeMessage || 'Re-analyze Story'}</span>
+            </Button>
             <Link to={`/read/${book.id || book._id}`}>
               <Button variant="secondary" size="sm" className="gap-2">
                 <Eye className="w-4 h-4" />
@@ -175,25 +216,25 @@ export function WriterBookInsightsPage() {
 
       <div className="bg-paper rounded border border-rule p-6 sm:p-8 min-h-[560px]">
         {activeTab === 'scenes' && (
-          <ScenesTab source={source} options={options} />
+          <ScenesTab key={`scenes-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'characters' && (
-          <CharactersTab source={source} options={options} />
+          <CharactersTab key={`characters-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'relationships' && (
-          <RelationshipsTab source={source} options={options} />
+          <RelationshipsTab key={`relationships-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'timeline' && (
-          <TimelineTab source={source} options={options} />
+          <TimelineTab key={`timeline-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'mood' && (
-          <MoodTab source={source} options={options} />
+          <MoodTab key={`mood-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'arc' && (
-          <StoryArcTab source={source} options={options} />
+          <StoryArcTab key={`arc-${refreshKey}`} source={source} options={options} />
         )}
         {activeTab === 'ask' && (
-          <AskQuestionsTab source={source} options={options} />
+          <AskQuestionsTab key={`ask-${refreshKey}`} source={source} options={options} />
         )}
       </div>
     </div>

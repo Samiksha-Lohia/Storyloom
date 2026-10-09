@@ -3,7 +3,8 @@ import { pipelineQueue } from '../queues/pipeline.queue.js';
 import { AnalysisDto } from '../dtos/analysis.dto.js';
 import { NotFoundError, BadRequestError } from '../utilities/custom-errors.js';
 import { JOB_STATUSES } from '../constants/job-status.js';
-import STAGES from '../constants/stages.js';
+import STAGES, { STAGE_LIST, STAGE_DEPENDENCIES } from '../constants/stages.js';
+import Document from '../models/document.model.js';
 import { enqueueReadyStages } from '../workers/pipeline.worker.js';
 import logger from '../utilities/logger.js';
 
@@ -37,11 +38,40 @@ const retryStage = async (documentId, stage) => {
   return AnalysisDto.toResponse(updated);
 };
 
-const triggerAnalysisIfPending = async (documentId) => {
+const triggerAnalysisIfPending = async (documentId, force = false) => {
   if (!documentId) return false;
 
-  const jobs = await processingJobRepository.findByDocumentId(documentId);
-  if (!jobs || jobs.length === 0) return false;
+  let jobs = await processingJobRepository.findByDocumentId(documentId);
+  if (!jobs || jobs.length === 0) {
+    const doc = await Document.findById(documentId).select('+parsedText');
+    if (!doc) return false;
+
+    const normalized = Boolean(doc.parsedText);
+    const jobRecords = STAGE_LIST.map((stage) => ({
+      documentId,
+      stage,
+      status: (stage === STAGES.PARSING && normalized) ? JOB_STATUSES.COMPLETED : JOB_STATUSES.QUEUED,
+      progress: (stage === STAGES.PARSING && normalized) ? 100 : 0,
+      completedAt: (stage === STAGES.PARSING && normalized) ? new Date() : null,
+      dependsOn: STAGE_DEPENDENCIES[stage],
+    }));
+    await processingJobRepository.create(jobRecords);
+    jobs = await processingJobRepository.findByDocumentId(documentId);
+  }
+
+  if (force) {
+    for (const j of jobs) {
+      if (j.stage !== STAGES.PARSING) {
+        await processingJobRepository.updateOne(
+          { documentId, stage: j.stage },
+          { status: JOB_STATUSES.QUEUED, progress: 0, error: null, startedAt: null, completedAt: null }
+        );
+      }
+    }
+    await enqueueReadyStages(documentId);
+    logger.info(`Narrative insights re-analysis forced and triggered for document ${documentId}`);
+    return true;
+  }
 
   const nonParsingJobs = jobs.filter((j) => j.stage !== STAGES.PARSING);
   const allComplete = nonParsingJobs.length > 0 && nonParsingJobs.every((j) => j.status === JOB_STATUSES.COMPLETED);

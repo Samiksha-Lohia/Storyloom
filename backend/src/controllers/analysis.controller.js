@@ -111,7 +111,8 @@ export class AnalysisController {
   static async triggerProcessing(req, res, next) {
     try {
       const ctx = await resolveRequestContext(req);
-      const triggered = await triggerAnalysisIfPending(ctx.documentId);
+      const force = req.query.force === 'true' || req.query.force === true || req.body?.force === true;
+      const triggered = await triggerAnalysisIfPending(ctx.documentId, force);
       res.status(200).json({
         success: true,
         message: triggered
