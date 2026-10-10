@@ -9,8 +9,6 @@ import {
   Search,
   MessageSquare,
   ShieldAlert,
-  Eye,
-  EyeOff,
   Sparkles,
   RefreshCw,
 } from 'lucide-react';
@@ -33,7 +31,6 @@ export function InsightsDrawer({
 }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('characters');
-  const [showAll, setShowAll] = useState(Boolean(inline));
   const [isProcessing, setIsProcessing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -47,11 +44,7 @@ export function InsightsDrawer({
   const bookId = (book?._id || book?.id)?.toString();
   const source = useMemo(() => ({ kind: 'book', id: bookId }), [bookId]);
 
-  const displayPage = Math.max(1, furthestPage || currentPage || 1);
-  const options = useMemo(() => ({
-    upto: displayPage,
-    showAll: showAll,
-  }), [displayPage, showAll]);
+  const options = useMemo(() => ({ showAll: true }), []);
 
   useEffect(() => {
     if (!bookId || !isOpen) return;
@@ -136,48 +129,16 @@ export function InsightsDrawer({
       </div>
 
       <div className="px-4 py-2 border-b border-rule flex flex-wrap items-center justify-between gap-3 text-xs bg-paper">
-        <div className="flex items-center gap-2">
-          {isReader ? (
-            <>
-              {showAll ? (
-                <div className="flex items-center gap-1.5 text-accent font-bold">
-                  <Eye className="w-4 h-4" />
-                  <span>Spoilers revealed (showing full analysis)</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 text-muted font-bold">
-                  <EyeOff className="w-4 h-4 text-accent" />
-                  <span>
-                    Spoilers hidden up to page <strong className="text-ink font-bold">{displayPage}</strong>
-                  </span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center gap-1.5 text-muted">
-              <span className="font-bold text-ink uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded border border-rule">
-                {isWriterOwner ? 'Author Mode' : isAdmin ? 'Admin Mode' : 'Publisher Mode'}
-              </span>
-              <span className="text-[11px]">
-                {isPublisher
-                  ? 'High-level summaries & character sheets'
-                  : 'Full story analysis'}
-              </span>
-            </div>
-          )}
+        <div className="flex items-center gap-1.5 text-muted">
+          <span className="font-bold text-ink uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded border border-rule">
+            {isWriterOwner ? 'Author Mode' : isAdmin ? 'Admin Mode' : isPublisher ? 'Publisher Mode' : 'Reader Mode'}
+          </span>
+          <span className="text-[11px]">
+            {isPublisher
+              ? 'High-level summaries & character sheets'
+              : 'Full story breakdown & insights'}
+          </span>
         </div>
-
-        {isReader && (
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <span className="text-[11px] font-bold text-ink">Show everything</span>
-            <input
-              type="checkbox"
-              checked={showAll}
-              onChange={(e) => setShowAll(e.target.checked)}
-              className="w-4 h-4 accent-accent rounded cursor-pointer"
-            />
-          </label>
-        )}
       </div>
 
       {isProcessing && (

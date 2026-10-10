@@ -239,13 +239,7 @@ Summary: ${s.summary || 'No summary'} ${textPortion}`;
     }
   }
 
-  // 11. Spoiler Boundary Instruction
-  const spoilerInstruction =
-    maxVisibleSceneNumber !== null
-      ? `CRITICAL SPOILER CONSTRAINT: The reader has only reached Scene ${maxVisibleSceneNumber}. You MUST NOT reveal or mention any plot twists, character deaths, reveals, or events that take place after Scene ${maxVisibleSceneNumber}. If the question asks about events beyond Scene ${maxVisibleSceneNumber}, explicitly inform the user that this occurs later in the story and cannot be revealed yet.`
-      : '';
-
-  // 12. Ironclad System Prompt
+  // 11. Ironclad System Prompt
   const prompt = `You are the official Storyloom Narrative Analysis Engine. Your job is to answer the user's question with 100% FACTUAL FIDELITY based EXCLUSIVELY on the story manuscript text and scene progression provided below.
 
 CRITICAL INSTRUCTIONS - ZERO ASSUMPTIONS:
@@ -253,7 +247,6 @@ CRITICAL INSTRUCTIONS - ZERO ASSUMPTIONS:
 2. THOROUGH LINE-BY-LINE EVALUATION: Carefully evaluate the narrative across all scenes. Cite the specific scenes (e.g., "In Scene 1...", "In Scene 3...") and refer directly to the actual actions, dialogues, and occurrences.
 3. UNMENTIONED INFORMATION: If the question asks about something that is NOT mentioned, explained, or addressed in the provided story text, you MUST clearly state: "Based on the text of the story, this is not mentioned or specified." Never invent an answer to fill gaps.
 4. SYNTHESIZE ACROSS SCENES: If a character or event appears across multiple scenes, trace their actions across the entire timeline to provide a comprehensive, accurate answer.
-${spoilerInstruction ? `\n${spoilerInstruction}\n` : ''}
 ${langInstruction ? `\nLANGUAGE INSTRUCTION:\n${langInstruction}\n` : ''}
 
 ${historyBlock}

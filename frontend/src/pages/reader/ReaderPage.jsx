@@ -586,8 +586,6 @@ export function ReaderPage() {
         isOpen={showInsights}
         onClose={() => setShowInsights(false)}
         book={book}
-        currentPage={currentPage}
-        furthestPage={libraryEntry?.furthestPage || currentPage}
         theme={settings.theme}
       />
 

@@ -270,8 +270,6 @@ export function BookPageData({
               <InsightsDrawer
                 inline={true}
                 book={book}
-                currentPage={libraryEntry?.currentPage || 1}
-                furthestPage={libraryEntry?.furthestPage || 1}
               />
             )}
           </div>

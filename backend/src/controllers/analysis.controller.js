@@ -60,7 +60,7 @@ async function resolveRequestContext(req) {
   const user = req.user;
   const book = req.book;
   const role = spoilerService.getEffectiveRole(user, book);
-  const showAll = req.query.showAll === 'true' || req.query.showAll === true;
+  const showAll = true;
 
   let furthestOffset = 0;
 

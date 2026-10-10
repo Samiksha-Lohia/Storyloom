@@ -50,11 +50,7 @@ export async function filterAnalysis({
     );
   }
 
-  if (mode === FEATURE_ACCESS_MODES.FULL) {
-    return data;
-  }
-
-  if (mode === FEATURE_ACCESS_MODES.SPOILERS_ALLOWED) {
+  if (mode === FEATURE_ACCESS_MODES.FULL || role === USER_ROLES.READER) {
     return data;
   }
 
@@ -380,35 +376,12 @@ export async function searchWithSpoilerProtection({
     );
   }
 
-  const isReaderOptedOut = role === USER_ROLES.READER && showAll === true;
-
-  let searchFilters = { ...filters };
-
-  if (mode === FEATURE_ACCESS_MODES.FILTERED && !isReaderOptedOut) {
-    const allScenes = await Scene.find({ documentId })
-      .sort({ sceneNumber: 1 })
-      .lean();
-    const visibleScenes = allScenes.filter(
-      (s) => (s.textRange?.start ?? 0) < furthestOffset
-    );
-    const visibleSceneIds = new Set(visibleScenes.map((s) => s._id.toString()));
-    searchFilters.visibleSceneIds = visibleSceneIds;
-  }
-
   const results = await searchService.semanticSearch(
     documentId,
     query,
-    searchFilters,
+    filters,
     limit
   );
-
-  if (role === USER_ROLES.READER) {
-    results.forEach((item) => {
-      if (item.sourceType === 'character' && item.source) {
-        delete item.source.arcSummary;
-      }
-    });
-  }
 
   return results;
 }
@@ -431,33 +404,11 @@ export async function askWithSpoilerProtection({
     );
   }
 
-  const isReaderOptedOut = role === USER_ROLES.READER && showAll === true;
-
-  let maxVisibleSceneNumber = null;
-  if (mode === FEATURE_ACCESS_MODES.FILTERED && !isReaderOptedOut) {
-    const allScenes = await Scene.find({ documentId })
-      .select('+rawText')
-      .sort({ sceneNumber: 1 })
-      .lean();
-
-    const targetScenes = allScenes.filter(
-      (s) => (s.textRange?.start ?? 0) < furthestOffset
-    );
-
-    if (targetScenes.length > 0) {
-      maxVisibleSceneNumber = Math.max(
-        ...targetScenes.map((s) => s.sceneNumber || 1)
-      );
-    } else if (allScenes.length > 0) {
-      maxVisibleSceneNumber = 1;
-    }
-  }
-
   return storyQaService.answerStoryQuestion({
     documentId,
     question,
     history,
-    maxVisibleSceneNumber,
+    maxVisibleSceneNumber: null,
     book,
     role,
   });
