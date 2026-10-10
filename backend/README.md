@@ -25,11 +25,7 @@ Create a `.env` file in `backend/` (you can copy `.env.example` as a template) a
 | `JWT_REFRESH_EXPIRY` | Refresh token lifetime | `7d` | No |
 | `MAX_FILE_SIZE_MB` | Maximum manuscript upload size in MB | `15` | No |
 | `UPLOAD_DIR` | Local disk upload directory | `uploads/` | No |
-| `STORAGE_PROVIDER` | Manuscript storage (`local` or `s3`) | `local` | No |
-| `AWS_ACCESS_KEY_ID` | AWS S3 access key (when `STORAGE_PROVIDER=s3`) | - | Conditionally |
-| `AWS_SECRET_ACCESS_KEY`| AWS S3 secret key (when `STORAGE_PROVIDER=s3`) | - | Conditionally |
-| `AWS_REGION` | AWS S3 region | `us-east-1` | No |
-| `AWS_S3_BUCKET_NAME` | AWS S3 bucket name | - | Conditionally |
+| `STORAGE_PROVIDER` | Manuscript storage (`local`) | `local` | No |
 | `CLOUDINARY_CLOUD_NAME`| Cloudinary Cloud Name for covers & avatars | - | **Yes** |
 | `CLOUDINARY_API_KEY` | Cloudinary API Key | - | **Yes** |
 | `CLOUDINARY_API_SECRET`| Cloudinary API Secret | - | **Yes** |

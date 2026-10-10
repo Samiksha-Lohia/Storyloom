@@ -23,23 +23,7 @@ const envVarsSchema = Joi.object()
     ALLOWED_MIME_TYPES: Joi.string()
       .default('application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain')
       .description('Comma-separated allowed MIME types for uploads'),
-    STORAGE_PROVIDER: Joi.string().valid('local', 's3').default('local'),
-    AWS_ACCESS_KEY_ID: Joi.string().when('STORAGE_PROVIDER', {
-      is: 's3',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
-    AWS_SECRET_ACCESS_KEY: Joi.string().when('STORAGE_PROVIDER', {
-      is: 's3',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
-    AWS_REGION: Joi.string().default('us-east-1'),
-    AWS_S3_BUCKET_NAME: Joi.string().when('STORAGE_PROVIDER', {
-      is: 's3',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
+    STORAGE_PROVIDER: Joi.string().valid('local').default('local'),
     OPENROUTER_API_KEY_1: Joi.string().required().allow('').description('OpenRouter API Key 1'),
     OPENROUTER_API_KEY_2: Joi.string().required().allow('').description('OpenRouter API Key 2'),
     OPENROUTER_API_KEY_3: Joi.string().required().allow('').description('OpenRouter API Key 3'),
@@ -99,13 +83,7 @@ const config = {
     allowedTypes: envVars.ALLOWED_MIME_TYPES.split(','),
   },
   storage: {
-    provider: envVars.STORAGE_PROVIDER,
-    s3: {
-      accessKeyId: envVars.AWS_ACCESS_KEY_ID,
-      secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
-      region: envVars.AWS_REGION,
-      bucketName: envVars.AWS_S3_BUCKET_NAME,
-    },
+    provider: 'local',
   },
   frontendUrl: envVars.FRONTEND_URL || '',
   corsAllowedOrigins: (() => {

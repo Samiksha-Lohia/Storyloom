@@ -5,10 +5,6 @@ import config from '../config/env.js';
 import { BadRequestError } from '../utilities/custom-errors.js';
 
 const buildStorage = () => {
-  if (config.storage.provider === 's3') {
-    return multer.memoryStorage();
-  }
-
   if (!fs.existsSync(config.file.uploadDir)) {
     fs.mkdirSync(config.file.uploadDir, { recursive: true });
   }

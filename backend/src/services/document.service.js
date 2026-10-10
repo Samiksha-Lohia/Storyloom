@@ -117,9 +117,7 @@ const deleteDocument = async (documentId) => {
     processingJobRepository.deleteMany({ documentId }),
   ]);
 
-  const storageKey = doc.storageUrl.includes('amazonaws.com')
-    ? doc.storageUrl.split('.amazonaws.com/')[1]
-    : doc.storageUrl;
+  const storageKey = doc.storageUrl;
   await deleteFile(doc.storageUrl, storageKey).catch((err) =>
     logger.warn(`File deletion warning for document ${documentId}: ${err.message}`)
   );
