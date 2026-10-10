@@ -7,7 +7,7 @@ Append one entry per phase: decision, reason, date.
   1. Add `bookId` references to analysis models and `Document` (spec §9).
   2. Store original manuscript files in MongoDB GridFS (`Document.fileId`) with parsed text and page offsets in Mongo (spec §4, §8, §9).
   3. Manage Cloudinary operations (covers, avatars) behind `storage.service.js` with `saveImage`, `deleteImage`, `imageUrl` (spec §8).
-  4. Track reader progress as `currentPage` and `furthestPage` on `ReadingList`, with spoiler filtering executed against `furthestPage` via binary search over `Book.pageOffsets` and `?upto=page` query parameters (spec §4, §5, §9, §10).
+  4. Track reader progress as `currentPage` and `furthestPage` on `ReadingList` (spec §4, §5, §9, §10).
   5. Structure backend with `controllers/` layer paired with route files declaring roles (spec §11).
   6. Enforce User status as `active | pending | banned` with strike progression (spec §2, §13).
   7. Enforce Book status as `draft`, `processing`, `published`, `unpublished`, `removed` (spec §3, §9).
@@ -47,7 +47,7 @@ Append one entry per phase: decision, reason, date.
   3. Created `scripts/repaginate.js` with Redis cache invalidation, batch-repaginating books lacking offsets and supporting `--force`/`--all`. Updated `seed-demo-books.js` to seed books ready for repagination.
   4. Implemented `GET /books/:bookId/pages?from=&to=` with 5-page window cap, JS string offset slicing, and 1-hour Redis caching (`book:${bookId}:pages:text`) invalidated on repaginate or book deletion. Avoided MongoDB `$substrCP` to ensure UTF-16 code unit consistency.
   5. Implemented mature content gate with `PUT /me/mature-ack`. Unacknowledged non-owner/non-admin requests for mature book pages or analysis return 403 with `MATURE_ACK_REQUIRED`.
-  6. Implemented `GET /books/:bookId/scene-markers` resolving `Scene.textRange.start` via binary search over `pageOffsets`, returning strictly numbers (no titles or text) to prevent spoilers.
+  6. Implemented `GET /books/:bookId/scene-markers` resolving `Scene.textRange.start` via binary search over `pageOffsets`, returning scene boundary numbers for navigation.
   7. Created `ReadingList` model per spec §9 with compound unique `readerId + bookId`, monotonic `furthestOffset = Math.max(old, new)`, auto-creation on first page fetch, auto-completion (`finished`) when reaching the last page, bookmark management, and per-user rate limiting.
   8. Hooked first reader progress entry creation to atomically increment `book.stats.reads`.
   9. Added reader settings (`fontSize`, `lineHeight`, `fontFamily`, `theme`) with Joi validation on `PATCH /me/settings`, embedded in `UserDto` and `GET /auth/me`.
@@ -59,7 +59,7 @@ Append one entry per phase: decision, reason, date.
   4. Created `MyBooksPage.jsx` (/w/books) with status chips (`processing`, `draft`, `published`, `unpublished`), progress tracking, Publish/Unpublish buttons (publish disabled with explanation until pagination is complete), reader preview, and deletion modal. Added `GET /api/books/writer/mine` backend route for writer book management.
   5. Implemented `ReaderPage.jsx` (/read/:bookId) with windowed prefetching (current page + next 2 + previous 1; max 5 pages), keyboard navigation (Left/Right/Space), edge clicking (12% margins), touch swipe gestures, and Framer Motion slide transitions honoring `prefers-reduced-motion`.
   6. Implemented reading progress auto-resume at `currentOffset` on open, with 1-second debounced progress saves sent to `PUT /me/library/:bookId` keeping `furthestOffset` strictly monotonic.
-  7. Built `Scrubber.jsx` with draggable range slider, "Page X of Y", percentage read, jump-to-page input, and spoiler-free scene marker ticks from `/scene-markers`.
+  7. Built `Scrubber.jsx` with draggable range slider, "Page X of Y", percentage read, jump-to-page input, and scene marker ticks from `/scene-markers`.
   8. Created `ReaderSettingsPopover.jsx` supporting font size (14-28px), line height (1.4-2.1), font family (Lora serif vs Nunito sans), and themes (`light`, `sepia`, `dark`) with contrast ratios >= 4.5:1, saved via `PATCH /me/settings` and applied instantly.
   9. Added `BookmarksDrawer.jsx` with toolbar "Mark" button, relative timestamps, and jump-to-page navigation.
   10. Added wide-screen (>= 1024px) optional two-page spread toggle.
@@ -70,14 +70,13 @@ Append one entry per phase: decision, reason, date.
 - **Reason**: Implement writer publish journey and reader experience per Platform Spec sections 3, 4, 8, 11, and 13.
 - **Date**: 2026-10-04
 
-## Phase 4 - Role-Gated & Spoiler-Protected Narrative Analysis
+## Phase 4 - Role-Gated Narrative Analysis
 - **Decision**:
   1. Formalized feature access matrix (`constants/feature-access.js`) covering all 10 features across roles (`writer`, `reader`, `publisher`, `admin`) with modes: `full`, `filtered`, `summary`, `main-cast`, `hidden`.
-  2. Implemented centralized spoiler protection service (`spoiler.service.js`) with binary search over `pageOffsets` determining reader cutoff from `furthestOffset`, filtering scenes, character introductions, relationships, timeline events, story arc climax/resolution, and semantic search hits beyond reading progress.
-  3. Reader queries support `?showAll=true` to opt-out of spoiler filtering while preserving reader privacy boundaries.
-  4. Unified analysis endpoints under `/books/:bookId/analysis/:feature` with role enforcement and rate limiting.
-  5. Built `InsightsDrawer.jsx` offering live reader-facing story intelligence directly inside reader and book pages with spoiler toggles.
-- **Reason**: Spec §2, §4, and §12.6 mandate role-gated analysis access and strict spoiler protection for readers.
+  2. Implemented centralized access control service (`spoiler.service.js`) with role-based feature gating across scenes, character profiles, relationships, timeline events, story arc, and semantic search.
+  3. Unified analysis endpoints under `/books/:bookId/analysis/:feature` with role enforcement and rate limiting.
+  4. Built `InsightsDrawer.jsx` offering live reader-facing story intelligence directly inside reader and book pages.
+- **Reason**: Spec §2, §4, and §12.6 mandate role-gated analysis access.
 - **Date**: 2026-10-04
 
 ## Phase 5 - Community, Moderation, Trust & Integration

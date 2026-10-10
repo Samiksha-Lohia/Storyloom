@@ -62,32 +62,7 @@ async function resolveRequestContext(req) {
   const role = spoilerService.getEffectiveRole(user, book);
   const showAll = true;
 
-  let furthestOffset = 0;
-
-  if (user) {
-    const readingEntry = await ReadingList.findOne({
-      readerId: user.id,
-      bookId: book._id,
-    }).lean();
-    if (readingEntry && typeof readingEntry.furthestOffset === 'number') {
-      furthestOffset = readingEntry.furthestOffset;
-    }
-  }
-
-  if (req.query.upto) {
-    const pageNum = parseInt(req.query.upto, 10);
-    if (pageNum > 0 && Array.isArray(book.pageOffsets)) {
-      if (book.pageOffsets[pageNum] !== undefined) {
-        furthestOffset = book.pageOffsets[pageNum];
-      } else {
-        furthestOffset = (book.pageOffsets[pageNum - 1] ?? 0) + 1800;
-      }
-    }
-  }
-
-  if (req.query.offset !== undefined) {
-    furthestOffset = parseInt(req.query.offset, 10) || 0;
-  }
+  const furthestOffset = 0;
 
   const documentId = book.documentId?._id || book.documentId;
 

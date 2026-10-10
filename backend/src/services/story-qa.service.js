@@ -78,11 +78,8 @@ export async function answerStoryQuestion({
     DialogueSummary.find({ documentId }).lean().catch(() => []),
   ]);
 
-  // 2. Enforce spoiler boundary if reader has a viewing limit
-  let visibleScenes = Array.isArray(allScenes) ? [...allScenes] : [];
-  if (maxVisibleSceneNumber !== null && Number.isInteger(maxVisibleSceneNumber)) {
-    visibleScenes = visibleScenes.filter((s) => s.sceneNumber <= maxVisibleSceneNumber);
-  }
+  // 2. Prepare all scenes for evaluation
+  const visibleScenes = Array.isArray(allScenes) ? [...allScenes] : [];
 
   // 3. Fallback text hydration: Ensure every scene has actual text
   const parsedText = document?.parsedText || '';
