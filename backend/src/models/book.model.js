@@ -66,8 +66,7 @@ const bookSchema = new mongoose.Schema(
     },
     accent: {
       type: String,
-      enum: BOOK_ACCENTS,
-      default: BOOK_ACCENTS[0],
+      default: '#C2410C',
     },
     pageCount: {
       type: Number,

@@ -83,7 +83,7 @@ export const createBook = async (userId, files, data) => {
     const tags = parseTags(data.tags);
     const mature = data.mature === true || data.mature === 'true';
     const template = BOOK_TEMPLATES_LIST.includes(data.template) ? data.template : 'classic';
-    const accent = BOOK_ACCENTS.includes(data.accent) ? data.accent : BOOK_ACCENTS[0];
+    const accent = data.accent || '#C2410C';
 
     const pageOffsets = documentResult.pageOffsets || [];
     const pageCount = documentResult.pageCount ?? pageOffsets.length;
@@ -415,8 +415,8 @@ export const updateBook = async (bookId, updateData, user, newCoverFile = null) 
   if (updateData.template && BOOK_TEMPLATES_LIST.includes(updateData.template)) {
     book.template = updateData.template;
   }
-  if (updateData.accent && BOOK_ACCENTS.includes(updateData.accent)) {
-    book.accent = updateData.accent;
+  if (updateData.accent !== undefined) {
+    book.accent = updateData.accent || '#C2410C';
   }
 
   await book.save();

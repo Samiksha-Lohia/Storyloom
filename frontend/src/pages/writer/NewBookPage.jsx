@@ -133,7 +133,6 @@ export function NewBookPage() {
       formData.append('language', language);
       formData.append('mature', String(mature));
       formData.append('template', 'classic');
-      formData.append('accent', '#C2410C');
       formData.append('acceptedRights', 'true');
 
       formData.append('status', targetStatus === 'publish' ? 'published' : 'draft');

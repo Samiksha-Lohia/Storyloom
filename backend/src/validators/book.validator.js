@@ -23,8 +23,9 @@ export const createBookSchema = {
       .valid(...BOOK_TEMPLATES_LIST)
       .default('classic'),
     accent: Joi.string()
-      .valid(...BOOK_ACCENTS)
-      .default(BOOK_ACCENTS[0]),
+      .optional()
+      .allow('', null)
+      .default('#C2410C'),
     status: Joi.string()
       .valid(...BOOK_STATUSES_LIST)
       .default('published'),
@@ -57,7 +58,7 @@ export const updateBookSchema = {
       .try(Joi.boolean(), Joi.string().valid('true', 'false'))
       .optional(),
     template: Joi.string().valid(...BOOK_TEMPLATES_LIST).optional(),
-    accent: Joi.string().valid(...BOOK_ACCENTS).optional(),
+    accent: Joi.string().optional().allow('', null),
     status: Joi.string().valid(...BOOK_STATUSES_LIST).optional(),
   }),
 };

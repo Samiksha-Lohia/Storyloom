@@ -15,7 +15,6 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import CoverCropper from '../../components/common/CoverCropper';
 import { GENRES } from '../../constants/app';
-import { DEFAULT_ACCENT } from '../../constants/templates';
 
 export function EditBookPage() {
   const { id } = useParams();
@@ -36,7 +35,6 @@ export function EditBookPage() {
   const [language, setLanguage] = useState('en');
   const [mature, setMature] = useState(false);
   const [template, setTemplate] = useState('classic');
-  const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [status, setStatus] = useState('draft');
 
   const [showCoverCropper, setShowCoverCropper] = useState(false);
@@ -61,7 +59,6 @@ export function EditBookPage() {
         setLanguage(data.language || 'en');
         setMature(Boolean(data.mature));
         setTemplate(data.template || 'classic');
-        setAccent(data.accent || DEFAULT_ACCENT);
         setStatus(data.status || 'draft');
         setCoverPreviewUrl(data.coverUrl || '');
       } catch (err) {
@@ -113,7 +110,6 @@ export function EditBookPage() {
         formData.append('language', language);
         formData.append('mature', String(mature));
         formData.append('template', template);
-        formData.append('accent', accent);
         formData.append('status', status);
         tags.forEach((tag) => formData.append('tags[]', tag));
 
@@ -127,7 +123,6 @@ export function EditBookPage() {
           language,
           mature,
           template,
-          accent,
           status,
         };
         updated = await api.books.update(id, payload, false);
