@@ -16,7 +16,11 @@ class SocketClient {
   }
 
   getToken() {
-    return localStorage.getItem('scenecraft_access_token') || '';
+    return (
+      localStorage.getItem('storyloom_access_token') ||
+      localStorage.getItem('scenecraft_access_token') ||
+      ''
+    );
   }
 
   getSocket() {

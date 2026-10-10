@@ -13,8 +13,6 @@ import ReportButton from '../common/ReportButton';
 import { DEFAULT_ACCENT } from '../../constants/templates';
 
 import ClassicTemplate from './ClassicTemplate';
-import ShowcaseTemplate from './ShowcaseTemplate';
-import NotebookTemplate from './NotebookTemplate';
 
 export function BookPageData({
   book,

@@ -1,4 +1,4 @@
-# SceneCraft Backend
+# Storyloom Backend
 
 AI-Powered Interactive Story Analysis & Publishing Platform Backend.
 

@@ -25,10 +25,49 @@ const isAuthEndpoint = (url) => {
   );
 };
 
-const clearAuthAndRedirect = () => {
+const TOKEN_KEY = 'storyloom_access_token';
+const REFRESH_KEY = 'storyloom_refresh_token';
+const USER_KEY = 'storyloom_user';
+
+const getStoredToken = () =>
+  localStorage.getItem(TOKEN_KEY) || localStorage.getItem('scenecraft_access_token');
+
+const getStoredRefreshToken = () =>
+  localStorage.getItem(REFRESH_KEY) || localStorage.getItem('scenecraft_refresh_token');
+
+const getStoredUser = () =>
+  localStorage.getItem(USER_KEY) || localStorage.getItem('scenecraft_user');
+
+const setStoredTokens = (access, refresh) => {
+  if (access) {
+    localStorage.setItem(TOKEN_KEY, access);
+    localStorage.setItem('scenecraft_access_token', access);
+  }
+  if (refresh) {
+    localStorage.setItem(REFRESH_KEY, refresh);
+    localStorage.setItem('scenecraft_refresh_token', refresh);
+  }
+};
+
+const setStoredUser = (user) => {
+  if (user) {
+    const val = typeof user === 'string' ? user : JSON.stringify(user);
+    localStorage.setItem(USER_KEY, val);
+    localStorage.setItem('scenecraft_user', val);
+  }
+};
+
+const clearStoredAuth = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(USER_KEY);
   localStorage.removeItem('scenecraft_access_token');
   localStorage.removeItem('scenecraft_refresh_token');
   localStorage.removeItem('scenecraft_user');
+};
+
+const clearAuthAndRedirect = () => {
+  clearStoredAuth();
   if (
     typeof window !== 'undefined' &&
     !window.location.pathname.startsWith('/login') &&
@@ -43,7 +82,7 @@ const refreshAccessToken = async () => {
 
   refreshPromise = (async () => {
     try {
-      const refreshToken = localStorage.getItem('scenecraft_refresh_token');
+      const refreshToken = getStoredRefreshToken();
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -64,8 +103,7 @@ const refreshAccessToken = async () => {
         throw new Error('Invalid token response structure');
       }
 
-      localStorage.setItem('scenecraft_access_token', tokens.accessToken);
-      localStorage.setItem('scenecraft_refresh_token', tokens.refreshToken);
+      setStoredTokens(tokens.accessToken, tokens.refreshToken);
 
       try {
         socketClient.reconnect();
@@ -112,7 +150,7 @@ const getHeaders = (isMultipart = false) => {
   if (!isMultipart) {
     headers['Content-Type'] = 'application/json';
   }
-  const token = localStorage.getItem('scenecraft_access_token');
+  const token = getStoredToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -173,9 +211,8 @@ export const api = {
 
       const data = await handleResponse(res);
       if (data.success && data.data.tokens) {
-        localStorage.setItem('scenecraft_access_token', data.data.tokens.accessToken);
-        localStorage.setItem('scenecraft_refresh_token', data.data.tokens.refreshToken);
-        localStorage.setItem('scenecraft_user', JSON.stringify(data.data.user));
+        setStoredTokens(data.data.tokens.accessToken, data.data.tokens.refreshToken);
+        setStoredUser(data.data.user);
       }
       return data.data;
     },
@@ -188,9 +225,8 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data.success && data.data.tokens) {
-        localStorage.setItem('scenecraft_access_token', data.data.tokens.accessToken);
-        localStorage.setItem('scenecraft_refresh_token', data.data.tokens.refreshToken);
-        localStorage.setItem('scenecraft_user', JSON.stringify(data.data.user));
+        setStoredTokens(data.data.tokens.accessToken, data.data.tokens.refreshToken);
+        setStoredUser(data.data.user);
       }
       return data.data;
     },
@@ -201,13 +237,13 @@ export const api = {
       });
       const data = await handleResponse(res);
       if (data.success && data.data) {
-        localStorage.setItem('scenecraft_user', JSON.stringify(data.data));
+        setStoredUser(data.data);
       }
       return data.data;
     },
 
     async logout() {
-      const refreshToken = localStorage.getItem('scenecraft_refresh_token');
+      const refreshToken = getStoredRefreshToken();
       if (refreshToken) {
         await fetch(`${API_BASE}/auth/logout`, {
           method: 'POST',
@@ -215,18 +251,16 @@ export const api = {
           body: JSON.stringify({ refreshToken }),
         }).catch(() => {});
       }
-      localStorage.removeItem('scenecraft_access_token');
-      localStorage.removeItem('scenecraft_refresh_token');
-      localStorage.removeItem('scenecraft_user');
+      clearStoredAuth();
     },
 
     getCurrentUser() {
-      const userStr = localStorage.getItem('scenecraft_user');
-      return userStr ? JSON.parse(userStr) : null;
+      const userStr = getStoredUser();
+      return userStr ? (typeof userStr === 'string' ? JSON.parse(userStr) : userStr) : null;
     },
 
     isAuthenticated() {
-      return !!localStorage.getItem('scenecraft_access_token');
+      return !!getStoredToken();
     },
 
     async forgotPassword(email) {

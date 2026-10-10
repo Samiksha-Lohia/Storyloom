@@ -1,5 +1,5 @@
 {
-  "name": "scenecraft-backend",
+  "name": "storyloom-backend",
   "version": "1.0.0",
   "description": "AI-Powered Interactive Story Analysis Platform Backend",
   "main": "src/server.js",

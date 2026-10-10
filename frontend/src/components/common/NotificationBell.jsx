@@ -13,7 +13,7 @@ export default function NotificationBell() {
   const dropdownRef = useRef(null);
 
   const currentUser = api.auth.getCurrentUser();
-  const token = localStorage.getItem('scenecraft_access_token');
+  const token = localStorage.getItem('storyloom_access_token') || localStorage.getItem('scenecraft_access_token');
 
   const fetchNotifications = async () => {
     if (!token) return;

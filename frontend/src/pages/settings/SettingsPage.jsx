@@ -310,7 +310,7 @@ export function SettingsPage() {
 
               <div className="pt-6 mt-6 border-t border-current/10 flex items-center justify-between text-xs opacity-60">
                 <span>Page 1 of 324</span>
-                <span>SceneCraft Reader</span>
+                <span>Storyloom Reader</span>
               </div>
             </div>
           </div>

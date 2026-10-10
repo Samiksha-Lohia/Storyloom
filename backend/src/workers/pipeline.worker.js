@@ -97,7 +97,7 @@ const startPipelineWorker = (io) => {
     );
   });
 
-  logger.info('SceneCraft pipeline worker started.');
+  logger.info('Storyloom pipeline worker started.');
 
   return worker;
 };

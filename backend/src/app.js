@@ -131,7 +131,7 @@ const createApp = () => {
   app.get('/', (_req, res) => {
     res.status(200).json({
       success: true,
-      message: 'SceneCraft API is running.',
+      message: 'Storyloom API is running.',
       health: '/health',
       apiBase: '/api',
     });
@@ -161,7 +161,7 @@ const createApp = () => {
 
       return res.status(200).json({
         success: true,
-        message: 'SceneCraft API is running.',
+        message: 'Storyloom API is running.',
         services: {
           mongodb: 'up',
           redis: 'up',

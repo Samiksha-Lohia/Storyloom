@@ -141,7 +141,7 @@ export const generateJSON = async (prompt, schemaHint = null, stage = null) => {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'SceneCraft',
+        'X-Title': 'Storyloom',
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(60000),

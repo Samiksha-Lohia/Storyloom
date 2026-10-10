@@ -39,7 +39,7 @@ const bootstrap = async () => {
   startMaintenanceWorker();
 
   httpServer.listen(config.port, () => {
-    logger.info(`SceneCraft API listening on port ${config.port} [${config.env}]`);
+    logger.info(`Storyloom API listening on port ${config.port} [${config.env}]`);
   });
 
   const shutdown = async (signal) => {
