@@ -44,12 +44,15 @@ scratch/
 dump.rdb
 
 # Project documentation & reference files
+docs/
 SceneCraft_Project_Overview.docx
 SceneCraft_Project_Overview.md
 CLAUDE.md
 study_document.md
 study_doc*
-
+DECISIONS.md
+Platform_Spec.pdf
+  
 # Ignored assets
 frontend/src/assets/9d261ec3344c8925537fae690a9c8c4b-removebg-preview.png
 frontend/src/assets/146e1e1cb5b63457348ee9e19be589c6-removebg-preview.png

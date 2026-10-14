@@ -21,7 +21,7 @@ Publishers can discover manuscripts using catalog filters, review standardized b
 | Document Extraction | pdf-parse, Mammoth | Parsing raw text from PDF, Word (DOCX), and text files |
 | Authentication | JSON Web Tokens (JWT), bcryptjs | Secure password hashing and stateless token-based authorization |
 | Media Storage | Cloudinary, Multer | Manuscript file upload handling and book cover image hosting |
-| AI Integration | LLM API | Narrative analysis, metadata extraction, and story question answering |
+| AI & Retrieval | LLM API, Lexical RAG & Vector Embeddings | Narrative analysis, grounded lexical Q&A, and semantic vector search |
 
 ## Key Features
 
@@ -34,13 +34,15 @@ Publishers can discover manuscripts using catalog filters, review standardized b
 - Emotional tone tracking measuring scene intensity and mood patterns.
 - Plot continuity checks scanning for narrative discrepancies across scenes.
 - Automated book pitch generation creating loglines, target demographics, and market hooks.
+- Dedicated vector embeddings stage (`STAGES.EMBEDDINGS`) generating dense representations for scenes, character profiles, and dialogue records for semantic search.
 - One-click story re-analysis enabling authors to re-run and synchronize insights on both new and existing stories.
 
-### Reading Experience and Grounded Story Q&A
+### Reading Experience, Lexical Q&A & Semantic Search
 - Distraction-free reader view with adjustable typography and reading modes.
 - Personal library tracking for currently reading, saved, and completed books.
 - Community reviews with five-star ratings and reader feedback.
-- Grounded Story Q&A assistant utilizing a line-by-line RAG pipeline that evaluates verbatim manuscript text with bilingual English and Hindi (Devanagari) keyword scoring, multi-turn history, and strict anti-hallucination guardrails.
+- Grounded Story Q&A assistant utilizing a deterministic **lexical retrieval engine** (`story-qa.service.js`) with weighted scoring (token matches, exact-phrase bonuses, character entity matches), verbatim manuscript text hydration, bilingual English/Hindi (Devanagari) scoring, and strict anti-hallucination guardrails.
+- Dedicated Semantic Vector Search (`search.service.js`) powered by cosine similarity against vectors generated during the worker's embeddings stage.
 
 ### Publisher Discovery and Acquisition
 - Search and filtering by genre, word count, reader completion rates, and average rating.
@@ -53,6 +55,30 @@ Publishers can discover manuscripts using catalog filters, review standardized b
 - Publisher verification pipeline to approve or decline publishing house accounts.
 - Moderation queue for handling reported content, user disputes, and book takedowns.
 - Audit logging tracking administrative actions for platform transparency.
+
+## Retrieval Architecture: Lexical Q&A vs. Vector Semantic Search
+
+Storyloom intentionally separates **Story Question Answering** from **Semantic Search** based on distinct technical requirements:
+
+| Dimension | Grounded Story Q&A (`story-qa.service.js`) | Semantic Search (`search.service.js`) |
+| :--- | :--- | :--- |
+| **Retrieval Engine** | **Lexical & Entity Heuristic Scoring** | **Dense Vector Embeddings & Cosine Similarity** |
+| **Pipeline Stage** | On-demand user query evaluation | Asynchronous background worker stage (`STAGES.EMBEDDINGS`) |
+| **Scoring Formula** | `Exact Phrase (+20) + Character Name (+5) + Query Tokens (+3)` | Cosine similarity between query vector and stored document/scene vectors |
+| **Data Grounding** | Verbatim manuscript text hydration sliced from character offsets | Indexed vectors across scenes, characters, and dialogue records |
+| **Language Support** | Bilingual token scoring with English and Hindi (Devanagari) stopwords | Multi-modal text embedding representation |
+| **Primary Advantage** | Zero vector DB overhead, 100% quote fidelity, deterministic fallback | Conceptual search across synonyms, themes, and paraphrased intent |
+
+### Why Lexical Retrieval for Story Q&A?
+Rather than relying on vector similarity—which can pull tangentially related scenes while missing exact plot details—Storyloom's Q&A engine evaluates paragraphs using lexical token scoring and entity co-occurrence. It hydrates verbatim text directly from manuscript character offsets (`Document.parsedText`), supplying the LLM with exact quotes under strict anti-hallucination instructions. If the AI provider is unavailable, it provides an instant deterministic fallback using the highest-scoring excerpt.
+
+### The Dedicated Worker Embeddings Stage
+The background worker (`pipeline.worker.js`) contains a dedicated stage (`STAGES.EMBEDDINGS`) executed after scene segmentation, character extraction, and dialogue summaries are finalized. It computes dense vector representations for:
+1. **Scenes:** Title, summary, and full scene text.
+2. **Characters:** Name, role description, and personality traits.
+3. **Dialogue Summaries:** Conversation summary, key quotes, and tone.
+
+These are stored in the MongoDB `Embedding` collection and queried via `search.service.js` for flexible semantic exploration.
 
 ## System Architecture
 
@@ -152,7 +178,8 @@ Storyloom/
 | GET | `/api/books/:id/analysis/mood` | Retrieve emotional arc tracking and intensity data |
 | GET | `/api/books/:id/analysis/continuity` | Retrieve detected plot consistency issues |
 | GET | `/api/books/:id/analysis/pitch` | Retrieve generated publisher pitch deck details |
-| POST | `/api/books/:id/analysis/ask` | Submit questions to the story-grounded RAG assistant |
+| GET | `/api/books/:id/analysis/search` | Semantic vector search across story scenes, characters, and dialogues |
+| POST | `/api/books/:id/analysis/ask` | Submit questions to the grounded lexical Q&A assistant |
 
 ### Reading and Reviews
 | Method | Endpoint | Description |
