@@ -112,36 +112,6 @@ flowchart TB
     WORKER -. "Progress updates" .-> FRONT
 ```
 
-## 🔄 Inside the Manuscript Workflow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Writer
-    participant UI as Frontend
-    participant API as Express API
-    participant Q as Redis / BullMQ
-    participant Worker as Analysis Worker
-    participant AI as AI Provider
-    participant DB as MongoDB
-
-    Writer->>UI: Upload manuscript
-    UI->>API: Submit document
-    API->>DB: Save document data
-    API->>Q: Queue analysis job
-    API-->>UI: Return upload response
-
-    Q->>Worker: Process queued job
-    Worker->>AI: Run applicable analysis
-    AI-->>Worker: Return analysis output
-    Worker->>DB: Persist results
-
-    UI->>API: Request analysis results
-    API->>DB: Retrieve saved results
-    DB-->>API: Return analysis data
-    API-->>UI: Display story insights
-```
-
 ### 🧠 What the Analysis Explores
 
 | Analysis stage | What it helps reveal |
