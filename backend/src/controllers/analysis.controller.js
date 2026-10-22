@@ -9,7 +9,7 @@ import * as relationshipService from '../services/relationship.service.js';
 import * as timelineService from '../services/timeline.service.js';
 import * as moodService from '../services/mood.service.js';
 import * as storyArcService from '../services/storyArc.service.js';
-import * as continuityService from '../services/continuity.service.js';
+import * as dialogueService from '../services/dialogue.service.js';
 import * as pitchService from '../services/pitch.service.js';
 import { triggerAnalysisIfPending, getJobsForDocument } from '../services/analysis.service.js';
 import logger from '../utilities/logger.js';
@@ -22,9 +22,7 @@ const FEATURE_TO_STAGE = {
   [FEATURES.TIMELINE]: STAGES.TIMELINE,
   [FEATURES.MOOD]: STAGES.MOOD,
   [FEATURES.ARC]: STAGES.ARC,
-  [FEATURES.SEARCH]: STAGES.EMBEDDINGS,
   [FEATURES.ASK]: STAGES.EMBEDDINGS,
-  [FEATURES.CONTINUITY]: STAGES.CONTINUITY,
   [FEATURES.PITCH]: STAGES.ARC,
 };
 
@@ -303,58 +301,16 @@ export class AnalysisController {
     }
   }
 
-  static async getContinuity(req, res, next) {
+  static async getDialogue(req, res, next) {
     try {
       const ctx = await resolveRequestContext(req);
-      const raw = await continuityService.getContinuityIssuesForDocument(ctx.documentId);
-      const filtered = await spoilerService.filterAnalysis({
-        feature: FEATURES.CONTINUITY,
+      const raw = await dialogueService.getDialogueForDocument(ctx.documentId);
+      const analysisStatus = await getAnalysisStatusForFeature(ctx.documentId, 'dialogue');
+
+      res.status(200).json({
+        success: true,
+        message: 'Dialogue summaries retrieved successfully.',
         data: raw,
-        role: ctx.role,
-        book: ctx.book,
-        furthestOffset: ctx.furthestOffset,
-        showAll: ctx.showAll,
-      });
-
-      const analysisStatus = await getAnalysisStatusForFeature(ctx.documentId, FEATURES.CONTINUITY);
-
-      res.status(200).json({
-        success: true,
-        message: 'Continuity issues retrieved successfully.',
-        data: filtered,
-        analysisStatus,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async search(req, res, next) {
-    try {
-      const ctx = await resolveRequestContext(req);
-      const query = req.query.q;
-      if (!query || !query.trim()) {
-        throw new BadRequestError('Query parameter "q" is required for search.');
-      }
-
-      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
-      const results = await spoilerService.searchWithSpoilerProtection({
-        documentId: ctx.documentId,
-        book: ctx.book,
-        role: ctx.role,
-        furthestOffset: ctx.furthestOffset,
-        showAll: ctx.showAll,
-        query: query.trim(),
-        filters: req.query,
-        limit,
-      });
-
-      const analysisStatus = await getAnalysisStatusForFeature(ctx.documentId, FEATURES.SEARCH);
-
-      res.status(200).json({
-        success: true,
-        message: 'Search completed.',
-        data: results,
         analysisStatus,
       });
     } catch (err) {

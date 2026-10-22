@@ -18,18 +18,6 @@ export const getAnalytics = async (req, res, next) => {
   }
 };
 
-export const getDropOffExplain = async (req, res, next) => {
-  try {
-    const bookId = req.query.bookId || null;
-    const explainPlan = await writerService.explainDropOffAggregation({
-      writerId: req.user.id,
-      bookId,
-    });
-    sendSuccess(res, explainPlan, 200, 'Drop-off explain execution plan.');
-  } catch (err) {
-    next(err);
-  }
-};
 
 export const getReviews = async (req, res, next) => {
   try {
@@ -86,7 +74,6 @@ export const unfollowWriter = async (req, res, next) => {
 
 export default {
   getAnalytics,
-  getDropOffExplain,
   getReviews,
   getProfile,
   followWriter,

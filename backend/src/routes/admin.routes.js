@@ -12,7 +12,6 @@ import {
   adminBookUpdateSchema,
 } from '../validators/admin.validator.js';
 import * as adminController from '../controllers/admin.controller.js';
-import * as conversationController from '../controllers/conversation.controller.js';
 import { USER_ROLES } from '../constants/user-roles.js';
 
 const router = Router();
@@ -36,7 +35,5 @@ router.patch('/users/:id', validate(adminUserUpdateSchema), adminController.upda
 router.get('/books', validate(adminBooksQuerySchema), adminController.getBooks);
 
 router.patch('/books/:id', validate(adminBookUpdateSchema), adminController.updateBook);
-
-router.get('/conversations/:id', conversationController.adminGet);
 
 export default router;

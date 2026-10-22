@@ -72,21 +72,10 @@ export const update = async (req, res, next) => {
   }
 };
 
-export const adminGet = async (req, res, next) => {
-  try {
-    const { reportId } = req.query;
-    const result = await conversationService.adminGetConversation(req.user, req.params.id, reportId);
-    return sendSuccess(res, result, 200, 'Conversation retrieved under administrative audit.');
-  } catch (err) {
-    next(err);
-  }
-};
-
 export default {
   list,
   getById,
   getMessages,
   sendMessage,
   update,
-  adminGet,
 };

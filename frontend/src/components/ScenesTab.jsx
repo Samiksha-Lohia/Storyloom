@@ -23,6 +23,9 @@ export default function ScenesTab({
   const stableOptions = useMemo(() => options || {}, [optionsKey]);
 
   const [fetchedScenes, setFetchedScenes] = useState([]);
+  const [fetchedDialogues, setFetchedDialogues] = useState({});
+  const [fetchedCharacters, setFetchedCharacters] = useState({});
+  const [fetchedMoods, setFetchedMoods] = useState({});
   const [loading, setLoading] = useState(
     propLoading !== undefined ? propLoading : Boolean(resolvedSource?.id && !propScenes)
   );
@@ -58,10 +61,69 @@ export default function ScenesTab({
     };
   }, [resolvedSource?.id, resolvedSource?.kind, optionsKey, Boolean(propScenes?.length)]);
 
+  useEffect(() => {
+    if (!resolvedSource?.id) return;
+    let isCancelled = false;
+
+    (async () => {
+      try {
+        const [dialogueRes, charRes, moodRes] = await Promise.allSettled([
+          api.analysis.getDialogue ? api.analysis.getDialogue(resolvedSource, stableOptions) : Promise.resolve([]),
+          api.analysis.getCharacters ? api.analysis.getCharacters(resolvedSource, { showAll: true, limit: 100 }) : Promise.resolve([]),
+          api.analysis.getMood ? api.analysis.getMood(resolvedSource, stableOptions) : Promise.resolve([]),
+        ]);
+
+        if (isCancelled) return;
+
+        if (dialogueRes.status === 'fulfilled' && dialogueRes.value) {
+          const raw = dialogueRes.value?.data !== undefined ? dialogueRes.value.data : dialogueRes.value;
+          const list = Array.isArray(raw) ? raw : (raw?.results || []);
+          const grouped = {};
+          list.forEach((item) => {
+            const sId = (item.sceneId?._id || item.sceneId)?.toString();
+            if (sId) {
+              if (!grouped[sId]) grouped[sId] = [];
+              grouped[sId].push(item);
+            }
+          });
+          setFetchedDialogues(grouped);
+        }
+
+        if (charRes.status === 'fulfilled' && charRes.value) {
+          const raw = charRes.value?.data !== undefined ? charRes.value.data : charRes.value;
+          const list = Array.isArray(raw) ? raw : (raw?.results || []);
+          const map = {};
+          list.forEach((c) => {
+            const cId = (c._id || c.id)?.toString();
+            if (cId) map[cId] = c;
+          });
+          setFetchedCharacters(map);
+        }
+
+        if (moodRes.status === 'fulfilled' && moodRes.value) {
+          const raw = moodRes.value?.data !== undefined ? moodRes.value.data : moodRes.value;
+          const list = Array.isArray(raw) ? raw : (raw?.results || []);
+          const map = {};
+          list.forEach((m) => {
+            const sId = (m.sceneId?._id || m.sceneId)?.toString();
+            if (sId) map[sId] = m;
+          });
+          setFetchedMoods(map);
+        }
+      } catch (err) {
+        console.error('Failed to load dialogue/characters:', err);
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedSource?.id, resolvedSource?.kind, optionsKey]);
+
   const scenes = propScenes || fetchedScenes;
-  const dialogues = propDialogues;
-  const moods = propMoods;
-  const characters = propCharacters;
+  const dialogues = Object.keys(propDialogues || {}).length > 0 ? propDialogues : fetchedDialogues;
+  const moods = Object.keys(propMoods || {}).length > 0 ? propMoods : fetchedMoods;
+  const characters = Object.keys(propCharacters || {}).length > 0 ? propCharacters : fetchedCharacters;
   const page = propPage;
   const totalPages = propTotalPages;
 
@@ -175,36 +237,65 @@ export default function ScenesTab({
 
               {isExpanded && (
                 <div className="bg-paper border-t border-rule p-5 space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Dialogue Insights
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Dialogue Subtext &amp; Cadence Analysis
+                    </h4>
+                    {sceneDialogues.length > 0 && (
+                      <span className="text-[11px] text-muted font-medium">
+                        {sceneDialogues.length} character perspective{sceneDialogues.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
 
                   {sceneDialogues.length === 0 ? (
-                    <p className="text-xs text-muted">No dialogue snippets analyzed for this scene.</p>
+                    <p className="text-xs text-muted">No dialogue subtext or cadence analyzed for this scene yet.</p>
                   ) : (
                     <div className="space-y-3">
                       {sceneDialogues.map((d) => {
-                        const speakerName = characters[d.characterId]?.name || 'Unknown Speaker';
+                        const charId = (d.characterId?._id || d.characterId)?.toString();
+                        const speakerName = characters[charId]?.name || d.characterId?.name || 'Unknown Speaker';
                         return (
-                          <div key={d._id || d.id} className="bg-paper border border-rule rounded p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-ink">{speakerName}</span>
-                              {d.tone && (
-                                <span className="px-1.5 py-0.5 border border-rule text-muted rounded text-[9px] font-bold uppercase tracking-wider">
-                                  {d.tone}
+                          <div key={d._id || d.id} className="bg-paper border border-rule rounded-md p-3.5 space-y-2.5">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+                                {speakerName}
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {d.tone && (
+                                  <span className="px-2 py-0.5 bg-accent/10 border border-accent/20 text-accent rounded text-[10px] font-bold uppercase tracking-wider">
+                                    Tone: {d.tone}
+                                  </span>
+                                )}
+                                <span className="px-1.5 py-0.5 border border-rule text-muted rounded text-[9px] font-medium uppercase tracking-wider">
+                                  Cadence &amp; Subtext
                                 </span>
-                              )}
+                              </div>
                             </div>
-                            <p className="text-xs text-ink italic">&ldquo;{d.summaryText}&rdquo;</p>
-                            
+
+                            {d.summaryText && (
+                              <div className="bg-rule/10 rounded p-2.5 text-xs text-ink space-y-1">
+                                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                                  Subtext &amp; Dynamic
+                                </span>
+                                <p className="italic leading-relaxed">&ldquo;{d.summaryText}&rdquo;</p>
+                              </div>
+                            )}
+
                             {d.keyQuotes && d.keyQuotes.length > 0 && (
-                              <div className="border-l-2 border-rule pl-3 mt-2 space-y-1">
-                                {d.keyQuotes.map((quote, qidx) => (
-                                  <p key={qidx} className="text-xs text-muted">
-                                    &ldquo;{quote}&rdquo;
-                                  </p>
-                                ))}
+                              <div className="space-y-1 pt-0.5">
+                                <span className="text-[10px] font-semibold text-muted uppercase tracking-wider block">
+                                  Key Lines
+                                </span>
+                                <div className="border-l-2 border-accent/40 pl-3 space-y-1">
+                                  {d.keyQuotes.map((quote, qidx) => (
+                                    <p key={qidx} className="text-xs text-ink/80 font-mono">
+                                      &ldquo;{quote}&rdquo;
+                                    </p>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

@@ -11,7 +11,7 @@ const defaultCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'n7j7nivw
 
 export const coverUrl = (publicId, preset = 'thumb', cloudName = defaultCloudName) => {
   if (!publicId) return '';
-  if (publicId.startsWith('http://') || publicId.startsWith('https://')) {
+  if (publicId.startsWith('http://') || publicId.startsWith('https://') || publicId.startsWith('/')) {
     return publicId;
   }
   const transformation = PRESETS[preset] || PRESETS.thumb;

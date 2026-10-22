@@ -54,7 +54,7 @@ const DEMO_USERS = [
     status: USER_STATUSES.ACTIVE,
     username: 'elena-vance',
     bio: 'Bestselling speculative fiction author and worldbuilder. Writing stories where myth and memory collide.',
-    defaultTemplate: BOOK_TEMPLATES.SHOWCASE,
+    defaultTemplate: BOOK_TEMPLATES.CLASSIC,
   },
   {
     name: 'Alex Reader',

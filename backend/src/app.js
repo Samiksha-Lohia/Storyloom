@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -94,6 +95,7 @@ const createApp = () => {
 
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
+  app.use('/uploads', express.static(path.resolve(config.file?.uploadDir || 'uploads')));
 
   const readLenientLimiter = rateLimit({
     windowMs: 60 * 1000,

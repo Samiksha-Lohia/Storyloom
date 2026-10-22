@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Eye,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -191,6 +192,12 @@ export function EditBookPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link to={`/w/books/${id}/insights`}>
+            <Button variant="secondary" size="sm" className="flex items-center gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5" />
+              Story Insights
+            </Button>
+          </Link>
           <Link to={`/book/${id}`} target="_blank" rel="noreferrer">
             <Button variant="secondary" size="sm" className="flex items-center gap-1.5 text-xs">
               <Eye className="w-3.5 h-3.5" />

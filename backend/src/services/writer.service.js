@@ -99,19 +99,6 @@ export const buildDropOffPipeline = (targetBookIds) => {
   ];
 };
 
-export const explainDropOffAggregation = async ({ writerId, bookId }) => {
-  let targetBookIds = [];
-  if (bookId) {
-    targetBookIds = [new mongoose.Types.ObjectId(bookId)];
-  } else {
-    const books = await Book.find({ writerId }).select('_id').lean();
-    targetBookIds = books.map((b) => b._id);
-  }
-
-  const pipeline = buildDropOffPipeline(targetBookIds);
-  const explainResult = await ReadingList.aggregate(pipeline).explain('executionStats');
-  return explainResult;
-};
 
 export const getWriterAnalytics = async ({ writerId, range = 30, bookId = null, userRole = null }) => {
   const rangeDays = range === 90 ? 90 : 30;
@@ -479,7 +466,6 @@ export const unfollowWriter = async (followerId, username) => {
 
 export default {
   getWriterAnalytics,
-  explainDropOffAggregation,
   getWriterReviews,
   getWriterProfile,
   followWriter,

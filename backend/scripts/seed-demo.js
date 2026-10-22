@@ -141,7 +141,7 @@ async function seedDemo() {
       email: 'writer@scenecraft.com',
       username: 'elena-vance',
       bio: 'Bestselling speculative fiction author and worldbuilder. Writing stories where myth and memory collide.',
-      defaultTemplate: BOOK_TEMPLATES.SHOWCASE,
+      defaultTemplate: BOOK_TEMPLATES.CLASSIC,
     },
     {
       name: 'Kai Sterling',
@@ -155,7 +155,7 @@ async function seedDemo() {
       email: 'amara.chen@scenecraft.com',
       username: 'amara-chen',
       bio: 'Historical fantasy and romantic intrigue storyteller. Obsessed with court drama.',
-      defaultTemplate: BOOK_TEMPLATES.NOTEBOOK,
+      defaultTemplate: BOOK_TEMPLATES.CLASSIC,
     },
     {
       name: 'Darian Cross',
@@ -169,7 +169,7 @@ async function seedDemo() {
       email: 'lyra.frost@scenecraft.com',
       username: 'lyra-frost',
       bio: 'Epic fantasy worldweaver crafting sweeping sagas of fallen empires.',
-      defaultTemplate: BOOK_TEMPLATES.SHOWCASE,
+      defaultTemplate: BOOK_TEMPLATES.CLASSIC,
     },
   ];
 

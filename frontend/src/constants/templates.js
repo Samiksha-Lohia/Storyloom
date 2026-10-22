@@ -1,7 +1,5 @@
 export const BOOK_TEMPLATES = {
   CLASSIC: 'classic',
-  SHOWCASE: 'showcase',
-  NOTEBOOK: 'notebook',
 };
 
 export const TEMPLATE_OPTIONS = [
@@ -11,20 +9,6 @@ export const TEMPLATE_OPTIONS = [
     badge: 'Editorial Standard',
     description: 'Clean editorial layout. Cover on the left, story details on the right, and tabbed sections below.',
     bestFor: 'General Fiction, Romance, Mystery, Young Adult',
-  },
-  {
-    id: BOOK_TEMPLATES.SHOWCASE,
-    name: 'Showcase',
-    badge: 'Cinematic Hero',
-    description: 'Centered presentation with artwork, stat chips, and author card.',
-    bestFor: 'Fantasy, Sci-Fi, Thriller, Action',
-  },
-  {
-    id: BOOK_TEMPLATES.NOTEBOOK,
-    name: 'Notebook',
-    badge: 'Paper & Ink',
-    description: 'Parchment background with ruled lines, a centered cover, and story synopsis.',
-    bestFor: 'Literary Fiction, Poetry, Memoir, Personal Essays',
   },
 ];
 

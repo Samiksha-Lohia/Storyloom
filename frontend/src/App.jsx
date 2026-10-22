@@ -31,9 +31,11 @@ import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminPublishersPage from './pages/admin/AdminPublishersPage';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminBooksPage from './pages/admin/AdminBooksPage';
 import { WriterDashboardPage } from './pages/writer/WriterDashboardPage';
 import { WriterReviewsPage } from './pages/writer/WriterReviewsPage';
 import { EditBookPage } from './pages/writer/EditBookPage';
+import { WriterBookInsightsPage } from './pages/writer/WriterBookInsightsPage';
 import { WriterProfilePage } from './pages/writer/WriterProfilePage';
 import { PublicWriterProfilePage } from './pages/writer/PublicWriterProfilePage';
 import { PublisherDiscoverPage } from './pages/publisher/PublisherDiscoverPage';
@@ -114,6 +116,7 @@ function App() {
             <Route path="books" element={<MyBooksPage />} />
             <Route path="books/new" element={<NewBookPage />} />
             <Route path="books/:id/edit" element={<EditBookPage />} />
+            <Route path="books/:id/insights" element={<WriterBookInsightsPage />} />
             <Route path="reviews" element={<WriterReviewsPage />} />
             <Route path="requests" element={<WriterRequestsPage />} />
             <Route path="chat" element={<ConversationsPage />} />
@@ -123,7 +126,6 @@ function App() {
               element={
                 <PlaceholderPage
                   title="Writer Studio"
-                  phase="Phase 3 Feature"
                 />
               }
             />
@@ -147,7 +149,6 @@ function App() {
               element={
                 <PlaceholderPage
                   title="Publisher Portal"
-                  phase="Phase 5 Feature"
                 />
               }
             />
@@ -162,6 +163,7 @@ function App() {
             }
           >
             <Route path="overview" element={<AdminOverviewPage />} />
+            <Route path="books" element={<AdminBooksPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="publishers" element={<AdminPublishersPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
@@ -170,7 +172,6 @@ function App() {
               element={
                 <PlaceholderPage
                   title="Admin Oversight"
-                  phase="Phase 6 Feature"
                 />
               }
             />

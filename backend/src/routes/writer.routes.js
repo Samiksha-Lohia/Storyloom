@@ -18,13 +18,6 @@ router.get(
   writerController.getAnalytics
 );
 
-router.get(
-  '/analytics/explain',
-  authenticate,
-  requireActive,
-  authorize(USER_ROLES.WRITER, USER_ROLES.ADMIN),
-  writerController.getDropOffExplain
-);
 
 router.get(
   '/reviews',

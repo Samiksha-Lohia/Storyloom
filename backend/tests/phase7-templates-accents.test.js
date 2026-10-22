@@ -211,25 +211,25 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       const res1 = await req(
         'PATCH',
         `/books/${book._id}`,
-        { template: 'showcase', accent: '#0F766E' },
+        { template: 'classic', accent: '#0F766E' },
         token
       );
       assert.equal(res1.status, 200);
-      assert.equal(res1.body.data.template, 'showcase');
+      assert.equal(res1.body.data.template, 'classic');
       assert.equal(res1.body.data.accent, '#0F766E');
 
       const res2 = await req(
         'PATCH',
         `/books/${book._id}`,
-        { template: 'notebook', accent: ACCESSIBLE_ORANGE },
+        { template: 'classic', accent: ACCESSIBLE_ORANGE },
         token
       );
       assert.equal(res2.status, 200);
-      assert.equal(res2.body.data.template, 'notebook');
+      assert.equal(res2.body.data.template, 'classic');
       assert.equal(res2.body.data.accent, ACCESSIBLE_ORANGE);
 
       const updatedInDb = await Book.findById(book._id);
-      assert.equal(updatedInDb.template, 'notebook');
+      assert.equal(updatedInDb.template, 'classic');
       assert.equal(updatedInDb.accent, ACCESSIBLE_ORANGE);
 
       assert.equal(updatedInDb.documentId.toString(), doc._id.toString());
@@ -315,29 +315,20 @@ describe('Phase 7: Writer Templates, Accessible Accents, and Live Presentation',
       const res1 = await req(
         'PATCH',
         '/me/profile',
-        { defaultTemplate: 'showcase' },
+        { defaultTemplate: 'classic' },
         token
       );
       assert.equal(res1.status, 200);
-      assert.equal(res1.body.data.defaultTemplate, 'showcase');
+      assert.equal(res1.body.data.defaultTemplate, 'classic');
 
       const meRes = await req('GET', '/auth/me', null, token);
       assert.equal(meRes.status, 200);
-      assert.equal(meRes.body.data.defaultTemplate, 'showcase');
-
-      const res2 = await req(
-        'PATCH',
-        '/me/profile',
-        { defaultTemplate: 'notebook' },
-        token
-      );
-      assert.equal(res2.status, 200);
-      assert.equal(res2.body.data.defaultTemplate, 'notebook');
+      assert.equal(meRes.body.data.defaultTemplate, 'classic');
 
       const resBad = await req(
         'PATCH',
         '/me/profile',
-        { defaultTemplate: 'holographic' },
+        { defaultTemplate: 'showcase' },
         token
       );
       assert.equal(resBad.status, 400);

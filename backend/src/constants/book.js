@@ -12,8 +12,6 @@ export const BOOK_STATUSES_LIST = Object.values(BOOK_STATUSES);
 
 export const BOOK_TEMPLATES = {
   CLASSIC: 'classic',
-  SHOWCASE: 'showcase',
-  NOTEBOOK: 'notebook',
 };
 
 export const BOOK_TEMPLATES_LIST = Object.values(BOOK_TEMPLATES);

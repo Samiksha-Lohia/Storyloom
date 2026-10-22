@@ -10,11 +10,10 @@ export const PUBLIC_ROUTES = [
   'GET /characters/:characterId',
   'GET /relationships',
   'GET /timeline',
+  'GET /dialogue',
   'GET /mood',
   'GET /arc',
-  'GET /continuity',
   'GET /pitch',
-  'GET /search',
   'GET /pipeline-status',
   'POST /ask',
   'POST /process',
@@ -33,11 +32,10 @@ router.get('/characters', AnalysisController.getCharacters);
 router.get('/characters/:characterId', AnalysisController.getCharacterById);
 router.get('/relationships', AnalysisController.getRelationships);
 router.get('/timeline', AnalysisController.getTimeline);
+router.get('/dialogue', AnalysisController.getDialogue);
 router.get('/mood', AnalysisController.getMood);
 router.get('/arc', AnalysisController.getArc);
-router.get('/continuity', AnalysisController.getContinuity);
 router.get('/pitch', AnalysisController.getPitch);
-router.get('/search', AnalysisController.search);
 router.post('/ask', AnalysisController.ask);
 
 export default router;

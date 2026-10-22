@@ -16,7 +16,6 @@ import { BOOK_STATUSES, BOOK_ACCENTS } from '../src/constants/book.js';
 import { TERMS_VERSION } from '../src/constants/terms.js';
 import { getDayString } from '../src/utilities/viewer-key.js';
 import { rollupStatsForDate, refreshAllBookStats } from '../src/services/stats-rollup.service.js';
-import { explainDropOffAggregation } from '../src/services/writer.service.js';
 
 let server;
 let baseUrl;
@@ -360,11 +359,6 @@ describe('Phase 6: Analytics, ViewEvents, Nightly Rollup, and Writer Dashboard',
       const b90_100 = dropOff.find((b) => b.bucket === '90-100%');
       assert.equal(b90_100.count, 1);
       assert.equal(b90_100.percentage, 25);
-
-      const explainRes = await explainDropOffAggregation({ writerId: writer.id, bookId: book._id });
-      assert.ok(explainRes, 'Explain result must exist');
-      const hasStages = Array.isArray(explainRes.stages) || explainRes.executionStats !== undefined || explainRes[0] !== undefined;
-      assert.ok(hasStages, 'Aggregation explain must include stages or executionStats');
     });
   });
 

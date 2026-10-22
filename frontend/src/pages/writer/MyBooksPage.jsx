@@ -237,6 +237,13 @@ export function MyBooksPage() {
                     </Button>
                   </Link>
 
+                  <Link to={`/w/books/${bookId}/insights`}>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5" title="Story Insights">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Insights
+                    </Button>
+                  </Link>
+
                   <Link to={`/w/books/${bookId}/edit`}>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1.5" title="Edit presentation and details">
                       <Edit3 className="w-3.5 h-3.5" />

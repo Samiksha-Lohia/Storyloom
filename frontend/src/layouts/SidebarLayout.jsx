@@ -52,7 +52,9 @@ export default function SidebarLayout({ roleTitle = 'Dashboard' }) {
     if (role === 'admin') {
       return [
         { label: 'Overview', to: '/a/overview', icon: LayoutDashboard },
-        { label: 'Admin Users', to: '/a/users', icon: Users },
+        { label: 'Books', to: '/a/books', icon: Library },
+        { label: 'Publishers', to: '/a/publishers', icon: Briefcase },
+        { label: 'Users', to: '/a/users', icon: Users },
         { label: 'Reports', to: '/a/reports', icon: Flag },
         { label: 'Catalogue', to: '/browse', icon: BookOpen },
       ];

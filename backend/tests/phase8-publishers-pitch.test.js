@@ -77,7 +77,7 @@ describe('Phase 8: Publisher Journey, Pitch Panel, Private Wishlist, and Public 
       role: USER_ROLES.WRITER,
       status: USER_STATUSES.ACTIVE,
       bio: 'Prolific writer of science fiction.',
-      defaultTemplate: 'showcase',
+      defaultTemplate: 'classic',
       defaultAccent: '#FF500A',
     });
     const tokens = await authService.generateTokenPair(user);
@@ -454,7 +454,7 @@ describe('Phase 8: Publisher Journey, Pitch Panel, Private Wishlist, and Public 
       const res = await req('GET', `/writers/${writer.user.username}`, null, reader.token);
       assert.equal(res.status, 200);
       assert.equal(res.body.data.writer.username, writer.user.username);
-      assert.equal(res.body.data.writer.defaultTemplate, 'showcase');
+      assert.equal(res.body.data.writer.defaultTemplate, 'classic');
       assert.equal(res.body.data.writer.defaultAccent, '#FF500A');
       assert.equal(res.body.data.books.length, 1);
       assert.equal(res.body.data.books[0].title, 'Judgment Day');

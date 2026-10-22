@@ -478,47 +478,8 @@ export const api = {
   },
 
   documents: {
-    async list() {
-      const res = await fetch(`${API_BASE}/documents`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async upload(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API_BASE}/documents`, {
-        method: 'POST',
-        headers: getHeaders(true),
-        body: formData,
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
     async getById(id) {
       const res = await fetch(`${API_BASE}/documents/${id}`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async updateTitle(id, title) {
-      const res = await fetch(`${API_BASE}/documents/${id}`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify({ title }),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async delete(id) {
-      const res = await fetch(`${API_BASE}/documents/${id}`, {
-        method: 'DELETE',
         headers: getHeaders(),
       });
       const data = await handleResponse(res);
@@ -607,36 +568,6 @@ export const api = {
       const res = await fetch(`${API_BASE}/documents/${documentId}/story/arc`, {
         headers: getHeaders(),
       });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async getContinuity(documentId) {
-      const res = await fetch(`${API_BASE}/documents/${documentId}/story/continuity`, {
-        headers: getHeaders(),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async updateContinuityStatus(documentId, issueId, status) {
-      const res = await fetch(`${API_BASE}/documents/${documentId}/story/continuity/${issueId}/status`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify({ status }),
-      });
-      const data = await handleResponse(res);
-      return data.data;
-    },
-
-    async search(documentId, query, filters = {}) {
-      let url = `${API_BASE}/documents/${documentId}/search?q=${encodeURIComponent(query)}`;
-      if (filters.character) url += `&character=${encodeURIComponent(filters.character)}`;
-      if (filters.mood) url += `&mood=${encodeURIComponent(filters.mood)}`;
-      if (filters.sceneRangeFrom) url += `&sceneRangeFrom=${filters.sceneRangeFrom}`;
-      if (filters.sceneRangeTo) url += `&sceneRangeTo=${filters.sceneRangeTo}`;
-      
-      const res = await fetch(url, { headers: getHeaders() });
       const data = await handleResponse(res);
       return data.data;
     },
@@ -777,30 +708,16 @@ export const api = {
       return api.story.getArc(src.id);
     },
 
-    async getContinuity(source, params = {}) {
+    async getDialogue(source, params = {}) {
       const src = this.normalizeSource(source);
       if (src.kind === 'book') {
-        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/continuity${this.buildQuery(params)}`, {
+        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/dialogue${this.buildQuery(params)}`, {
           headers: getHeaders(),
         });
         const data = await handleResponse(res);
         return data;
       }
-      return api.story.getContinuity(src.id);
-    },
-
-    async updateContinuityStatus(source, issueId, status) {
-      const src = this.normalizeSource(source);
-      let docId = src.id;
-      if (src.kind === 'book') {
-        if (src.documentId) {
-          docId = src.documentId;
-        } else {
-          const book = await api.books.getById(src.id);
-          docId = book?.documentId?._id || book?.documentId || src.id;
-        }
-      }
-      return api.story.updateContinuityStatus(docId, issueId, status);
+      return api.story.getDialogue(src.id, params.characterId);
     },
 
     async getPitch(source, params = {}) {
@@ -813,27 +730,6 @@ export const api = {
         return data;
       }
       return null;
-    },
-
-    async search(source, query, filters = {}, params = {}) {
-      const src = this.normalizeSource(source);
-      if (src.kind === 'book') {
-        const mergedParams = { ...filters, ...params, q: query };
-        const queryParams = new URLSearchParams();
-        for (const [k, v] of Object.entries(mergedParams)) {
-          if (v !== undefined && v !== null && v !== '') queryParams.append(k, v);
-        }
-        const res = await fetch(`${API_BASE}/books/${src.id}/analysis/search?${queryParams.toString()}`, {
-          headers: getHeaders(),
-        });
-        const data = await handleResponse(res);
-        return data;
-      }
-      return api.story.search(src.id, query, filters);
-    },
-
-    async semanticSearch(source, query, filters = {}, params = {}) {
-      return this.search(source, query, filters, params);
     },
 
     async ask(source, question, params = {}) {

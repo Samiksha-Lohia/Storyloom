@@ -4,8 +4,6 @@ import Message from '../models/message.model.js';
 import PublishRequest from '../models/publish-request.model.js';
 import Book from '../models/book.model.js';
 import User from '../models/user.model.js';
-import Report from '../models/report.model.js';
-import AuditLog from '../models/audit-log.model.js';
 import { detectContactInfo } from '../utilities/contact-filter.js';
 import { createNotification } from './notification.service.js';
 import {
@@ -275,81 +273,10 @@ export const updateConversation = async (user, conversationId, { status, contact
   return conversation;
 };
 
-export const adminGetConversation = async (adminUser, conversationId, reportId) => {
-  if (adminUser.role !== USER_ROLES.ADMIN) {
-    throw new ForbiddenError('Administrative privileges required.');
-  }
-
-  if (!reportId) {
-    throw new ForbiddenError(
-      'Administrative access to conversations requires an active reportId.',
-      'REPORT_REQUIRED'
-    );
-  }
-
-  const report = await Report.findById(reportId);
-  if (!report || report.status === 'closed') {
-    throw new ForbiddenError(
-      'An open or active report is required to access user conversations.',
-      'INVALID_REPORT'
-    );
-  }
-
-  const conversation = await Conversation.findById(conversationId)
-    .populate('participants', 'name username email role publisherProfile')
-    .populate('bookId', 'title coverUrl genre writerId')
-    .populate('requestId')
-    .lean();
-
-  if (!conversation) {
-    throw new NotFoundError('Conversation not found.');
-  }
-
-  const participantIds = (conversation.participants || []).map((p) => (p._id || p).toString());
-  const targetIdStr = report.targetId.toString();
-
-  const targetsParticipant = participantIds.includes(targetIdStr);
-  const targetsConversation = targetIdStr === conversationId.toString();
-  const targetsBook = conversation.bookId && (conversation.bookId._id || conversation.bookId).toString() === targetIdStr;
-
-  if (!targetsParticipant && !targetsConversation && !targetsBook) {
-    throw new ForbiddenError(
-      'The specified report does not target this conversation or any of its participants.',
-      'REPORT_TARGET_MISMATCH'
-    );
-  }
-
-  await AuditLog.create({
-    actor: adminUser.id || adminUser._id,
-    action: 'conversation_read',
-    targetType: 'conversation',
-    targetId: conversationId.toString(),
-    meta: {
-      reportId: report._id.toString(),
-      reportReason: report.reason,
-      participants: participantIds,
-    },
-    at: new Date(),
-  });
-
-  const messages = await Message.find({ conversationId }).sort({ createdAt: 1 }).lean();
-
-  return {
-    conversation,
-    messages,
-    report: {
-      _id: report._id,
-      reason: report.reason,
-      status: report.status,
-    },
-  };
-};
-
 export default {
   listUserConversations,
   getConversationById,
   getConversationMessages,
   sendMessage,
   updateConversation,
-  adminGetConversation,
 };

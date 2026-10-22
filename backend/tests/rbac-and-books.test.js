@@ -225,7 +225,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
     formData.append('genre', 'Fantasy');
     formData.append('tags', 'magic,adventure,epic');
     formData.append('accent', BOOK_ACCENTS[0]);
-    formData.append('template', 'showcase');
+    formData.append('template', 'classic');
     formData.append('acceptedRights', 'true');
     formData.append(
       'manuscript',
@@ -242,7 +242,7 @@ describe('RBAC, Seed Admin, and Book Foundation Tests', () => {
     assert.equal(res.status, 201);
     assert.equal(json.data.title, 'The Chronicles of SceneCraft');
     assert.equal(json.data.status, BOOK_STATUSES.PROCESSING);
-    assert.equal(json.data.template, 'showcase');
+    assert.equal(json.data.template, 'classic');
     assert.equal(json.data.writerId, user._id.toString());
     assert.ok(json.data.documentId);
     assert.ok(json.data.acceptedTermsAt);

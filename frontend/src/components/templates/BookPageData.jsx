@@ -19,7 +19,6 @@ export function BookPageData({
   relatedBooks = [],
   user = null,
   isPreview = false,
-  forcedTemplate = null,
   forcedAccent = null,
 }) {
   const [activeTab, setActiveTab] = useState('summary');
@@ -28,11 +27,6 @@ export function BookPageData({
   const [libraryLoading, setLibraryLoading] = useState(false);
 
   const bookId = book?.id || book?._id;
-
-  let templateName = (forcedTemplate || book?.template || 'classic').toLowerCase();
-  if (templateName === 'accent') {
-    templateName = 'classic';
-  }
   const accent = forcedAccent || book?.accent || DEFAULT_ACCENT;
 
   useEffect(() => {
